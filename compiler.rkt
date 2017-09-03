@@ -29,22 +29,22 @@
 
 (define (pe-neg2 exp)
   (match exp
-    [ n             #:when (fixnum? n)                     (fx- 0 n)]
-    [`(+ ,n ,m)     #:when (and (fixnum? n) (fixnum? m))  `(+ ,(pe-neg2 n) (pe-neg2 m))]
-    [`(+ ,n ,e)     #:when (fixnum? n)                    `(+ ,(pe-neg2 n) ,e)]
-    [`(+ ,e ,n)     #:when (fixnum? n)                     (pe-neg2 `(+ n e))]
-    [e                                                    `(- e)]
+    [ n         #:when (fixnum? n)                     (fx- 0 n)] ; int -> -int
+    [`(+ ,n ,m) #:when (and (fixnum? n) (fixnum? m))  `(+ ,(pe-neg2 n) (pe-neg2 m))] ; (+ int int) -> (+ -int -int)
+    [`(+ ,n ,e) #:when (fixnum? n)                    `(+ ,(pe-neg2 n) (- ,e))] ; (+ int exp) -> (+ -int (- exp))
+    [`(+ ,e ,n) #:when (fixnum? n)                     (pe-neg2 `(+ n e))] ; (+ exp int) -> (+ 
+    [e                                                `(- e)]
     ))
 
 (define (pe-add2 left right)
   (match* (left right)
-    [( n            m)           #:when (and (fixnum? n) (fixnum? m))  (fx+ n m)]
-    [( n           `(+ ,m ,b))   #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)]
-    [(`(+ ,m ,b)    n)           #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)]
-    [( n           `(+ ,ra ,rb)) #:when (fixnum? n)                    (pe-add2 (pe-add2 n ra) rb)]
-    [(`(+ ,la ,lb) `(+ ,ra ,rb))                                      `(+ ,(pe-add2 ra la) ,(pe-add2 rb lb))]
-    [( a            b)           #:when (fixnum? b)                    (pe-add2 b a)]
-    [( a            b)                                                `(+ ,a ,b)]))
+    [( n            m)           #:when (and (fixnum? n) (fixnum? m))  (fx+ n m)] ; int int -> int
+    [( n           `(+ ,m ,b))   #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)] ; int (+ int exp) -> (+ int exp)
+    [(`(+ ,m ,b)    n)           #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)] ; (+ int exp) int -> (+ int exp)
+    [( n           `(+ ,ra ,rb)) #:when (fixnum? n)                    (pe-add2 (pe-add2 n ra) rb)] ; int (+ exp exp) -> (pe-add2 (pe-add2 int exp) exp)
+    [(`(+ ,la ,lb) `(+ ,ra ,rb))                                      `(+ ,(pe-add2 ra la) ,(pe-add2 rb lb))] ; (+ exp exp) (+ exp exp) -> (+ (pe-add2 exp exp) (pe-add2 exp exp))
+    [( a            b)           #:when (fixnum? b)                    (pe-add2 b a)] ; exp int -> (pe-add2 int exp)
+    [( a            b)                                                `(+ ,a ,b)])) ; exp exp -> (+ exp exp)
 
 (define (pe-arith e)
   (match e
