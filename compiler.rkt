@@ -67,6 +67,24 @@
       [`(program ,e) `(program ,((uniquify alist) e))]
       [`(,op ,es ...) `(,op ,@(map (uniquify alist) es))])))
 
+(define (map-values proc lst)
+  (define (wrap e)
+    (call-with-values (lambda () (proc e)) list))      
+  (apply values
+         (apply map list (map wrap lst))))
+
+(trace-define (select-instructions exp)
+  (match exp
+    [`(assign ,lhs (read))                                             (list `(callq read_int)
+                                                                             `(movq (reg rax) (var ,lhs)))]
+    [`(assign ,v ,n)          #:when (fixnum? n)                      `(movq (int ,n) (var ,v))]
+    [`(assign ,v (+ ,n1 ,n2)) #:when (and (fixnum? n1) (fixnum? n2))   (list `(movq (int ,n1) (var ,v))
+                                                                           `(addq (int ,n2) (var ,v)))]
+    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2) (equal? v1 v2))   `(addq (int ,n) (var ,v1))]
+    [`(assign ,v1 (+ ,v2 ,n)) #:when (and (fixnum? n) (symbol? v2))    (select-instructions `(assign ,v1 (+ ,n ,v2)))]
+    [`(return ,v)             #:when (symbol? v)                      `(movq ,v (reg rax))]
+    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,(map select-instructions instrs))]))
+
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
 ;; should be named "compiler.rkt"
@@ -79,6 +97,5 @@
   `( ("uniquify" ,(lambda (e) ((uniquify '()) e)) ,interp-scheme)
      ))
 
-(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
-(display "tests passed!") (newline)
-
+;(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
+;(display "tests passed!") (newline)
