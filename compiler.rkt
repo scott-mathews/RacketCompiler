@@ -73,6 +73,59 @@
   (apply values
          (apply map list (map wrap lst))))
 
+
+
+
+(define-struct flatData (data vars))
+
+  (define-values (flatten env)
+    (values 
+     (lambda (exp)
+       (match exp
+         [`,y #:when (symbol? y) `,y]
+         [`(+ ,y ,n) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
+                                                                 (make-flatData (list `(assign ,temp (+ ,n ,y))) (cons (cons temp `((+ ,n ,y))) empty)))]
+         [`(+ ,n ,y) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
+                                                                 (make-flatData (list `(assign ,temp (+ ,n ,y))) (cons (cons temp `((+ ,n ,y))) empty)))]
+         [`(+ ,n1 ,n2) #:when (and (fixnum? n1) (fixnum? n2)) (let ([temp (gensym `tmp)])
+                                                                 (make-flatData (list `(assign ,temp ,(+ n1 n2))) (cons (cons temp `(,(+ n1 n2))) empty)))]
+         [`(+ ,n ,b) #:when (fixnum? n) (let ([ run (flatten b)])
+                                          (let ([temp (gensym `tmp)])
+                                                 (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
+                                                                (append
+                                                                 (flatData-vars run)
+                                                                 (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
+         ;[`(+ ,b ,n) #:when (fixnum? n) (apply values (list (flatten b) `(assign ,(gensym `tmp) (+ ,n ,(gensym `tmp)))))] ;same as above
+         [`(+ ,b ,n) #:when (fixnum? n) (let ([ run (flatten b)])
+                                          (let ([temp (gensym `tmp)])
+                                                 (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
+                                                                (append
+                                                                 (flatData-vars run)
+                                                                 (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
+         [`(- ,n) #:when (fixnum? n) (let ([temp (gensym `tmp)])
+                                            (make-flatData (list `(assign ,temp (- ,n))) (list (cons temp `((- ,n))))))]
+         [`(let ([,y ,val]) ,body) (let ([temp (gensym `tmp)])
+                                     (let ([valrun (flatten val)])
+                                       (let ([bodyrun (flatten body)])
+                                         (make-flatData (append
+                                                         (flatData-data valrun)
+                                                         (list `(assign ,y ,(car (flatData-data valrun))))
+                                                         (flatData-data bodyrun))
+                                                        (append
+                                                         (flatData-vars valrun)
+                                                         (list (cons y (car (car (flatData-vars valrun)))))
+                                                         (flatData-vars bodyrun))))))]
+                                                         
+                                                         
+                                                     
+         
+         ))
+     (lambda (x)
+       (add1 x))
+     ))
+ 
+    
+
 ;; TODO: write tests for select-instructions, return values properly
 (trace-define (select-instructions exp)
   (match exp
@@ -98,6 +151,11 @@
                                           (symbol? v3)(equal? v1 v2)) `(addq (var ,v3) (var ,v1))]
     [`(return ,v)             #:when (symbol? v)                      `(movq ,v (reg rax))]
     [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(map values (map select-instructions instrs)))]))
+
+
+
+
+
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
