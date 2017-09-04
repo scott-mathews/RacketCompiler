@@ -73,18 +73,31 @@
   (apply values
          (apply map list (map wrap lst))))
 
-;; TODO: write tests for select-instructions
-(define (select-instructions exp)
+;; TODO: write tests for select-instructions, return values properly
+(trace-define (select-instructions exp)
   (match exp
     [`(assign ,lhs (read))                                             (list `(callq read_int)
                                                                              `(movq (reg rax) (var ,lhs)))]
     [`(assign ,v ,n)          #:when (fixnum? n)                      `(movq (int ,n) (var ,v))]
+    [`(assign ,v (- ,n))      #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v))
+                                                                             `(negq (var ,v)))]
+    [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2) (equal? v1 v2))`(negq (var ,v1))]
+    [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2))                (list `(movq (var ,v2) (var ,v1))
+                                                                             `(negq (var ,v1)))]
     [`(assign ,v (+ ,n1 ,n2)) #:when (and (fixnum? n1) (fixnum? n2))   (list `(movq (int ,n1) (var ,v))
-                                                                           `(addq (int ,n2) (var ,v)))]
-    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2) (equal? v1 v2))   `(addq (int ,n) (var ,v1))]
+                                                                             `(addq (int ,n2) (var ,v)))]
+    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2)
+                                          (equal? v1 v2))             `(addq (int ,n) (var ,v1))]
     [`(assign ,v1 (+ ,v2 ,n)) #:when (and (fixnum? n) (symbol? v2))    (select-instructions `(assign ,v1 (+ ,n ,v2)))]
+    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
+                                          (symbol? v3))                (list `(addq (var ,v2) (var ,v3))
+                                                                             `(movq (var ,v1) (var ,v3)))]
+    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
+                                          (symbol? v3)(equal? v1 v3)) `(addq (var ,v2) (var ,v1))]
+    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
+                                          (symbol? v3)(equal? v1 v2)) `(addq (var ,v3) (var ,v1))]
     [`(return ,v)             #:when (symbol? v)                      `(movq ,v (reg rax))]
-    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,(map select-instructions instrs))]))
+    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(map values (map select-instructions instrs)))]))
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
