@@ -67,37 +67,40 @@
       [`(program ,e) `(program ,((uniquify alist) e))]
       [`(,op ,es ...) `(,op ,@(map (uniquify alist) es))])))
 
-(define (map-values proc lst)
-  (define (wrap e)
-    (call-with-values (lambda () (proc e)) list))      
-  (apply values
-         (apply map list (map wrap lst))))
+(define (map-me proc lst)
+  (cond [(empty? lst) lst]
+        [else (append (map-me-helper (proc (car lst))) (map-me proc (cdr lst)))]))
+
+(define (map-me-helper x . xs)
+  (append x xs))
 
 ;; TODO: write tests for select-instructions, return values properly
 (trace-define (select-instructions exp)
   (match exp
     [`(assign ,lhs (read))                                             (list `(callq read_int)
                                                                              `(movq (reg rax) (var ,lhs)))]
-    [`(assign ,v ,n)          #:when (fixnum? n)                      `(movq (int ,n) (var ,v))]
+    [`(assign ,v ,n)          #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v)))]
     [`(assign ,v (- ,n))      #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v))
                                                                              `(negq (var ,v)))]
-    [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2) (equal? v1 v2))`(negq (var ,v1))]
+    [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2) (equal? v1 v2)) (list `(negq (var ,v1)))]
     [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2))                (list `(movq (var ,v2) (var ,v1))
                                                                              `(negq (var ,v1)))]
     [`(assign ,v (+ ,n1 ,n2)) #:when (and (fixnum? n1) (fixnum? n2))   (list `(movq (int ,n1) (var ,v))
                                                                              `(addq (int ,n2) (var ,v)))]
     [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2)
-                                          (equal? v1 v2))             `(addq (int ,n) (var ,v1))]
+                                          (equal? v1 v2))              (list `(addq (int ,n) (var ,v1)))]
     [`(assign ,v1 (+ ,v2 ,n)) #:when (and (fixnum? n) (symbol? v2))    (select-instructions `(assign ,v1 (+ ,n ,v2)))]
+    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
+                                          (symbol? v3)(equal? v1 v3))  (list `(addq (var ,v2) (var ,v1)))]
+    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
+                                          (symbol? v3)(equal? v1 v2))  (list `(addq (var ,v3) (var ,v1)))]
     [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
                                           (symbol? v3))                (list `(addq (var ,v2) (var ,v3))
                                                                              `(movq (var ,v1) (var ,v3)))]
-    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
-                                          (symbol? v3)(equal? v1 v3)) `(addq (var ,v2) (var ,v1))]
-    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
-                                          (symbol? v3)(equal? v1 v2)) `(addq (var ,v3) (var ,v1))]
-    [`(return ,v)             #:when (symbol? v)                      `(movq ,v (reg rax))]
-    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(map values (map select-instructions instrs)))]))
+    [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
+    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(values (map-me select-instructions instrs)))]))
+
+;; a test (select-instructions `(program (a b) (assign a (+ 3 10)) (assign a (+ 3 a)) (assign b (read)) (assign b (+ a b)) (return b)))
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
