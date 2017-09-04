@@ -73,7 +73,8 @@
   (apply values
          (apply map list (map wrap lst))))
 
-(trace-define (select-instructions exp)
+;; TODO: write tests for select-instructions
+(define (select-instructions exp)
   (match exp
     [`(assign ,lhs (read))                                             (list `(callq read_int)
                                                                              `(movq (reg rax) (var ,lhs)))]
