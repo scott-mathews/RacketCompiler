@@ -2,9 +2,11 @@
 (require racket/fixnum)
 (require racket/trace)
 (require "interp.rkt")
+(require "utilities.rkt")
 
 ;; This exports r0-passes, defined below, to users of this file.
 (provide r0-passes)
+(provide uniquify-passes)
 
 ;; The following pass is just a silly pass that doesn't change anything important,
 ;; but is nevertheless an example of a pass. It flips the arguments of +. -Jeremy
@@ -32,9 +34,8 @@
     [ n         #:when (fixnum? n)                     (fx- 0 n)] ; int -> -int
     [`(+ ,n ,m) #:when (and (fixnum? n) (fixnum? m))  `(+ ,(pe-neg2 n) (pe-neg2 m))] ; (+ int int) -> (+ -int -int)
     [`(+ ,n ,e) #:when (fixnum? n)                    `(+ ,(pe-neg2 n) (- ,e))] ; (+ int exp) -> (+ -int (- exp))
-    [`(+ ,e ,n) #:when (fixnum? n)                     (pe-neg2 `(+ n e))] ; (+ exp int) -> (+ 
-    [e                                                `(- e)]
-    ))
+    [`(+ ,e ,n) #:when (fixnum? n)                     (pe-neg2 `(+ n e))] ; (+ exp int) -> (+ -int (-exp))
+    [e                                                `(- e)])) ; exp -> (- exp)
 
 (define (pe-add2 left right)
   (match* (left right)
@@ -55,6 +56,17 @@
     [`(program ,e) `(program ,(pe-arith e))]
     ))
 
+(define (uniquify alist)
+  (lambda (expression)
+    (match expression
+      [v #:when (symbol? v) (lookup v alist)]
+      [n   #:when (integer? n) n]
+      [`(let ([,x ,e]) ,body) (let ([y (gensym x)])
+                                (let ([l (cons (cons x y) alist)])
+                                `(let ([,y ,((uniquify alist) e)]) ,((uniquify l) body))))]
+      [`(program ,e) `(program ,((uniquify alist) e))]
+      [`(,op ,es ...) `(,op ,@(map (uniquify alist) es))])))
+
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
 ;; should be named "compiler.rkt"
@@ -62,4 +74,11 @@
   `( ("flipper" ,flipper ,interp-scheme)
      ("partial evaluator" ,pe-arith ,interp-scheme)
      ))
+
+(define uniquify-passes
+  `( ("uniquify" ,(lambda (e) ((uniquify '()) e)) ,interp-scheme)
+     ))
+
+(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
+(display "tests passed!") (newline)
 
