@@ -83,7 +83,12 @@
 (define flatten 
   (lambda (exp)
     (match exp
-      [`,y #:when (symbol? y) `,y]
+      [`,n #:when (fixnum? n) (let ([temp (gensym `tmp)])
+                                (make-flatData (list `(assign ,temp ,n)) (list (cons temp n))))]
+      [`,y #:when (symbol? y) (make-flatData `(return ,y) (list (cons y empty)))]
+      [`(read)
+       (let ([temp (gensym `tmp)])
+              (make-flatData (list `(assign ,temp (read))) (list (cons temp `(read)))))]
       [`(+ ,y ,n) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
                                                          (make-flatData (list `(assign ,temp (+ ,n ,y))) (cons (cons temp `((+ ,n ,y))) empty)))]
       [`(+ ,n ,y) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
@@ -96,7 +101,12 @@
                                                         (append
                                                          (flatData-vars run)
                                                          (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
-      ;[`(+ ,b ,n) #:when (fixnum? n) (apply values (list (flatten b) `(assign ,(gensym `tmp) (+ ,n ,(gensym `tmp)))))] ;same as above
+      [`(+ ,b ,n) #:when (fixnum? n) (let ([ run (flatten b)])
+                                       (let ([temp (gensym `tmp)])
+                                         (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
+                                                        (append
+                                                         (flatData-vars run)
+                                                         (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
       [`(+ ,b ,n) #:when (fixnum? n) (let ([ run (flatten b)])
                                        (let ([temp (gensym `tmp)])
                                          (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
@@ -105,18 +115,35 @@
                                                          (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
       [`(- ,n) #:when (fixnum? n) (let ([temp (gensym `tmp)])
                                     (make-flatData (list `(assign ,temp (- ,n))) (list (cons temp `((- ,n))))))]
-     
+      [`(- ,b)
+       (let ([temp (gensym `tmp)])
+         (let ([run (flatten b)])
+           (make-flatData (append (flatData-data run) (list `(assign ,temp ,(car (car (flatData-vars run))))))
+                          (append (flatData-vars run) (list (cons temp `((- ,(car (car (flatData-vars run)))))))))))]
+      [`(let ([,y ,n]) ,body) #:when (fixnum? n) (let ([temp (gensym `tmp)])
+                                                   (let ([run (flatten body)])
+                                                     (make-flatData (append
+                                                                     (list `(assign ,y ,n))
+                                                                     (flatData-data run))
+                                                                    (append
+                                                                     (list (cons y n))
+                                                                     (flatData-vars run)))))]
+                                                          
       [`(let ([,y ,val]) ,body) (let ([temp (gensym `tmp)])
                                   (let ([valrun (flatten val)])
                                     (let ([bodyrun (flatten body)])
                                       (make-flatData (append
                                                       (flatData-data valrun)
-                                                      ;(list `(assign ,y ,(car (car (flatData-vars valrun)))))
+                                                      (list `(assign ,y ,(car (car (flatData-vars valrun)))))
                                                       (flatData-data bodyrun))
                                                      (append
                                                       (flatData-vars valrun)
-                                                      ;(list (cons y (car (car (flatData-vars valrun)))))
-                                                      (flatData-vars bodyrun))))))]      
+                                                      (list (cons y (car (car (flatData-vars valrun)))))
+                                                      (flatData-vars bodyrun))))))]
+      [`(program ,exp)
+       (let ([run (flatten exp)])
+         `(program ,@(values (append (list (map car (flatData-vars run))) (flatData-data run) `((return ,(car (car (reverse (flatData-vars run))))))))))] 
+      
       )))
 
 
@@ -149,36 +176,8 @@
 
 ;; a test (select-instructions `(program (a b) (assign a (+ 3 10)) (assign a (+ 3 a)) (assign b (read)) (assign b (+ a b)) (return b)))
 
-(define (alloc-size vars)
-  (let ([x (* 8 (length vars))])
-    (if (= (modulo x 16) 0)
-        x
-        (+ x 8))))
 
-(define (make-homes vars ctr)
-  (cond [(empty? vars) '()]
-        [else (cons (cons (car vars) ctr) (make-homes (cdr vars) (- ctr 8)))]))
 
-(define (assign-homes alist)
-  (lambda (exp)
-    (match exp
-      [`(addq (var ,v1) (var ,v2)) (list `(addq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))]
-      [`(addq (int ,n) (var ,v)) (list `(addq (int ,n) (deref rbp ,(lookup v alist))))]
-      [`(addq (int ,n1) (int ,n2)) (list exp)]
-      [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))]
-      [`(movq (var ,v1) (var ,v2)) (list `(movq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))]
-      [`(movq (int ,n) (var ,v)) (list `(movq (int ,n) (deref rbp ,(lookup v alist))))]
-      [`(movq (var ,v) (reg ,r)) (list `(movq (deref rbp ,(lookup v alist)) (reg ,r)))]
-      [`(movq (reg ,r1) (reg ,r2)) (list exp)]
-      [`(callq ,fn) (list exp)]
-      [`(program (,vars ...) ,instrs ...) `(program ,(alloc-size vars) ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))])))
-
-(define (patch-instructions exp)
-  (match exp
-    [`(movq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) `(movq (reg rax) (deref rbp ,n2)))]
-    [`(program ,n ,instrs ...) `(program ,n ,@(values (map-me patch-instructions instrs)))]
-    [else (list exp)]
-    ))
 
 (define intro
   (lambda (n) (cond [(equal? (system-type `macosx)) (format "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)]
