@@ -6,6 +6,7 @@
 
 ;; This exports r0-passes, defined below, to users of this file.
 (provide r0-passes)
+(provide r1-passes)
 (provide uniquify-passes)
 
 ;; The following pass is just a silly pass that doesn't change anything important,
@@ -213,7 +214,21 @@
      ))
 
 (define select-instructions-passes
-  `( ("select-instructions") ,select-instructions ,interp-x86))
+  `( ("select-instructions" ,select-instructions ,interp-x86)))
+
+(define patch-instructions-passes
+  `( ("patch-instructions" ,patch-instructions ,interp-x86)))
+
+(define print-x86-passes
+  `( ("print-x86" ,print-x86 ,interp-x86)))
+
+(define r1-passes
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,uniquify ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
+     ("patch-instructions" ,patch-instructions ,interp-x86)
+     ("print-x86" ,print-x86 ,interp-x86)))
 
 ;(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
 ;(display "tests passed!") (newline)
