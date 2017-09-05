@@ -179,7 +179,31 @@
       [`(callq ,fn) (list exp)]
       [`(program (,vars ...) ,instrs ...) `(program ,(alloc-size vars) ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))])))
 
+(define (patch-instructions exp)
+  (match exp
+    [`(movq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) `(movq (reg rax) (deref rbp ,n2)))]
+    [`(program ,n ,instrs ...) `(program ,n ,@(values (map-me patch-instructions instrs)))]
+    [else (list exp)]
+    ))
 
+(define intro
+  (lambda (n) (format "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)))
+
+(define conclusion
+  (lambda (n) (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)))
+
+(define (print-x86 exp)
+  (match exp
+    [`(addq (deref rbp ,n1) (deref rbp ,n2)) (format "\taddq ~a(%rbp), ~a(%rbp)\n" n1 n2)]
+    [`(addq (int ,n1) (deref rbp ,n2)) (format "\taddq $~a, ~a(%rbp)\n" n1 n2)]
+    [`(addq (int ,n1) (int ,n2)) (format "\taddq $~a, $~a\n" n1 n2)]
+    [`(negq (deref rbp ,n)) (format "\tnegq ~a(%rbp)\n" n)]
+    [`(movq (int ,n1) (deref rbp ,n2)) (format "\tmovq $~a, ~a(%rbp)\n" n1 n2)]
+    [`(movq (deref rbp ,n) (reg ,r)) (format "\tmovq ~a(%rbp), %~a\n" n r)]
+    [`(movq (reg ,r) (deref rbp ,n)) (format "\tmovq %~a, ~a(%rbp)\n" r n)]
+    [`(movq (reg ,r1) (reg ,r2)) (format "\tmovq %~a, %~a\n" r1 r2)]
+    [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
+    [`(program ,n ,instrs ...) (string-append (intro n) (foldl string-append "" (map print-x86 instrs)) (conclusion n))]))
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
