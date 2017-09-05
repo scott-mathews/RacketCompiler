@@ -177,7 +177,12 @@
 ;; a test (select-instructions `(program (a b) (assign a (+ 3 10)) (assign a (+ 3 a)) (assign b (read)) (assign b (+ a b)) (return b)))
 
 
-
+(define (patch-instructions exp)  
+  (match exp  
+    [`(movq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) `(movq (reg rax) (deref rbp ,n2)))] 
+    [`(program ,n ,instrs ...) `(program ,n ,@(values (map-me patch-instructions instrs)))]  
+    [else (list exp)] 
+    )) 
 
 (define intro
   (lambda (n) (cond [(equal? (system-type `macosx)) (format "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)]
@@ -223,8 +228,7 @@
   `( ("print-x86" ,print-x86 ,interp-x86)))
 
 (define r1-passes
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,uniquify ,interp-scheme)
+  `( ("uniquify" ,uniquify ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)

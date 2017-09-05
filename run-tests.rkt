@@ -7,6 +7,7 @@
 
 ;; (debug-level 3)
 
-(interp-tests "integers and arithmetic" #f r0-passes interp-scheme "r0" (range 1 5))
-(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
+;(interp-tests "integers and arithmetic" #f r0-passes interp-scheme "r0" (range 1 5))
+;(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
+(compiler-tests "r1-compiler" #f r1-passes "ex3" (range 1 5))
 (display "tests passed!") (newline)
