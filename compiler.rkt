@@ -178,6 +178,30 @@
 
 
 
+<<<<<<< HEAD
+=======
+(define intro
+  (lambda (n) (cond [(equal? (system-type `macosx)) (format "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)]
+                    [else (format "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)])))
+
+(define conclusion
+  (lambda (n) (cond [(equal? (system-type) `macosx) (format "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
+                    [(equal? (system-type `windows)) (format "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
+                    [else (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)])))
+
+(define (print-x86 exp)
+  (match exp
+    [`(addq (deref rbp ,n1) (deref rbp ,n2)) (format "\taddq ~a(%rbp), ~a(%rbp)\n" n1 n2)]
+    [`(addq (int ,n1) (deref rbp ,n2)) (format "\taddq $~a, ~a(%rbp)\n" n1 n2)]
+    [`(addq (int ,n1) (int ,n2)) (format "\taddq $~a, $~a\n" n1 n2)]
+    [`(negq (deref rbp ,n)) (format "\tnegq ~a(%rbp)\n" n)]
+    [`(movq (int ,n1) (deref rbp ,n2)) (format "\tmovq $~a, ~a(%rbp)\n" n1 n2)]
+    [`(movq (deref rbp ,n) (reg ,r)) (format "\tmovq ~a(%rbp), %~a\n" n r)]
+    [`(movq (reg ,r) (deref rbp ,n)) (format "\tmovq %~a, ~a(%rbp)\n" r n)]
+    [`(movq (reg ,r1) (reg ,r2)) (format "\tmovq %~a, %~a\n" r1 r2)]
+    [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
+    [`(program ,n ,instrs ...) (string-append (intro n) (foldl string-append "" (map print-x86 instrs)) (conclusion n))]))
+>>>>>>> 0212e874d57f2518f99cfc929d07a4ea3def2026
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
@@ -190,6 +214,9 @@
 (define uniquify-passes
   `( ("uniquify" ,(lambda (e) ((uniquify '()) e)) ,interp-scheme)
      ))
+
+(define select-instructions-passes
+  `( ("select-instructions") ,select-instructions ,interp-x86))
 
 ;(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
 ;(display "tests passed!") (newline)

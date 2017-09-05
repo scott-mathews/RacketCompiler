@@ -379,7 +379,9 @@
                          (format "tests/~a.res" test-name)
                          (lambda (f) (read-line f)))
                        "42")]
-           [progout (if typechecks (process (format "./a.out~a" input)) 'type-error)]
+           [progout (if (equal? (system-type) `windows)
+                        (if typechecks (process (format "./a.exe~a" input)) 'type-error)
+                        (if typechecks (process (format "./a.out~a" input)) 'type-error))]
            )
       ;; process returns a list, it's first element is stdout
       (match progout
