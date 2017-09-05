@@ -102,6 +102,32 @@
 
 ;; a test (select-instructions `(program (a b) (assign a (+ 3 10)) (assign a (+ 3 a)) (assign b (read)) (assign b (+ a b)) (return b)))
 
+(define (alloc-size vars)
+  (let ([x (* 8 (length vars))])
+    (if (= (modulo x 16) 0)
+        x
+        (+ x 8))))
+
+(define (make-homes vars ctr)
+  (cond [(empty? vars) '()]
+        [else (cons (cons (car vars) ctr) (make-homes (cdr vars) (- ctr 8)))]))
+
+(define (assign-homes alist)
+  (lambda (exp)
+    (match exp
+      [`(addq (var ,v1) (var ,v2)) (list `(addq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))]
+      [`(addq (int ,n) (var ,v)) (list `(addq (int ,n) (deref rbp ,(lookup v alist))))]
+      [`(addq (int ,n1) (int ,n2)) (list exp)]
+      [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))]
+      [`(movq (var ,v1) (var ,v2)) (list `(movq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))]
+      [`(movq (int ,n) (var ,v)) (list `(movq (int ,n) (deref rbp ,(lookup v alist))))]
+      [`(movq (var ,v) (reg ,r)) (list `(movq (deref rbp ,(lookup v alist)) (reg ,r)))]
+      [`(movq (reg ,r1) (reg ,r2)) (list exp)]
+      [`(callq ,fn) (list exp)]
+      [`(program (,vars ...) ,instrs ...) `(program ,(alloc-size vars) ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))])))
+
+
+
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
 ;; should be named "compiler.rkt"
