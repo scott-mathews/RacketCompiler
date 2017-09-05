@@ -180,10 +180,13 @@
     ))
 
 (define intro
-  (lambda (n) (format "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)))
+  (lambda (n) (cond [(equal? (system-type `macosx)) (format "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)]
+                    [else (format "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)])))
 
 (define conclusion
-  (lambda (n) (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)))
+  (lambda (n) (cond [(equal? (system-type) `macosx) (format "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
+                    [(equal? (system-type `windows)) (format "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
+                    [else (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)])))
 
 (define (print-x86 exp)
   (match exp
@@ -209,6 +212,9 @@
 (define uniquify-passes
   `( ("uniquify" ,(lambda (e) ((uniquify '()) e)) ,interp-scheme)
      ))
+
+(define select-instructions-passes
+  `( ("select-instructions") ,select-instructions ,interp-x86))
 
 ;(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
 ;(display "tests passed!") (newline)
