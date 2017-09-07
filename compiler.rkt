@@ -75,6 +75,44 @@
 (define (map-me-helper x . xs)
   (append x xs))
 
+(trace-define (flatten2 exp)
+  (match exp
+    [`(program ,e) (define-values (flat-exp assignments vars) (flatten2-helper e))
+                   `(program ,vars ,@assignments (return ,flat-exp))]
+    ;[`(,op ,exps ...) (define-values (flat-exp assignments vars) (map3 flatten2-helper exps))
+    ;                  flat-exp]
+    ))
+
+(define (terminal? e)
+  (or (fixnum? e) (symbol? e) (equal? `(read) e)))
+
+(trace-define (flatten2-helper exp)
+  (match exp
+    [v #:when (symbol? v) (values v '() (list v))]
+    [n #:when (fixnum? n) (let ([v (gensym `tmp)]) (values v (list `(assign ,v ,n)) (list v)))]
+    [`(read) (let ([v (gensym `tmp)]) (values v (list `(assign ,v (read))) (list v)))]
+    [`(+ ,n1 ,n2) #:when (and (fixnum? n1) (fixnum? n2)) (let ([v (gensym `tmp)]) (values v (list `(assign ,v (+ ,n1 ,n2))) (list v)))]
+    [`(+ ,n ,e) #:when (fixnum? n) (let ([v (gensym `tmp)]) (define-values (flat-exp assignments vars) (flatten2-helper e))
+                                                             (values v
+                                                                     `( ,@assignments (assign ,v (+ ,n ,flat-exp)))
+                                                                     (cons v vars)))]
+    [`(+ ,e ,n) #:when (fixnum? n) (flatten2-helper `(+ ,n ,e))]
+    [`(- ,n) #:when (fixnum? n) (let ([v (gensym `tmp)]) (values v (list `(assign ,v (- ,n))) (list v)))]
+    [`(- ,e) (let ([v (gensym `tmp)]) (define-values (flat-exp assignments vars) (flatten2-helper e))
+                                      (values v
+                                              `( ,@assignments (assign ,v (- ,flat-exp)))
+                                              (cons v vars)))]
+    [`(let ([,v ,e]) ,body) #:when (terminal? e)
+                            (define-values (flat-exp2 assignments2 vars2) (if (not (terminal? body)) (flatten2-helper body) (values body '() (list body))))
+                            (values flat-exp2
+                                    `( (assign ,v ,e) ,@assignments2)
+                                    (set->list (list->set(cons v vars2))))]
+    [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1) (flatten2-helper e))
+                            (define-values (flat-exp2 assignments2 vars2) (flatten2-helper body))
+                            (values flat-exp2
+                                    `( ,@assignments1 (assign ,flat-exp2 ,flat-exp1) ,@assignments2)
+                                    (cons v (append vars1 vars2)))]
+    ))
 
 
 
