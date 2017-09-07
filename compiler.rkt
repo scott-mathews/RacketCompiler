@@ -20,7 +20,6 @@
     [`(program ,e) `(program ,(flipper e))]
     ))
 
-
 ;; Next we have the partial evaluation pass described in the book.
 (define (pe-neg r)
   (cond [(fixnum? r) (fx- 0 r)]
@@ -54,6 +53,7 @@
     [`(read)       `(read)]
     [`(- ,e1)       (pe-neg2 (pe-arith e1))]
     [`(+ ,e1 ,e2)   (pe-add2 (pe-arith e1) (pe-arith e2))]
+    [`(let ([,x ,e]) ,body) `(let ([,x ,(pe-arith e)] ,(pe-arith body)))]
     [`(program ,e) `(program ,(pe-arith e))]
     ))
 
@@ -228,7 +228,8 @@
   `( ("print-x86" ,print-x86 ,interp-x86)))
 
 (define r1-passes
-  `( ("uniquify" ,uniquify ,interp-scheme)
+  `( ("pe-arith" ,pe-arith ,interp-scheme)
+     ("uniquify" ,uniquify ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
