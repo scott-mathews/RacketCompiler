@@ -234,6 +234,3 @@
      ("select-instructions" ,select-instructions ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)))
-
-;(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
-;(display "tests passed!") (newline)
