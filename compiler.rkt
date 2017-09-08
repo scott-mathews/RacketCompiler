@@ -86,8 +86,8 @@
 (define (terminal? e)
   (or (fixnum? e) (symbol? e) (equal? `(read) e)))
 
+;; Get variable from list, or generate a temporary one
 (trace-define (genvar var)
-  (display var)
   (if (empty? var) (gensym `tmp) (car var)))
 
 (trace-define (pass-optional1 f arg . args)
@@ -106,6 +106,10 @@
                                    (define-values (flat-exp assignments vars) (flatten2-helper e))
                                    (values v `( ,@assignments (assign ,v (+ ,n ,flat-exp))) (cons v vars))]
     [`(+ ,e ,n) #:when (fixnum? n) (pass-optional1 flatten2-helper `(+ ,n ,e) var)]
+    [`(+ ,e1 ,e2) (define v (genvar var))
+                  (define-values (flat-exp1 assignments1 vars1) (flatten2-helper e1))
+                  (define-values (flat-exp2 assignments2 vars2) (flatten2-helper e2))
+                  (values v `(,@assignments1 ,@assignments2 (assign ,v (+ ,flat-exp1 ,flat-exp2))) (cons v (append vars1 vars2)))]
     [`(- ,n) #:when (fixnum? n) (define v (genvar var))
                                 (values v (list `(assign ,v (- ,n))) (list v))]
     [`(- ,e) (define v (genvar var))
