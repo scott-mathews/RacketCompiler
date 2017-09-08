@@ -7,7 +7,11 @@
 ;; This exports r0-passes, defined below, to users of this file.
 (provide r0-passes)
 (provide r1-passes)
-(provide uniquify-passes)
+(provide uniquify-pass)
+(provide flatten-pass)
+(provide select-instructions-pass)
+(provide assign-homes-pass)
+(provide)
 
 ;; The following pass is just a silly pass that doesn't change anything important,
 ;; but is nevertheless an example of a pass. It flips the arguments of +. -Jeremy
@@ -50,6 +54,7 @@
 (define (pe-arith e)
   (match e
     [(? fixnum?)    e]
+    [(? symbol?)    e]
     [`(read)       `(read)]
     [`(- ,e1)       (pe-neg2 (pe-arith e1))]
     [`(+ ,e1 ,e2)   (pe-add2 (pe-arith e1) (pe-arith e2))]
@@ -75,12 +80,10 @@
 (define (map-me-helper x . xs)
   (append x xs))
 
-(trace-define (flatten2 exp)
+(trace-define (flatten exp)
   (match exp
-    [`(program ,e) (define-values (flat-exp assignments vars) (flatten2-helper e))
+    [`(program ,e) (define-values (flat-exp assignments vars) (flatten-helper e))
                    `(program ,vars ,@assignments (return ,flat-exp))]
-    ;[`(,op ,exps ...) (define-values (flat-exp assignments vars) (map3 flatten2-helper exps))
-    ;                  flat-exp]
     ))
 
 (define (terminal? e)
@@ -93,7 +96,7 @@
 (trace-define (pass-optional1 f arg . args)
   (if (null? args) (f arg) (if (null? (car args)) (f arg) (f arg (car (car args))))))
 
-(trace-define (flatten2-helper exp . var)
+(trace-define (flatten-helper exp . var)
   (match exp
     [v #:when (symbol? v) (values v '() (list v))]
     [n #:when (fixnum? n) (define v (genvar var))
@@ -103,100 +106,29 @@
     [`(+ ,n1 ,n2) #:when (and (fixnum? n1) (fixnum? n2)) (define v (genvar var))
                                                          (values v (list `(assign ,v (+ ,n1 ,n2))) (list v))]
     [`(+ ,n ,e) #:when (fixnum? n) (define v (genvar var))
-                                   (define-values (flat-exp assignments vars) (flatten2-helper e))
+                                   (define-values (flat-exp assignments vars) (flatten-helper e))
                                    (values v `( ,@assignments (assign ,v (+ ,n ,flat-exp))) (cons v vars))]
-    [`(+ ,e ,n) #:when (fixnum? n) (pass-optional1 flatten2-helper `(+ ,n ,e) var)]
+    [`(+ ,e ,n) #:when (fixnum? n) (pass-optional1 flatten-helper `(+ ,n ,e) var)]
     [`(+ ,e1 ,e2) (define v (genvar var))
-                  (define-values (flat-exp1 assignments1 vars1) (flatten2-helper e1))
-                  (define-values (flat-exp2 assignments2 vars2) (flatten2-helper e2))
+                  (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
+                  (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
                   (values v `(,@assignments1 ,@assignments2 (assign ,v (+ ,flat-exp1 ,flat-exp2))) (cons v (append vars1 vars2)))]
     [`(- ,n) #:when (fixnum? n) (define v (genvar var))
                                 (values v (list `(assign ,v (- ,n))) (list v))]
     [`(- ,e) (define v (genvar var))
-             (define-values (flat-exp assignments vars) (flatten2-helper e))
+             (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons v vars))]
     [`(let ([,v ,e]) ,body) #:when (terminal? e)
-                            (define-values (flat-exp2 assignments2 vars2) (if (not (terminal? body)) (flatten2-helper body v) (values body '() (list body))))
+                            (define-values (flat-exp2 assignments2 vars2) (if (not (terminal? body)) (flatten-helper body v) (values body '() (list body))))
                             (values flat-exp2
                                     `( (assign ,v ,e) ,@assignments2)
                                     (set->list (list->set (cons v vars2))))]
-    [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1) (flatten2-helper e v))
-                            (define-values (flat-exp2 assignments2 vars2) (flatten2-helper body))
+    [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1) (flatten-helper e v))
+                            (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
                             (values flat-exp2
                                     `( ,@assignments1 ,@assignments2)
                                     (set->list (list->set (cons v (append vars1 vars2)))))]
     ))
-
-
-
-(define-struct flatData (data vars))
-
-(define flatten 
-  (lambda (exp)
-    (match exp
-      [`,n #:when (fixnum? n) (let ([temp (gensym `tmp)])
-                                (make-flatData (list `(assign ,temp ,n)) (list (cons temp n))))]
-      [`,y #:when (symbol? y) (make-flatData `(return ,y) (list (cons y empty)))]
-      [`(read)
-       (let ([temp (gensym `tmp)])
-              (make-flatData (list `(assign ,temp (read))) (list (cons temp `(read)))))]
-      [`(+ ,y ,n) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
-                                                         (make-flatData (list `(assign ,temp (+ ,n ,y))) (cons (cons temp `((+ ,n ,y))) empty)))]
-      [`(+ ,n ,y) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
-                                                         (make-flatData (list `(assign ,temp (+ ,n ,y))) (cons (cons temp `((+ ,n ,y))) empty)))]
-      ;[`(+ ,n1 ,n2) #:when (and (fixnum? n1) (fixnum? n2)) (let ([temp (gensym `tmp)])
-       ;                                                      (make-flatData (list `(assign ,temp ,(+ n1 n2))) (cons (cons temp `(,(+ n1 n2))) empty)))]
-      [`(+ ,n ,b) #:when (fixnum? n) (let ([ run (flatten b)])
-                                       (let ([temp (gensym `tmp)])
-                                         (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
-                                                        (append
-                                                         (flatData-vars run)
-                                                         (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
-      [`(+ ,b ,n) #:when (fixnum? n) (let ([ run (flatten b)])
-                                       (let ([temp (gensym `tmp)])
-                                         (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
-                                                        (append
-                                                         (flatData-vars run)
-                                                         (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
-      [`(+ ,b ,n) #:when (fixnum? n) (let ([ run (flatten b)])
-                                       (let ([temp (gensym `tmp)])
-                                         (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
-                                                        (append
-                                                         (flatData-vars run)
-                                                         (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
-      [`(- ,n) #:when (fixnum? n) (let ([temp (gensym `tmp)])
-                                    (make-flatData (list `(assign ,temp (- ,n))) (list (cons temp `((- ,n))))))]
-      [`(- ,b)
-       (let ([temp (gensym `tmp)])
-         (let ([run (flatten b)])
-           (make-flatData (append (flatData-data run) (list `(assign ,temp ,(car (car (flatData-vars run))))))
-                          (append (flatData-vars run) (list (cons temp `((- ,(car (car (flatData-vars run)))))))))))]
-      [`(let ([,y ,n]) ,body) #:when (fixnum? n) (let ([temp (gensym `tmp)])
-                                                   (let ([run (flatten body)])
-                                                     (make-flatData (append
-                                                                     (list `(assign ,y ,n))
-                                                                     (flatData-data run))
-                                                                    (append
-                                                                     (list (cons y n))
-                                                                     (flatData-vars run)))))]
-                                                          
-      [`(let ([,y ,val]) ,body) (let ([temp (gensym `tmp)])
-                                  (let ([valrun (flatten val)])
-                                    (let ([bodyrun (flatten body)])
-                                      (make-flatData (append
-                                                      (flatData-data valrun)
-                                                      (list `(assign ,y ,(car (car (flatData-vars valrun)))))
-                                                      (flatData-data bodyrun))
-                                                     (append
-                                                      (flatData-vars valrun)
-                                                      (list (cons y (car (car (flatData-vars valrun)))))
-                                                      (flatData-vars bodyrun))))))]
-      [`(program ,exp)
-       (let ([run (flatten exp)])
-         `(program ,@(values (append (list (map car (flatData-vars run))) (flatData-data run) `((return ,(car (car (reverse (flatData-vars run))))))))))] 
-      
-      )))
-
 
 
 ;; TODO: write tests for select-instructions, return values properly
@@ -225,7 +157,29 @@
     [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
     [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(values (map-me select-instructions instrs)))]))
 
-;; a test (select-instructions `(program (a b) (assign a (+ 3 10)) (assign a (+ 3 a)) (assign b (read)) (assign b (+ a b)) (return b)))
+(define (alloc-size vars) 
+  (let ([x (* 8 (length vars))]) 
+    (if (= (modulo x 16) 0) 
+        x 
+        (+ x 8))))  
+
+(define (make-homes vars ctr) 
+  (cond [(empty? vars) '()] 
+        [else (cons (cons (car vars) ctr) (make-homes (cdr vars) (- ctr 8)))]))
+
+(define (assign-homes alist) 
+  (lambda (exp) 
+    (match exp 
+      [`(addq (var ,v1) (var ,v2)) (list `(addq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
+      [`(addq (int ,n) (var ,v)) (list `(addq (int ,n) (deref rbp ,(lookup v alist))))] 
+      [`(addq (int ,n1) (int ,n2)) (list exp)] 
+      [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))] 
+      [`(movq (var ,v1) (var ,v2)) (list `(movq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
+      [`(movq (int ,n) (var ,v)) (list `(movq (int ,n) (deref rbp ,(lookup v alist))))] 
+      [`(movq (var ,v) (reg ,r)) (list `(movq (deref rbp ,(lookup v alist)) (reg ,r)))] 
+      [`(movq (reg ,r1) (reg ,r2)) (list exp)] 
+      [`(callq ,fn) (list exp)] 
+      [`(program (,vars ...) ,instrs ...) `(program ,(alloc-size vars) ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))]))) 
 
 
 (define (patch-instructions exp)  
@@ -265,23 +219,36 @@
      ("partial evaluator" ,pe-arith ,interp-scheme)
      ))
 
-(define uniquify-passes
+(define uniquify-pass
   `( ("uniquify" ,(lambda (e) ((uniquify '()) e)) ,interp-scheme)
      ))
 
-(define select-instructions-passes
-  `( ("select-instructions" ,select-instructions ,interp-x86)))
+(define flatten-pass
+  `( ("flatten" ,flatten ,interp-C)
+     ))
 
-(define patch-instructions-passes
-  `( ("patch-instructions" ,patch-instructions ,interp-x86)))
+(define select-instructions-pass
+  `( ("select-instructions" ,select-instructions ,interp-x86)
+     ))
 
-(define print-x86-passes
-  `( ("print-x86" ,print-x86 ,interp-x86)))
+(define assign-homes-pass
+  `( ("assign-homes" ,assign-homes ,interp-x86)
+     ))
+
+(define patch-instructions-pass
+  `( ("patch-instructions" ,patch-instructions ,interp-x86)
+     ))
+
+(define print-x86-pass
+  `( ("print-x86" ,print-x86 ,interp-x86)
+     ))
 
 (define r1-passes
   `( ("pe-arith" ,pe-arith ,interp-scheme)
      ("uniquify" ,uniquify ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
+     ("assign-homes" ,assign-homes ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
-     ("print-x86" ,print-x86 ,interp-x86)))
+     ("print-x86" ,print-x86 ,interp-x86)
+     ))
