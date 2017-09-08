@@ -39,7 +39,7 @@
     [`(+ ,n ,m) #:when (and (fixnum? n) (fixnum? m))  `(+ ,(pe-neg2 n) (pe-neg2 m))] ; (+ int int) -> (+ -int -int)
     [`(+ ,n ,e) #:when (fixnum? n)                    `(+ ,(pe-neg2 n) (- ,e))] ; (+ int exp) -> (+ -int (- exp))
     [`(+ ,e ,n) #:when (fixnum? n)                     (pe-neg2 `(+ n e))] ; (+ exp int) -> (+ -int (-exp))
-    [e                                                `(- e)])) ; exp -> (- exp)
+    [e                                                `(- ,e)])) ; exp -> (- exp)
 
 (define (pe-add2 left right)
   (match* (left right)
@@ -118,15 +118,18 @@
     [`(- ,e) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons v vars))]
-    [`(let ([,v ,e]) ,body) #:when (terminal? e)
-                            (define-values (flat-exp2 assignments2 vars2) (if (not (terminal? body)) (flatten-helper body v) (values body '() (list body))))
+    [`(let ([,v ,t]) ,body) #:when (terminal? t)
+                            (define-values (flat-exp2 assignments2 vars2) (if (not (terminal? body)) (pass-optional1 flatten-helper body var) (values body '() (list body))))
                             (values flat-exp2
-                                    `( (assign ,v ,e) ,@assignments2)
+                                    `( (assign ,v ,t) ,@assignments2)
                                     (set->list (list->set (cons v vars2))))]
-    [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1) (flatten-helper e v))
+    [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1)
+                              (if (equal? '() var)
+                                  (flatten-helper e v)
+                                  (flatten-helper e var)))
                             (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
                             (values flat-exp2
-                                    `( ,@assignments1 ,@assignments2)
+                                    `( ,@assignments1 (assign ,v ,flat-exp1) ,@assignments2)
                                     (set->list (list->set (cons v (append vars1 vars2)))))]
     ))
 
@@ -220,11 +223,12 @@
      ))
 
 (define uniquify-pass
-  `( ("uniquify" ,(lambda (e) ((uniquify '()) e)) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ))
 
 (define flatten-pass
-  `( ("flatten" ,flatten ,interp-C)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
      ))
 
 (define select-instructions-pass
@@ -244,8 +248,7 @@
      ))
 
 (define r1-passes
-  `( ("pe-arith" ,pe-arith ,interp-scheme)
-     ("uniquify" ,uniquify ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("assign-homes" ,assign-homes ,interp-x86)
