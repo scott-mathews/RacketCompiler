@@ -140,7 +140,7 @@
 
 ;;; Select Instructions Itself ;;;
 ;; TODO: write tests for select-instructions, return values properly
-(trace-define (select-instructions exp)
+(define (select-instructions exp)
   (match exp
     [`(assign ,lhs (read))                                             (list `(callq read_int)
                                                                              `(movq (reg rax) (var ,lhs)))]
@@ -187,7 +187,8 @@
       [`(addq (int ,n1) (int ,n2)) (list exp)] 
       [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))] 
       [`(movq (var ,v1) (var ,v2)) (list `(movq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
-      [`(movq (int ,n) (var ,v)) (list `(movq (int ,n) (deref rbp ,(lookup v alist))))] 
+      [`(movq (int ,n) (var ,v)) (list `(movq (int ,n) (deref rbp ,(lookup v alist))))]
+      [`(movq (reg ,r) (var ,v)) (list `(movq (reg ,r) (deref rbp ,(lookup v alist))))]
       [`(movq (var ,v) (reg ,r)) (list `(movq (deref rbp ,(lookup v alist)) (reg ,r)))] 
       [`(movq (reg ,r1) (reg ,r2)) (list exp)] 
       [`(callq ,fn) (list exp)] 
@@ -202,12 +203,12 @@
     )) 
 
 (define intro
-  (lambda (n) (cond [(equal? (system-type `macosx)) (format "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)]
+  (lambda (n) (cond [(equal? (system-type) `macosx) (format "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)]
                     [else (format "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)])))
 
 (define conclusion
   (lambda (n) (cond [(equal? (system-type) `macosx) (format "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
-                    [(equal? (system-type `windows)) (format "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
+                    [(equal? (system-type) `windows) (format "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
                     [else (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)])))
 
 (define (print-x86 exp)
@@ -254,22 +255,39 @@
      ))
 
 (define assign-homes-pass
-  `( ("assign-homes" ,assign-homes ,interp-x86)
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
+     ("assign-homes" ,(assign-homes '()) ,interp-x86)
      ))
 
 (define patch-instructions-pass
   `( ("patch-instructions" ,patch-instructions ,interp-x86)
+     ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
+     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("patch-instructions" ,patch-instructions ,interp-x86)
      ))
 
 (define print-x86-pass
-  `( ("print-x86" ,print-x86 ,interp-x86)
+  `( ("patch-instructions" ,patch-instructions ,interp-x86)
+     ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
+     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("patch-instructions" ,patch-instructions ,interp-x86)
+     ("print-x86" ,print-x86 ,interp-x86)
      ))
 
 (define r1-passes
   `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
-     ("assign-homes" ,assign-homes ,interp-x86)
+     ("assign-homes" ,(assign-homes '()) ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
      ))
