@@ -5,13 +5,7 @@
 (require "utilities.rkt")
 
 ;; This exports r0-passes, defined below, to users of this file.
-(provide r0-passes)
-(provide r1-passes)
-(provide uniquify-pass)
-(provide flatten-pass)
-(provide select-instructions-pass)
-(provide assign-homes-pass)
-(provide)
+(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass assign-homes-pass)
 
 ;; The following pass is just a silly pass that doesn't change anything important,
 ;; but is nevertheless an example of a pass. It flips the arguments of +. -Jeremy
@@ -24,14 +18,7 @@
     [`(program ,e) `(program ,(flipper e))]
     ))
 
-;; Next we have the partial evaluation pass described in the book.
-(define (pe-neg r)
-  (cond [(fixnum? r) (fx- 0 r)]
-	[else `(- ,r)]))
-
-(define (pe-add r1 r2)
-  (cond [(and (fixnum? r1) (fixnum? r2)) (fx+ r1 r2)]
-	[else `(+ ,r1 ,r2)]))
+;;; === Partial Evaluator === ;;;
 
 (define (pe-neg2 exp)
   (match exp
@@ -58,9 +45,12 @@
     [`(read)       `(read)]
     [`(- ,e1)       (pe-neg2 (pe-arith e1))]
     [`(+ ,e1 ,e2)   (pe-add2 (pe-arith e1) (pe-arith e2))]
-    [`(let ([,x ,e]) ,body) `(let ([,x ,(pe-arith e)] ,(pe-arith body)))]
+    [`(let ([,x ,e]) ,body) `(let ([,x ,(pe-arith e)]) ,(pe-arith body))]
     [`(program ,e) `(program ,(pe-arith e))]
     ))
+
+
+;;; === Uniquify === ;;;
 
 (define (uniquify alist)
   (lambda (expression)
@@ -73,30 +63,32 @@
       [`(program ,e) `(program ,((uniquify alist) e))]
       [`(,op ,es ...) `(,op ,@(map (uniquify alist) es))])))
 
-(define (map-me proc lst)
-  (cond [(empty? lst) lst]
-        [else (append (map-me-helper (proc (car lst))) (map-me proc (cdr lst)))]))
 
-(define (map-me-helper x . xs)
-  (append x xs))
+;;; ==== Flatten === ;;;
 
-(trace-define (flatten exp)
+;;; Helpers ;;;
+
+;; Get variable from list, or generate a temporary one
+(define (genvar var)
+  (if (empty? var) (gensym `tmp) (car var)))
+
+; If args is empty, call f on just arg. Otherwise call f on the car of args.
+(define (pass-optional1 f arg . args)
+  (if (null? args) (f arg) (if (null? (car args)) (f arg) (f arg (car (car args))))))
+
+; Check if an expression is a terminal one
+(define (terminal? e)
+  (or (fixnum? e) (symbol? e) (equal? `(read) e)))
+
+;;; Flatten Itself ;;;
+
+(define (flatten exp)
   (match exp
     [`(program ,e) (define-values (flat-exp assignments vars) (flatten-helper e))
                    `(program ,vars ,@assignments (return ,flat-exp))]
     ))
 
-(define (terminal? e)
-  (or (fixnum? e) (symbol? e) (equal? `(read) e)))
-
-;; Get variable from list, or generate a temporary one
-(trace-define (genvar var)
-  (if (empty? var) (gensym `tmp) (car var)))
-
-(trace-define (pass-optional1 f arg . args)
-  (if (null? args) (f arg) (if (null? (car args)) (f arg) (f arg (car (car args))))))
-
-(trace-define (flatten-helper exp . var)
+(define (flatten-helper exp . var)
   (match exp
     [v #:when (symbol? v) (values v '() (list v))]
     [n #:when (fixnum? n) (define v (genvar var))
@@ -134,12 +126,27 @@
     ))
 
 
+;;; === Select Instructions === ;;;
+
+;;; Helpers ;;;
+
+; Map a procedure which returns multiple values over a list, and return the result in a non-nested list
+(define (map-me proc lst)
+  (cond [(empty? lst) lst]
+        [else (append (map-me-helper (proc (car lst))) (map-me proc (cdr lst)))]))
+
+(define (map-me-helper x . xs)
+  (append x xs))
+
+;;; Select Instructions Itself ;;;
 ;; TODO: write tests for select-instructions, return values properly
 (trace-define (select-instructions exp)
   (match exp
     [`(assign ,lhs (read))                                             (list `(callq read_int)
                                                                              `(movq (reg rax) (var ,lhs)))]
     [`(assign ,v ,n)          #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v)))]
+    [`(assign ,v1 ,v2)        #:when (and (symbol? v1) (symbol? v2))   (list `(movq (var ,v2) (var ,v1)))]
+    [`(assign ,v1 ,v2)        #:when (and (symbol? v1) (symbol? v2) (equal? v1 v2))   '()]
     [`(assign ,v (- ,n))      #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v))
                                                                              `(negq (var ,v)))]
     [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2) (equal? v1 v2)) (list `(negq (var ,v1)))]
@@ -149,6 +156,8 @@
                                                                              `(addq (int ,n2) (var ,v)))]
     [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2)
                                           (equal? v1 v2))              (list `(addq (int ,n) (var ,v1)))]
+    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2))    (list `(addq (int ,n) (var ,v2))
+                                                                             `(movq (var ,v2) (var ,v1)))]
     [`(assign ,v1 (+ ,v2 ,n)) #:when (and (fixnum? n) (symbol? v2))    (select-instructions `(assign ,v1 (+ ,n ,v2)))]
     [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
                                           (symbol? v3)(equal? v1 v3))  (list `(addq (var ,v2) (var ,v1)))]
@@ -156,7 +165,7 @@
                                           (symbol? v3)(equal? v1 v2))  (list `(addq (var ,v3) (var ,v1)))]
     [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
                                           (symbol? v3))                (list `(addq (var ,v2) (var ,v3))
-                                                                             `(movq (var ,v1) (var ,v3)))]
+                                                                             `(movq (var ,v3) (var ,v1)))]
     [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
     [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(values (map-me select-instructions instrs)))]))
 
@@ -222,17 +231,26 @@
      ("partial evaluator" ,pe-arith ,interp-scheme)
      ))
 
+(define pe-arith-pass
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+  ))
+
 (define uniquify-pass
-  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
      ))
 
 (define flatten-pass
-  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ))
 
 (define select-instructions-pass
-  `( ("select-instructions" ,select-instructions ,interp-x86)
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
      ))
 
 (define assign-homes-pass
