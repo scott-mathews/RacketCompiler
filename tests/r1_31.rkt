@@ -1,0 +1,10 @@
+
+(let ([r 7])
+  (let ([t (+ 4 r)])
+    (let ([r 6])
+      (let ([woop (+ 6 t)])
+        (let ([t (- r)])
+          (let ([pls (- woop)])
+            (let ([stp (+ woop woop)])
+              (let ([tests (- pls)])
+                (+ 25 tests)))))))))
