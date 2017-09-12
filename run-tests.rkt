@@ -14,5 +14,5 @@
 ;(interp-tests "select instructions" #f select-instructions-pass interp-scheme "r1" (range 1 15))
 ;(interp-tests "assign homes" #f assign-homes-pass interp-scheme "r1" (range 1 15))
 ;(interp-tests "patch instructions" #f patch-instructions-pass interp-scheme "ex3" (range 1 5))
-(compiler-tests "r1-compiler" #f r1-passes "ex3" (range 1 5))
+(compiler-tests "r1-compiler" #f r1-passes "r1" (range 1 16))
 (display "tests passed!") (newline)
