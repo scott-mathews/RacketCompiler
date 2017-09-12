@@ -254,8 +254,7 @@
      ))
 
 (define select-instructions-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ))
@@ -288,8 +287,7 @@
      ))
 
 (define r1-passes
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
