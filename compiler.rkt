@@ -145,8 +145,8 @@
     [`(assign ,lhs (read))                                             (list `(callq read_int)
                                                                              `(movq (reg rax) (var ,lhs)))]
     [`(assign ,v ,n)          #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v)))]
-    [`(assign ,v1 ,v2)        #:when (and (symbol? v1) (symbol? v2))   (list `(movq (var ,v2) (var ,v1)))]
     [`(assign ,v1 ,v2)        #:when (and (symbol? v1) (symbol? v2) (equal? v1 v2))   '()]
+    [`(assign ,v1 ,v2)        #:when (and (symbol? v1) (symbol? v2))   (list `(movq (var ,v2) (var ,v1)))]
     [`(assign ,v (- ,n))      #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v))
                                                                              `(negq (var ,v)))]
     [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2) (equal? v1 v2)) (list `(negq (var ,v1)))]
@@ -156,16 +156,19 @@
                                                                              `(addq (int ,n2) (var ,v)))]
     [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2)
                                           (equal? v1 v2))              (list `(addq (int ,n) (var ,v1)))]
-    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2))    (list `(addq (int ,n) (var ,v2))
-                                                                             `(movq (var ,v2) (var ,v1)))]
+    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2))    (list `(movq (var ,v2) (var ,v1))
+                                                                             `(addq (int ,n) (var ,v1)))]
     [`(assign ,v1 (+ ,v2 ,n)) #:when (and (fixnum? n) (symbol? v2))    (select-instructions `(assign ,v1 (+ ,n ,v2)))]
     [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
                                           (symbol? v3)(equal? v1 v3))  (list `(addq (var ,v2) (var ,v1)))]
     [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
                                           (symbol? v3)(equal? v1 v2))  (list `(addq (var ,v3) (var ,v1)))]
     [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
-                                          (symbol? v3))                (list `(addq (var ,v2) (var ,v3))
-                                                                             `(movq (var ,v3) (var ,v1)))]
+                                          (symbol? v3)(equal? v2 v3))  (list `(movq (var ,v3) (var ,v1))
+                                                                             `(addq (var ,v3) (var ,v1)))]
+    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
+                                          (symbol? v3))                (list `(movq (var ,v3) (var ,v1))
+                                                                             `(addq (var ,v2) (var ,v1)))]
     [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
     [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(values (map-me select-instructions instrs)))]))
 
