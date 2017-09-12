@@ -6,7 +6,6 @@
 
 ;; This exports r0-passes, defined below, to users of this file.
 (provide r0-passes)
-(provide r1-passes)
 (provide uniquify-passes)
 
 ;; The following pass is just a silly pass that doesn't change anything important,
@@ -80,12 +79,13 @@
 
 (define-struct flatData (data vars))
 
+; TO-DO: add clause for (+ var body)
 (define flatten 
   (lambda (exp)
     (match exp
       [`,n #:when (fixnum? n) (let ([temp (gensym `tmp)])
                                 (make-flatData (list `(assign ,temp ,n)) (list (cons temp n))))]
-      [`,y #:when (symbol? y) (make-flatData `(return ,y) (list (cons y empty)))]
+      [`,y #:when (symbol? y) (make-flatData empty (list (cons y empty)))]
       [`(read)
        (let ([temp (gensym `tmp)])
               (make-flatData (list `(assign ,temp (read))) (list (cons temp `(read)))))]
@@ -142,7 +142,7 @@
                                                       (flatData-vars bodyrun))))))]
       [`(program ,exp)
        (let ([run (flatten exp)])
-         `(program ,@(values (append (list (map car (flatData-vars run))) (flatData-data run) `((return ,(car (car (reverse (flatData-vars run))))))))))] 
+         `(program ,@(values (append (list (remove-duplicates (map car (flatData-vars run)))) (flatData-data run) `((return ,(car (car (reverse (flatData-vars run))))))))))] 
       
       )))
 
@@ -214,21 +214,7 @@
      ))
 
 (define select-instructions-passes
-  `( ("select-instructions" ,select-instructions ,interp-x86)))
-
-(define patch-instructions-passes
-  `( ("patch-instructions" ,patch-instructions ,interp-x86)))
-
-(define print-x86-passes
-  `( ("print-x86" ,print-x86 ,interp-x86)))
-
-(define r1-passes
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,uniquify ,interp-scheme)
-     ("flatten" ,flatten ,interp-C)
-     ("select-instructions" ,select-instructions ,interp-x86)
-     ("patch-instructions" ,patch-instructions ,interp-x86)
-     ("print-x86" ,print-x86 ,interp-x86)))
+  `( ("select-instructions") ,select-instructions ,interp-x86))
 
 ;(interp-tests "uniquify" #f uniquify-passes interp-scheme "ex3" (range 1 5))
 ;(display "tests passed!") (newline)
