@@ -5,12 +5,7 @@
 (require "utilities.rkt")
 
 ;; This exports r0-passes, defined below, to users of this file.
-<<<<<<< HEAD
-(provide r0-passes)
-(provide uniquify-passes)
-=======
 (provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass assign-homes-pass)
->>>>>>> 37219f5d03bab91d18da50d3f54fc1d5d7022788
 
 ;; The following pass is just a silly pass that doesn't change anything important,
 ;; but is nevertheless an example of a pass. It flips the arguments of +. -Jeremy
@@ -81,80 +76,9 @@
 (define (pass-optional1 f arg . args)
   (if (null? args) (f arg) (if (null? (car args)) (f arg) (f arg (car (car args))))))
 
-<<<<<<< HEAD
-(define-struct flatData (data vars))
-
-; TO-DO: add clause for (+ var body)
-(define flatten 
-  (lambda (exp)
-    (match exp
-      [`,n #:when (fixnum? n) (let ([temp (gensym `tmp)])
-                                (make-flatData (list `(assign ,temp ,n)) (list (cons temp n))))]
-      [`,y #:when (symbol? y) (make-flatData empty (list (cons y empty)))]
-      [`(read)
-       (let ([temp (gensym `tmp)])
-              (make-flatData (list `(assign ,temp (read))) (list (cons temp `(read)))))]
-      [`(+ ,y ,n) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
-                                                         (make-flatData (list `(assign ,temp (+ ,n ,y))) (cons (cons temp `((+ ,n ,y))) empty)))]
-      [`(+ ,n ,y) #:when (and (symbol? y) (fixnum? n)) (let ([temp (gensym `tmp)])
-                                                         (make-flatData (list `(assign ,temp (+ ,n ,y))) (cons (cons temp `((+ ,n ,y))) empty)))]
-      ;[`(+ ,n1 ,n2) #:when (and (fixnum? n1) (fixnum? n2)) (let ([temp (gensym `tmp)])
-       ;                                                      (make-flatData (list `(assign ,temp ,(+ n1 n2))) (cons (cons temp `(,(+ n1 n2))) empty)))]
-      [`(+ ,n ,b) #:when (fixnum? n) (let ([ run (flatten b)])
-                                       (let ([temp (gensym `tmp)])
-                                         (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
-                                                        (append
-                                                         (flatData-vars run)
-                                                         (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
-      [`(+ ,b ,n) #:when (fixnum? n) (let ([ run (flatten b)])
-                                       (let ([temp (gensym `tmp)])
-                                         (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
-                                                        (append
-                                                         (flatData-vars run)
-                                                         (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
-      [`(+ ,b ,n) #:when (fixnum? n) (let ([ run (flatten b)])
-                                       (let ([temp (gensym `tmp)])
-                                         (make-flatData (append (flatData-data run) (list `(assign ,temp (+ ,n ,(car (car (flatData-vars run)))))))
-                                                        (append
-                                                         (flatData-vars run)
-                                                         (list (cons temp `((+ ,n ,(car (car (flatData-vars run)))))))))))]
-      [`(- ,n) #:when (fixnum? n) (let ([temp (gensym `tmp)])
-                                    (make-flatData (list `(assign ,temp (- ,n))) (list (cons temp `((- ,n))))))]
-      [`(- ,b)
-       (let ([temp (gensym `tmp)])
-         (let ([run (flatten b)])
-           (make-flatData (append (flatData-data run) (list `(assign ,temp ,(car (car (flatData-vars run))))))
-                          (append (flatData-vars run) (list (cons temp `((- ,(car (car (flatData-vars run)))))))))))]
-      [`(let ([,y ,n]) ,body) #:when (fixnum? n) (let ([temp (gensym `tmp)])
-                                                   (let ([run (flatten body)])
-                                                     (make-flatData (append
-                                                                     (list `(assign ,y ,n))
-                                                                     (flatData-data run))
-                                                                    (append
-                                                                     (list (cons y n))
-                                                                     (flatData-vars run)))))]
-                                                          
-      [`(let ([,y ,val]) ,body) (let ([temp (gensym `tmp)])
-                                  (let ([valrun (flatten val)])
-                                    (let ([bodyrun (flatten body)])
-                                      (make-flatData (append
-                                                      (flatData-data valrun)
-                                                      (list `(assign ,y ,(car (car (flatData-vars valrun)))))
-                                                      (flatData-data bodyrun))
-                                                     (append
-                                                      (flatData-vars valrun)
-                                                      (list (cons y (car (car (flatData-vars valrun)))))
-                                                      (flatData-vars bodyrun))))))]
-      [`(program ,exp)
-       (let ([run (flatten exp)])
-         `(program ,@(values (append (list (remove-duplicates (map car (flatData-vars run)))) (flatData-data run) `((return ,(car (car (reverse (flatData-vars run))))))))))] 
-      
-      )))
-=======
 ; Check if an expression is a terminal one
 (define (terminal? e)
   (or (fixnum? e) (symbol? e) (equal? `(read) e)))
-
 
 ;;; Flatten Itself ;;;
 
@@ -317,10 +241,6 @@
      ("uniquify" ,(uniquify '()) ,interp-scheme)
      ))
 
-<<<<<<< HEAD
-(define select-instructions-passes
-  `( ("select-instructions") ,select-instructions ,interp-x86))
-=======
 (define flatten-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
@@ -360,7 +280,6 @@
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
      ))
->>>>>>> 37219f5d03bab91d18da50d3f54fc1d5d7022788
 
 (define r1-passes
   `( ("uniquify" ,(uniquify '()) ,interp-scheme)
