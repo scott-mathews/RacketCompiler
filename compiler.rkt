@@ -5,7 +5,7 @@
 (require "utilities.rkt")
 
 ;; This exports r0-passes, defined below, to users of this file.
-(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass assign-homes-pass)
+(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass assign-homes-pass patch-instructions-pass)
 
 ;; The following pass is just a silly pass that doesn't change anything important,
 ;; but is nevertheless an example of a pass. It flips the arguments of +. -Jeremy
@@ -208,7 +208,7 @@
 
 (define conclusion
   (lambda (n) (cond [(equal? (system-type) `macosx) (format "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
-                    [(equal? (system-type) `windows) (format "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
+                    [(equal? (system-type) `windows) (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
                     [else (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)])))
 
 (define (print-x86 exp)
@@ -282,7 +282,8 @@
      ))
 
 (define r1-passes
-  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
