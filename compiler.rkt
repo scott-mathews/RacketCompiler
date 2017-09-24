@@ -214,15 +214,14 @@
 ;;; End Uncover-Live ;;;
 
 ;;; === Build-Interference === ;;;
-
-(trace-define (build-interference exp)
+(define (build-interference exp)
   (match exp
     [`(program (,vars ,live-afters) ,instrs ...) `(program (,vars
                                                             ,(graphify (make-graph vars) live-afters (car instrs))
                                                             )
                                                             ,instrs)]))
 
-(trace-define (graphify graph live-afters instrs)
+(define (graphify graph live-afters instrs)
   (define g graph)
   (for ([lafter live-afters] [instr instrs])
     (define lafter-v (set->list lafter))
@@ -238,6 +237,53 @@
       [else "pass"]))
   g)
 ;;; End Build-Interference ;;;
+
+;;; === Allocate-Registers === ;;;
+
+(define (allocate-registers exp)
+  (match exp
+    [`(program (,vars ,graph) ,instrs ...) (color-graph graph vars)]))
+
+(define (color-graph graph vars)
+  ; constraints : (Var . Set of Numbers)
+  (define constraints (make-hash))
+  ; labels : (Var . Number)
+  (define labels (make-hash))
+  (define W vars)
+  (while (not (empty? W))
+    ; Sort W by # constraints decreasing
+    (set! W (sort W (lambda (x y) (> (set-count (hash-ref constraints x (set))) (set-count (hash-ref constraints y (set)))))))
+    ; Pop first item in W
+    (define i (car W))
+    (set! W (cdr W))
+    ; Find first number not in constraints of i
+    (define count 0)
+    (while (set-member? (hash-ref constraints i (set)) count)
+           (set! count (+ count 1)))
+    ; Assign i to count
+    (hash-set! labels i count)
+    ; Update constraints for all adjacent nodes to i
+    (for ([adj-item (adjacent graph i)])
+      (hash-update! constraints adj-item (lambda (item) (set-union (set count) item)) (set count))))
+  labels)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;; End Allocate-Registers ;;;
 
 (define (alloc-size vars) 
   (let ([x (* 8 (length vars))]) 
