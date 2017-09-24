@@ -172,6 +172,97 @@
     [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
     [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(values (map-me select-instructions instrs)))]))
 
+
+
+;;; === Uncover Live === ;;;
+(define (ripple func list carry)
+  (cond [(empty? list) '()]
+        [else (let ([result (func (car list) carry)])
+                (cons carry (ripple func (cdr list) result)))]))
+
+(define (live-after-set read written prevset)
+  (set-union read (set-subtract prevset written)))
+
+(define (uncover-live exp)
+  (match exp
+    [`(program (,vars ...) ,instrs ...) `(program (,vars ,(reverse (ripple get-set-of-vars-from-instruction (reverse instrs) (set)))) ,instrs)]))
+
+(define (get-set-of-vars-from-instruction instr prevset)
+  (match instr
+    [`(movq (var ,read) (var ,writ)) (live-after-set (set read) (set writ) prevset)]
+    [`(movq (,type ,x) (var ,writ)) (live-after-set (set) (set writ) prevset)]
+    [`(,op (var ,read) (var ,writ)) (live-after-set (set read) (set) prevset)]
+    [`(,op (var ,read) (,type ,x)) (live-after-set (set read) (set) prevset)]
+    [else                           prevset]))
+
+;; test programs ;;
+(define tp-ul-1 `(program (x y z) (movq (int 1) (var x)) (movq (int 3) (var y)) (addq (var y) (var x)) (movq (var x) (var z)) (negq (var z)) (movq (var z) (reg rax))))
+(define tp-ul-2 `(program (v w x y z t.1 t.2)
+                          (movq (int 1) (var v))
+                          (movq (int 46) (var w))
+                          (movq (var v) (var x))
+                          (addq (int 7) (var x))
+                          (movq (var x) (var y))
+                          (addq (int 4) (var y))
+                          (movq (var x) (var z))
+                          (addq (var w) (var z))
+                          (movq (var y) (var t.1))
+                          (negq (var t.1))
+                          (movq (var z) (var t.2))
+                          (addq (var t.1) (var t.2))
+                          (movq (var t.2) (reg rax))))
+;;; End Uncover-Live ;;;
+
+;;; === Build-Interference === ;;;
+
+(define (collapse-me proc list start s d graph)
+  (cond [(empty? list) start]
+        [else (proc (car list) s d (collapse-me proc (cdr list) start s d graph))]))
+
+(trace-define (build-interference exp)
+  (match exp
+    [`(program (,vars ,live-afters) ,instrs ...) `(program (,vars
+                                                            ,(foldl graph-from-live-after
+                                                                    (make-immutable-graph vars)
+                                                                    (map cons live-afters (car instrs)))
+                                                            )
+                                                            ,instrs)]))
+
+(trace-define (graph-from-live-after pair graph)
+  (define-values (lafter instr) (values (car pair) (cdr pair)))
+  (define vs (set->list lafter))
+  (match instr
+    [`(movq (,type1 ,s) (,type2 ,d)) (foldl sdcase (list s d graph) vs)]
+    [`(,op (,type1 ,s) (,type2 ,d))  (foldl dcase (list d graph) vs)]))
+
+;; vars is a list '(source-var destination-var graph)
+(trace-define (sdcase v s d graph)
+  (define-values (s d graph) (values (car vars) (cadr vars) (caddr vars)))
+  (if (or (equal? s v) (equal? d v))
+      (list s d graph)
+      (list s d (add-edge-immutable graph d v))))
+
+;; vars is a list '(destination-var graph)
+(trace-define (dcase vars v)
+  (define-values (d graph) (values (car vars) (cadr vars)))
+  (if (equal? d v)
+      (list d graph)
+      (list d (add-edge-immutable graph d v))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;; End Build-Interference ;;;
+
 (define (alloc-size vars) 
   (let ([x (* 8 (length vars))]) 
     (if (= (modulo x 16) 0) 

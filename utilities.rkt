@@ -7,7 +7,7 @@
          label-name lookup  make-dispatcher assert
          read-fixnum read-program 
 	 compile compile-file check-passes interp-tests compiler-tests
-	 make-graph add-edge adjacent vertices print-dot
+	 make-graph make-immutable-graph add-edge add-edge-immutable adjacent vertices print-dot
 	 general-registers registers-for-alloc caller-save callee-save
 	 arg-registers register->color registers align
          byte-reg->full-reg print-by-type)
@@ -517,9 +517,17 @@
 (define (make-graph vertices)
   (make-hash (map (lambda (v) (cons v (set))) vertices)))
 
+(define (make-immutable-graph vertices)
+  (make-immutable-hash (map (lambda (v) (cons v (set))) vertices)))
+
 (define (add-edge graph u v)
   (hash-set! graph u (set-add (hash-ref graph u (set)) v))
   (hash-set! graph v (set-add (hash-ref graph v (set)) u)))
+
+(define (add-edge-immutable graph u v)
+  (define mod1 (hash-set graph u (set-add (hash-ref graph u (set)) v)))
+  (define mod2 (hash-set mod1 v  (set-add (hash-ref graph v (set)) u)))
+  mod2)
 
 (define (adjacent graph u)
   (hash-ref graph u))
