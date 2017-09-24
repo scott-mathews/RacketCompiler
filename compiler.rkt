@@ -241,8 +241,26 @@
 ;;; === Allocate-Registers === ;;;
 
 (define (allocate-registers exp)
-  (match exp
-    [`(program (,vars ,graph) ,instrs ...) (color-graph graph vars)]))
+   ((assign-homes '())
+    (match exp
+    [`(program (,vars ,graph) ,instrs ...) (define new-names (color-graph graph vars))
+                                           `(program ,(prune-vars new-names vars) ,@(map (lambda (instr) (update-name new-names instr)) (caar instrs)))])))
+
+(define (prune-vars new-names vars)
+  (filter (lambda (var) (> (hash-ref new-names var) (vector-length general-registers))) vars))
+
+(define (update-name new-names instr)
+  (match instr
+    [`(,op (,type1 ,v1) (,type2 ,v2)) `(,op ,(if (and (equal? 'var type1) (<= (hash-ref new-names v1) (vector-length general-registers)))
+                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
+                                                 `(,type1 ,v1))
+                                            ,(if (and (equal? 'var type2) (<= (hash-ref new-names v2) (vector-length general-registers)))
+                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v2)))
+                                                 `(,type2 ,v2)))]
+    [`(,op (,type ,v)) `(,op ,(if (and (equal? 'var type) (<= (hash-ref new-names v) (vector-length general-registers)))
+                                  `(reg ,(vector-ref general-registers (hash-ref new-names v)))
+                                  `(,type ,v)))]
+    [else instr]))
 
 (define (color-graph graph vars)
   ; constraints : (Var . Set of Numbers)
@@ -300,13 +318,17 @@
     (match exp 
       [`(addq (var ,v1) (var ,v2)) (list `(addq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
       [`(addq (int ,n) (var ,v)) (list `(addq (int ,n) (deref rbp ,(lookup v alist))))] 
-      [`(addq (int ,n1) (int ,n2)) (list exp)] 
-      [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))] 
+      [`(addq (int ,n1) (int ,n2)) (list exp)]
+      [`(addq (int ,n) (reg ,r)) (list exp)]
+      [`(addq (reg ,r1) (reg ,r2)) (list exp)]
+      [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))]
+      [`(negq (reg ,r)) (list exp)]
       [`(movq (var ,v1) (var ,v2)) (list `(movq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
       [`(movq (int ,n) (var ,v)) (list `(movq (int ,n) (deref rbp ,(lookup v alist))))]
       [`(movq (reg ,r) (var ,v)) (list `(movq (reg ,r) (deref rbp ,(lookup v alist))))]
       [`(movq (var ,v) (reg ,r)) (list `(movq (deref rbp ,(lookup v alist)) (reg ,r)))] 
-      [`(movq (reg ,r1) (reg ,r2)) (list exp)] 
+      [`(movq (reg ,r1) (reg ,r2)) (list exp)]
+      [`(movq (int ,n) (reg ,r)) (list exp)]
       [`(callq ,fn) (list exp)] 
       [`(program (,vars ...) ,instrs ...) `(program ,(alloc-size vars) ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))]))) 
 
