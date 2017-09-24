@@ -215,52 +215,28 @@
 
 ;;; === Build-Interference === ;;;
 
-(define (collapse-me proc list start s d graph)
-  (cond [(empty? list) start]
-        [else (proc (car list) s d (collapse-me proc (cdr list) start s d graph))]))
-
 (trace-define (build-interference exp)
   (match exp
     [`(program (,vars ,live-afters) ,instrs ...) `(program (,vars
-                                                            ,(foldl graph-from-live-after
-                                                                    (make-immutable-graph vars)
-                                                                    (map cons live-afters (car instrs)))
+                                                            ,(graphify (make-graph vars) live-afters (car instrs))
                                                             )
                                                             ,instrs)]))
 
-(trace-define (graph-from-live-after pair graph)
-  (define-values (lafter instr) (values (car pair) (cdr pair)))
-  (define vs (set->list lafter))
-  (match instr
-    [`(movq (,type1 ,s) (,type2 ,d)) (foldl sdcase (list s d graph) vs)]
-    [`(,op (,type1 ,s) (,type2 ,d))  (foldl dcase (list d graph) vs)]))
-
-;; vars is a list '(source-var destination-var graph)
-(trace-define (sdcase v s d graph)
-  (define-values (s d graph) (values (car vars) (cadr vars) (caddr vars)))
-  (if (or (equal? s v) (equal? d v))
-      (list s d graph)
-      (list s d (add-edge-immutable graph d v))))
-
-;; vars is a list '(destination-var graph)
-(trace-define (dcase vars v)
-  (define-values (d graph) (values (car vars) (cadr vars)))
-  (if (equal? d v)
-      (list d graph)
-      (list d (add-edge-immutable graph d v))))
-
-
-
-
-
-
-
-
-
-
-
-
-
+(trace-define (graphify graph live-afters instrs)
+  (define g graph)
+  (for ([lafter live-afters] [instr instrs])
+    (define lafter-v (set->list lafter))
+    (match instr
+      [`(movq (,type1 ,s) (,type2 ,d)) (for ([var lafter-v])
+                                         (if (or (equal? s var) (equal? d var))
+                                             "pass"
+                                             (add-edge g var d)))]
+      [`(,op (,type1 ,s) (,type2 ,d)) (for ([var lafter-v])
+                                        (if (equal? d var)
+                                            "pass"
+                                            (add-edge g var d)))]
+      [else "pass"]))
+  g)
 ;;; End Build-Interference ;;;
 
 (define (alloc-size vars) 
