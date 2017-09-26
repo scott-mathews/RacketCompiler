@@ -268,6 +268,9 @@
                                             (add-edge g var d)))]
       [`(,op (,type ,v)) (for ([var lafter-v])
                            (add-edge g var v))]
+      [`(callq ,label) (for ([reg caller-save])
+                         (for ([var lafter-v])
+                           (add-edge g reg var)))]
       [else "pass"]))
   g)
 ;;; End Build-Interference ;;;
@@ -277,7 +280,7 @@
 (define (allocate-registers exp)
     (match exp
     [`(program (,vars ,graph) ,instrs ...) (define new-names (color-graph graph vars))
-                                           `(program ,(prune-vars new-names vars) ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
+                                           `(program ,vars ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
 
 (define (prune-vars new-names vars)
   (filter (lambda (var) (> (hash-ref new-names var) (vector-length general-registers))) vars))
@@ -295,7 +298,7 @@
                                   `(,type ,v)))]
     [else instr]))
 
-(trace-define (color-graph graph vars)
+(define (color-graph graph vars)
   ; constraints : (Var . Set of Numbers)
   (define constraints (make-hash))
   ; labels : (Var . Number)
@@ -318,22 +321,6 @@
       (hash-update! constraints adj-item (lambda (item) (set-union (set count) item)) (set count))))
   labels)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ;;; End Allocate-Registers ;;;
 
 (define (alloc-size vars) 
@@ -352,6 +339,7 @@
       [`(addq (var ,v1) (var ,v2)) (list `(addq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
       [`(addq (int ,n) (var ,v)) (list `(addq (int ,n) (deref rbp ,(lookup v alist))))] 
       [`(addq (int ,n1) (int ,n2)) (list exp)]
+      [`(addq (var ,v) (reg ,r)) (list `(addq (deref rbp ,(lookup v alist)) (reg ,r)))]
       [`(addq (int ,n) (reg ,r)) (list exp)]
       [`(addq (reg ,r1) (reg ,r2)) (list exp)]
       [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))]
@@ -387,12 +375,17 @@
 (define (print-x86 exp)
   (match exp
     [`(addq (deref rbp ,n1) (deref rbp ,n2)) (format "\taddq ~a(%rbp), ~a(%rbp)\n" n1 n2)]
+    [`(addq (deref rbp ,n) (reg ,r)) (format "\taddq ~a(%rbp), %~a\n" n r)]
     [`(addq (int ,n1) (deref rbp ,n2)) (format "\taddq $~a, ~a(%rbp)\n" n1 n2)]
     [`(addq (int ,n1) (int ,n2)) (format "\taddq $~a, $~a\n" n1 n2)]
     [`(addq (reg ,r) (deref rbp ,n)) (format "\taddq %~a, ~a(%rbp)\n" r n)]
+    [`(addq (reg ,r1) (reg ,r2)) (format "\taddq %~a, %~a\n" r1 r2)]
+    [`(addq (int ,n) (reg ,r)) (format "\taddq $~a, %~a\n" n r)]
     [`(negq (deref rbp ,n)) (format "\tnegq ~a(%rbp)\n" n)]
+    [`(negq (reg ,r)) (format "\tnegq %~a\n" r)]
     [`(movq (int ,n1) (deref rbp ,n2)) (format "\tmovq $~a, ~a(%rbp)\n" n1 n2)]
     [`(movq (deref rbp ,n) (reg ,r)) (format "\tmovq ~a(%rbp), %~a\n" n r)]
+    [`(movq (int ,n1) (reg ,r)) (format "\tmovq $~a, %~a\n" n1 r)]
     [`(movq (reg ,r) (deref rbp ,n)) (format "\tmovq %~a, ~a(%rbp)\n" r n)]
     [`(movq (reg ,r1) (reg ,r2)) (format "\tmovq %~a, %~a\n" r1 r2)]
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
@@ -435,6 +428,7 @@
      ("uncover-live" ,uncover-live ,interp-x86)
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
+     ("assign-homes" ,(assign-homes '()) ,interp-x86)
      ))
 
 (define patch-instructions-pass
@@ -463,7 +457,8 @@
      ))
 
 (define r1-passes
-  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("uncover-live" ,uncover-live ,interp-x86)
