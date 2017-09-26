@@ -323,6 +323,24 @@
 
 ;;; End Allocate-Registers ;;;
 
+
+
+;;; Begine Move Biased ;;;
+
+
+(define (build-MoveG vars inst)
+  (define g (make-graph vars))
+  (for ([i inst])
+    (match i
+      [`(movq (var ,x) (var ,y)) (add-edge g x y)]
+      [else "Pass"]))
+   g)
+        
+
+
+
+;;; End Move Biased ;;; 
+
 (define (alloc-size vars) 
   (let ([x (* 8 (length vars))]) 
     (if (= (modulo x 16) 0) 
