@@ -5,11 +5,11 @@ main:
 	subq $32, %rsp
 
 	movq $22, %rbx
-	movq %rbx, %rcx
-	movq $20, %rbx
 	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq %rbx, %rax
+	movq $20, %rcx
+	movq %rcx, %rcx
+	addq %rbx, %rcx
+	movq %rcx, %rax
 
 	movq %rax, %rcx
 	callq print_int

@@ -4,11 +4,10 @@ main:
 	movq %rsp, %rbp
 	subq $16, %rsp
 
-	movq $32, -16(%rbp)
-	movq -16(%rbp), %rax
-	movq %rax, -8(%rbp)
-	addq $10, -8(%rbp)
-	movq -8(%rbp), %rax
+	movq $32, %rbx
+	movq %rbx, %rbx
+	addq $10, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rcx
 	callq print_int
