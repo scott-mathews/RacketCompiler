@@ -298,7 +298,7 @@
                                   `(,type ,v)))]
     [else instr]))
 
-(trace-define (color-graph graph mgraph vars)
+(define (color-graph graph mgraph vars)
   ; constraints : (Var . Set of Numbers)
   (define constraints (make-hash))
   ; labels : (Var . Number)

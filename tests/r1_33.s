@@ -4,17 +4,17 @@ main:
 	movq %rsp, %rbp
 	subq $64, %rsp
 
-	movq $4, %rdx
-	movq $-53, %rcx
-	movq %rdx, %rbx
-	addq $20, %rbx
-	movq %rcx, %rbx
-	negq %rbx
-	movq %rdx, %rbx
-	addq $31, %rbx
-	movq %rcx, %rbx
-	addq $300, %rbx
+	movq $4, %rbx
+	movq $-53, %rdx
+	movq %rbx, %rcx
+	addq $20, %rcx
+	movq %rdx, %rcx
+	negq %rcx
 	movq %rbx, %rbx
+	addq $31, %rbx
+	movq %rdx, %rdx
+	addq $300, %rdx
+	movq %rdx, %rbx
 	negq %rbx
 	movq %rbx, %rbx
 	addq $289, %rbx
