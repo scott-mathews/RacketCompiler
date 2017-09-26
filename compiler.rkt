@@ -4,8 +4,8 @@
 (require "interp.rkt")
 (require "utilities.rkt")
 
-;; This exports r0-passes, defined below, to users of this file.
-(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass assign-homes-pass patch-instructions-pass)
+;; This exports passes, defined below, to users of this file.
+(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass)
 
 ;; The following pass is just a silly pass that doesn't change anything important,
 ;; but is nevertheless an example of a pass. It flips the arguments of +. -Jeremy
@@ -185,7 +185,7 @@
 
 (define (uncover-live exp)
   (match exp
-    [`(program (,vars ...) ,instrs ...) `(program (,vars ,(reverse (ripple get-set-of-vars-from-instruction (reverse instrs) (set)))) ,instrs)]))
+    [`(program (,vars ...) ,instrs ...) `(program (,vars ,(reverse (ripple get-set-of-vars-from-instruction (reverse instrs) (set)))) ,@instrs)]))
 
 (define (get-set-of-vars-from-instruction instr prevset)
   (match instr
@@ -211,15 +211,47 @@
                           (movq (var z) (var t.2))
                           (addq (var t.1) (var t.2))
                           (movq (var t.2) (reg rax))))
+(define tp-ul-hard `(program
+  (and127582
+   tmp127586
+   ofJuliet127581
+   tmp127585
+   thanThat127580
+   herRomeo127583
+   woe127579
+   ofMore127578
+   aTale127577
+   wasThere127576
+   never127575)
+  (movq (int 27) (var never127575))
+  (movq (int -6) (var wasThere127576))
+  (movq (var wasThere127576) (var aTale127577))
+  (addq (var never127575) (var aTale127577))
+  (movq (var aTale127577) (var ofMore127578))
+  (negq (var ofMore127578))
+  (movq (var never127575) (var woe127579))
+  (movq (var woe127579) (var thanThat127580))
+  (addq (var never127575) (var thanThat127580))
+  (movq (var aTale127577) (var ofJuliet127581))
+  (negq (var ofJuliet127581))
+  (movq (var ofMore127578) (var and127582))
+  (addq (int 5) (var and127582))
+  (movq (int -7) (var herRomeo127583))
+  (movq (var ofJuliet127581) (var tmp127586))
+  (addq (int 70) (var tmp127586))
+  (movq (var herRomeo127583) (var tmp127585))
+  (addq (var tmp127586) (var tmp127585))
+  (movq (var tmp127585) (reg rax)))
+)
 ;;; End Uncover-Live ;;;
 
 ;;; === Build-Interference === ;;;
 (define (build-interference exp)
   (match exp
     [`(program (,vars ,live-afters) ,instrs ...) `(program (,vars
-                                                            ,(graphify (make-graph vars) live-afters (car instrs))
+                                                            ,(graphify (make-graph vars) live-afters instrs)
                                                             )
-                                                            ,instrs)]))
+                                                            ,@instrs)]))
 
 (define (graphify graph live-afters instrs)
   (define g graph)
@@ -234,6 +266,8 @@
                                         (if (equal? d var)
                                             "pass"
                                             (add-edge g var d)))]
+      [`(,op (,type ,v)) (for ([var lafter-v])
+                           (add-edge g var v))]
       [else "pass"]))
   g)
 ;;; End Build-Interference ;;;
@@ -241,28 +275,27 @@
 ;;; === Allocate-Registers === ;;;
 
 (define (allocate-registers exp)
-   ((assign-homes '())
     (match exp
     [`(program (,vars ,graph) ,instrs ...) (define new-names (color-graph graph vars))
-                                           `(program ,(prune-vars new-names vars) ,@(map (lambda (instr) (update-name new-names instr)) (caar instrs)))])))
+                                           `(program ,(prune-vars new-names vars) ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
 
 (define (prune-vars new-names vars)
   (filter (lambda (var) (> (hash-ref new-names var) (vector-length general-registers))) vars))
 
 (define (update-name new-names instr)
   (match instr
-    [`(,op (,type1 ,v1) (,type2 ,v2)) `(,op ,(if (and (equal? 'var type1) (<= (hash-ref new-names v1) (vector-length general-registers)))
+    [`(,op (,type1 ,v1) (,type2 ,v2)) `(,op ,(if (and (equal? 'var type1) (< (hash-ref new-names v1) (vector-length general-registers)))
                                                  `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
                                                  `(,type1 ,v1))
-                                            ,(if (and (equal? 'var type2) (<= (hash-ref new-names v2) (vector-length general-registers)))
+                                            ,(if (and (equal? 'var type2) (< (hash-ref new-names v2) (vector-length general-registers)))
                                                  `(reg ,(vector-ref general-registers (hash-ref new-names v2)))
                                                  `(,type2 ,v2)))]
-    [`(,op (,type ,v)) `(,op ,(if (and (equal? 'var type) (<= (hash-ref new-names v) (vector-length general-registers)))
+    [`(,op (,type ,v)) `(,op ,(if (and (equal? 'var type) (< (hash-ref new-names v) (vector-length general-registers)))
                                   `(reg ,(vector-ref general-registers (hash-ref new-names v)))
                                   `(,type ,v)))]
     [else instr]))
 
-(define (color-graph graph vars)
+(trace-define (color-graph graph vars)
   ; constraints : (Var . Set of Numbers)
   (define constraints (make-hash))
   ; labels : (Var . Number)
@@ -394,12 +427,14 @@
      ("select-instructions" ,select-instructions ,interp-x86)
      ))
 
-(define assign-homes-pass
+(define allocate-registers-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
-     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("uncover-live" ,uncover-live ,interp-x86)
+     ("build-interference" ,build-interference ,interp-x86)
+     ("allocate-registers" ,allocate-registers ,interp-x86)
      ))
 
 (define patch-instructions-pass
@@ -407,6 +442,9 @@
      ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
+     ("uncover-live" ,uncover-live ,interp-x86)
+     ("build-interference" ,build-interference ,interp-x86)
+     ("allocate-registers" ,allocate-registers ,interp-x86)
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ))
@@ -416,6 +454,9 @@
      ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
+     ("uncover-live" ,uncover-live ,interp-x86)
+     ("build-interference" ,build-interference ,interp-x86)
+     ("allocate-registers" ,allocate-registers ,interp-x86)
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
@@ -425,6 +466,9 @@
   `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
+     ("uncover-live" ,uncover-live ,interp-x86)
+     ("build-interference" ,build-interference ,interp-x86)
+     ("allocate-registers" ,allocate-registers ,interp-x86)
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
