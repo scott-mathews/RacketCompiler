@@ -12,9 +12,9 @@ main:
 	movq $9, %rbx
 	movq %rdx, %rbx
 	negq %rbx
+	movq %rcx, %rcx
+	addq %rdx, %rcx
 	movq %rcx, %rbx
-	addq %rdx, %rbx
-	movq %rbx, %rbx
 	addq $38, %rbx
 	movq %rbx, %rax
 

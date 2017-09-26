@@ -6,8 +6,8 @@ main:
 
 	movq $3, %rbx
 	movq %rbx, %rbx
-	movq %rbx, %rbx
 	movq %rbx, %rcx
+	movq %rcx, %rcx
 	addq $28, %rcx
 	movq %rbx, %rbx
 	addq %rcx, %rbx

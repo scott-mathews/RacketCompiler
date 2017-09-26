@@ -5,20 +5,20 @@ main:
 	subq $80, %rsp
 
 	movq $7, %rbx
+	movq %rbx, %rbx
+	addq $4, %rbx
+	movq $6, %rcx
+	movq %rbx, %rbx
+	addq $6, %rbx
+	movq %rcx, %rcx
+	negq %rcx
 	movq %rbx, %rcx
-	addq $4, %rcx
-	movq $6, %rbx
-	movq %rcx, %rcx
-	addq $6, %rcx
+	negq %rcx
 	movq %rbx, %rbx
-	negq %rbx
+	addq %rbx, %rbx
+	movq %rcx, %rcx
+	negq %rcx
 	movq %rcx, %rbx
-	negq %rbx
-	movq %rcx, %rcx
-	addq %rcx, %rcx
-	movq %rbx, %rbx
-	negq %rbx
-	movq %rbx, %rbx
 	addq $25, %rbx
 	movq %rbx, %rax
 

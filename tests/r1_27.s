@@ -5,24 +5,24 @@ main:
 	subq $96, %rsp
 
 	movq $27, %rbx
-	movq $-6, %rcx
-	movq %rcx, %rdx
+	movq $-6, %rdx
+	movq %rdx, %rdx
 	addq %rbx, %rdx
-	movq %rdx, %rcx
-	negq %rcx
-	movq %rbx, %rbx
-	movq %rbx, %rsi
-	addq %rbx, %rsi
-	movq %rdx, %rbx
-	negq %rbx
-	movq %rcx, %rcx
-	addq $5, %rcx
-	movq $-7, %rcx
-	movq %rbx, %rbx
-	addq $70, %rbx
+	movq %rdx, %rsi
+	negq %rsi
+	movq %rbx, %rcx
 	movq %rcx, %rcx
 	addq %rbx, %rcx
-	movq %rcx, %rax
+	movq %rdx, %rdx
+	negq %rdx
+	movq %rsi, %rsi
+	addq $5, %rsi
+	movq $-7, %rbx
+	movq %rdx, %rdx
+	addq $70, %rdx
+	movq %rbx, %rbx
+	addq %rdx, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rcx
 	callq print_int

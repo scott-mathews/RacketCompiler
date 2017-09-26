@@ -320,7 +320,7 @@
     (define priority-set (filter (lambda (x) (not (equal? x (set))))(map (lambda (n) (hash-ref labels
                                                                                                n
                                                                                                (set)))
-                                                                         (filter (lambda (x) (not (set-member? x (list->set (adjacent graph))))) (adjacent mgraph i)))))
+                                                                         (filter (lambda (x) (not (set-member? (list->set (adjacent graph i)) x))) (set->list (adjacent mgraph i))))))
     
 
     (define count 0)
