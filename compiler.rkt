@@ -279,7 +279,7 @@
 
 (define (allocate-registers exp)
     (match exp
-    [`(program (,vars ,graph) ,instrs ...) (define new-names (color-graph graph vars))
+    [`(program (,vars ,graph) ,instrs ...) (define new-names (color-graph graph (build-MoveG vars instrs) vars))
                                            `(program ,vars ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
 
 (define (prune-vars new-names vars)
@@ -298,7 +298,7 @@
                                   `(,type ,v)))]
     [else instr]))
 
-(trace-define (color-graph graph vars)
+(trace-define (color-graph graph mgraph vars)
   ; constraints : (Var . Set of Numbers)
   (define constraints (make-hash))
   ; labels : (Var . Number)
@@ -317,12 +317,30 @@
     ; Pop first item in W
     (define i (car W))
     (set! W (cdr W))
-    ; Find first number not in constraints of i
+    (define priority-set (filter (lambda (x) (not (equal? x (set))))(map (lambda (n) (hash-ref labels
+                                                                                               n
+                                                                                               (set)))
+                                                                         (filter (lambda (x) (not (set-member? x (list->set (adjacent graph))))) (adjacent mgraph i)))))
+    
+
     (define count 0)
-    (while (set-member? (hash-ref constraints i (set)) count)
-           (set! count (+ count 1)))
-    ; Assign i to count
-    (hash-set! labels i count)
+    (define set-already #f)
+    (for ([p-val priority-set])
+      (if (not (set-member? (hash-ref constraints i (set)) p-val))
+          (begin
+            (hash-set! labels i p-val)
+            (set! set-already #t)
+            (set! count p-val))
+          "pass"))
+    ; Find first number not in constraints of i
+    (if (not set-already)
+        (begin
+          (while (set-member? (hash-ref constraints i (set)) count)
+                 (set! count (+ count 1)))
+          (hash-set! labels i count))
+        "pass")
+        ; Assign i to count
+    
     ; Update constraints for all adjacent nodes to i
     (for ([adj-item (adjacent graph i)])
       (hash-update! constraints adj-item (lambda (item) (set-union (set count) item)) (set count))))
