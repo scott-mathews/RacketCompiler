@@ -270,7 +270,7 @@
                            (add-edge g var v))]
       [`(callq ,label) (for ([reg caller-save])
                          (for ([var lafter-v])
-                           (add-edge g reg var)))]
+                           (add-edge g (register->color reg) var)))]
       [else "pass"]))
   g)
 ;;; End Build-Interference ;;;
@@ -298,12 +298,19 @@
                                   `(,type ,v)))]
     [else instr]))
 
-(define (color-graph graph vars)
+(trace-define (color-graph graph vars)
   ; constraints : (Var . Set of Numbers)
   (define constraints (make-hash))
   ; labels : (Var . Number)
   (define labels (make-hash))
   (define W vars)
+  (define precount 0)
+  (while (< precount (set-count caller-save))
+    (if (hash-ref graph precount #f)
+        (for ([adj-item (adjacent graph precount)])
+          (hash-update! constraints adj-item (lambda (item) (set-union (set precount) item)) (set precount)))
+        "pass")
+    (set! precount (+ precount 1)))
   (while (not (empty? W))
     ; Sort W by # constraints decreasing
     (set! W (sort W (lambda (x y) (> (set-count (hash-ref constraints x (set))) (set-count (hash-ref constraints y (set)))))))

@@ -5,14 +5,14 @@ main:
 	subq $32, %rsp
 
 callq read_int
-	movq %rax, %rcx
-callq read_int
 	movq %rax, %rbx
-	movq %rbx, %rbx
-	negq %rbx
-	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq %rbx, %rax
+callq read_int
+	movq %rax, %rcx
+	movq %rcx, %rcx
+	negq %rcx
+	movq %rcx, %rcx
+	addq %rbx, %rcx
+	movq %rcx, %rax
 
 	movq %rax, %rcx
 	callq print_int
