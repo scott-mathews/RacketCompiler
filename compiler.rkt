@@ -223,9 +223,16 @@
                                                                              `(addq (var ,v2) (var ,v1)))]
     [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
     [`(return ,n)                                                      (list `(movq (int ,n) (reg rax)))]
-    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(values (map-me select-instructions instrs)))]))
+    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
 
-
+(define (remove-duplicate-movq list)
+  (cond [(empty? list) '()]
+        [(empty? (cdr list)) `(,(car list))]
+        [else (match (car list)
+                [`(movq ,a ,b) (if (equal? (car list) (cadr list))
+                  (remove-duplicate-movq (cdr list))
+                  (cons (car list) (remove-duplicate-movq (cdr list))))]
+                [else (cons (car list) (remove-duplicate-movq (cdr list)))])]))
 
 ;;; === Uncover Live === ;;;
 (define (ripple func list carry)
