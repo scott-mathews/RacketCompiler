@@ -144,8 +144,7 @@
 (define (flatten-helper exp . var)
   (match exp
     [v #:when (symbol? v) (values v '() (list v))]
-    [n #:when (fixnum? n) (define v (genvar var))
-                          (values v (list `(assign ,v ,n)) (list v))]
+    [n #:when (fixnum? n) (values n '() '())]
     [`(read) (define v (genvar var))
              (values v (list `(assign ,v (read))) (list v))]
     [`(+ ,n1 ,n2) #:when (and (fixnum? n1) (fixnum? n2)) (define v (genvar var))
@@ -223,6 +222,7 @@
                                           (symbol? v3))                (list `(movq (var ,v3) (var ,v1))
                                                                              `(addq (var ,v2) (var ,v1)))]
     [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
+    [`(return ,n)                                                      (list `(movq (int ,n) (reg rax)))]
     [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(values (map-me select-instructions instrs)))]))
 
 

@@ -5,7 +5,7 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 
-;(debug-level 2)
+;(debug-level 3)
 
 ;(interp-tests "integers and arithmetic" #f r0-passes interp-scheme "r0" (range 1 5))
 ;(interp-tests "partial evaluator" #f pe-arith-pass interp-scheme "ex3" (range 1 5))
