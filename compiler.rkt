@@ -145,35 +145,32 @@
   (match exp
     [v #:when (symbol? v) (values v '() (list v))]
     [n #:when (fixnum? n) (values n '() '())]
+    [b #:when (boolean? b) (values b '() '())]
     [`(read) (define v (genvar var))
              (values v (list `(assign ,v (read))) (list v))]
-    [`(+ ,n1 ,n2) #:when (and (fixnum? n1) (fixnum? n2)) (define v (genvar var))
-                                                         (values v (list `(assign ,v (+ ,n1 ,n2))) (list v))]
-    [`(+ ,n ,e) #:when (fixnum? n) (define v (genvar var))
-                                   (define-values (flat-exp assignments vars) (flatten-helper e))
-                                   (values v `( ,@assignments (assign ,v (+ ,n ,flat-exp))) (cons v vars))]
-    [`(+ ,e ,n) #:when (fixnum? n) (pass-optional1 flatten-helper `(+ ,n ,e) var)]
-    [`(+ ,e1 ,e2) (define v (genvar var))
-                  (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
-                  (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
-                  (values v `(,@assignments1 ,@assignments2 (assign ,v (+ ,flat-exp1 ,flat-exp2))) (cons v (append vars1 vars2)))]
-    [`(- ,n) #:when (fixnum? n) (define v (genvar var))
-                                (values v (list `(assign ,v (- ,n))) (list v))]
+    [`(not ,b) #:when (boolean? b)
+               (define v (genvar var))
+               (values v (list `(assign ,v (not ,b))) (list v))]
+    [`(not ,e) (define v (genvar var))
+               (define-values (flat-exp assignments vars) (flatten-helper e))
+               (values v `(,@assignments (assign ,v (not ,flat-exp))) (cons v vars))]
+    [`(,op ,e1 ,e2) #:when (or (member op cmp-syms) (member op arith-syms-biadic))
+                    (define v (genvar var))
+                    (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
+                    (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
+                    (values v `(,@assignments1 ,@assignments2 (assign ,v (,op ,flat-exp1 ,flat-exp2))) (cons v (append vars1 vars2)))]
     [`(- ,e) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons v vars))]
-    [`(let ([,v ,t]) ,body) #:when (terminal? t)
-                            (define-values (flat-exp2 assignments2 vars2) (if (not (terminal? body)) (pass-optional1 flatten-helper body var) (values body '() (list body))))
-                            (values flat-exp2
-                                    `( (assign ,v ,t) ,@assignments2)
-                                    (set->list (list->set (cons v vars2))))]
     [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1)
                               (if (equal? '() var)
                                   (flatten-helper e v)
                                   (flatten-helper e var)))
                             (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
                             (values flat-exp2
-                                    `( ,@assignments1 (assign ,v ,flat-exp1) ,@assignments2)
+                                    (if (equal? v flat-exp1)
+                                    `(,@assignments1 ,@assignments2)
+                                    `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
                                     (set->list (list->set (cons v (append vars1 vars2)))))]
     ))
 
