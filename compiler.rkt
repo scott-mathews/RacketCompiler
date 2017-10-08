@@ -228,8 +228,6 @@
 
 ;;; Select Instructions Itself ;;;
 
-;TODO: implement if
-
 (define (select-instructions exp)
   (match exp
     [`(assign ,lhs (read)) (list `(callq read_int)
@@ -243,14 +241,15 @@
                               (list `(xorq (int 1) ,(val->typedval v)))
                               (list `(movq ,(val->typedval e) ,(val->typedval v))
                                     `(xorq (int 1) ,(val->typedval v))))]
-    [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,e2 ,e1)
-                                       `(set ,(cmp->cc cmp) (byte-reg a1))
-                                       `(movzbq (byte-reg a1) ,(val->typedval v)))]
     [`(assign ,v (+ ,e1 ,e2)) (cond
                                 [(equal? v e1) (list `(addq ,(val->typedval e2) ,(val->typedval v)))]
                                 [(equal? v e2) (list `(addq ,(val->typedval e1) ,(val->typedval v)))]
                                 [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
                                             `(addq ,(val->typedval e2) ,(val->typedval v)))])]
+    [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,e2 ,e1)
+                                       `(set ,(cmp->cc cmp) (byte-reg a1))
+                                       `(movzbq (byte-reg a1) ,(val->typedval v)))]
+    [`(if ,cnd (,thn ...) (,els ...)) (list `(if ,cnd ,(values (map-me select-instructions thn)) ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
     [`(program (,vars ...) ,instrs ...) `(program ,vars ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
 
