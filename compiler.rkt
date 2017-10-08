@@ -7,16 +7,69 @@
 ;; This exports passes, defined below, to users of this file.
 (provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass)
 
-;; The following pass is just a silly pass that doesn't change anything important,
-;; but is nevertheless an example of a pass. It flips the arguments of +. -Jeremy
-(define (flipper e)
-  (match e
-    [(? fixnum?) e]
-    [`(read) `(read)]
-    [`(- ,e1) `(- ,(flipper e1))]
-    [`(+ ,e1 ,e2) `(+ ,(flipper e2) ,(flipper e1))]
-    [`(program ,e) `(program ,(flipper e))]
-    ))
+(define cmp-syms '(< > <= >= eq?))
+(define bool-syms-biadic '(and))
+(define arith-syms-biadic '(+))
+(define arith-syms-monadic '(-))
+
+;;; === Type Checker === ;;;
+
+(define (typecheck-R2 env)
+  (lambda (e)
+    (define recur (typecheck-R2 env))
+    (match e
+      [(? fixnum?) `Integer]
+      [(? boolean?) `Boolean]
+      [(? symbol?) (lookup e env)]
+      [`(read) `Integer]
+      [`(let ([,x ,(app recur T)]) ,body)
+       (define new-env (cons (cons x T) env))
+       ((typecheck-R2 new-env) body)]
+      [`(,op ,(app recur n1) ,(app recur n2)) #:when (member op arith-syms-biadic)
+                     (if (and (eq? n1 `Integer) (eq? n2 `Integer))
+                         `Integer
+                         (error `typecheck-R2 "~a expects integer arguments" op))]
+      [`(,op ,(app recur n)) #:when (member op arith-syms-monadic)
+                                          (if (eq? n `Integer)
+                                              `Integer
+                                              (error `typecheck-R2 "~a expects integer arguments" op))]
+      [`(not ,(app recur T))
+       (match T
+         [`Boolean `Boolean]
+         [else (error `typecheck-R2 "`not` expects a boolean" e)])]
+      [`(,op ,(app recur b1) ,(app recur b2)) #:when (member op bool-syms-biadic)
+                                                                        (if (and (eq? b1 `Boolean) (eq? b2 `Boolean))
+                                                                            `Boolean
+                                                                            (error `typecheck-R2 "~a expects boolean arguments" op))]
+      [`(,op ,(app recur t1) ,(app recur t2)) #:when (member op cmp-syms)
+                                                                        (define accepted-types (if (eq? 'eq? op) '(Boolean Integer) '(Integer)))
+                                                                        (if (and (member t1 accepted-types) (member t2 accepted-types) (eq? t1 t2))
+                                                                            `Boolean
+                                                                            (error `typecheck-R2 "~a expects integer arguments (or of the same type if eq?)" op))]
+      [`(if ,(app recur cnd) ,(app recur thn) ,(app recur els))
+       (if (eq? `Boolean cnd)
+           (if (eq? thn els)
+               thn
+               (error `typecheck-R2 "both branches of if must be same type"))
+           (error `typecheck-R2 "if expects a boolean in the conditional"))]
+      [`(program ,body)
+       (define ty ((typecheck-R2 '()) body))
+       `(program (type ,ty) ,body)]
+      )))
+
+; tests ;
+(define tc-int0 `(program (+ 3 4)))
+(define tc-bool0 `(program (>= 3 4)))
+(define tc-int `(program (if (eq? (read) 0) 777 (+ 2 (if (eq? (read) 0) 40 444)))))
+(define tc-bool `(program (let ((x (if (eq? 42 (read)) #f #t))) (and x (> 30 (read))))))
+(define tc-int2 `(program (let ((x (let ((y 30)) (+ y 12)))) (if (eq? x 12) (+ x 124) 42))))
+(define tc-fail0 `(program (let ((x #f)) (+ 3 x))))
+(define tc-fail1 `(program (if (eq? (read) 33) #f 3)))
+(define tc-fail2 `(program (> 34 (- #f))))
+(define tc-fail3 `(program (if (eq? (read) 42) #f (+ 33 2001))))
+(define tc-fail4 `(program (if (eq? (read) 42) (if (eq? (read) 42) #f #t) 13)))
+
+;;; End Type Checker ;;;
 
 ;;; === Partial Evaluator === ;;;
 
@@ -78,7 +131,7 @@
 
 ; Check if an expression is a terminal one
 (define (terminal? e)
-  (or (fixnum? e) (symbol? e) (equal? `(read) e)))
+  (or (fixnum? e) (boolean? e) (symbol? e) (equal? `(read) e)))
 
 ;;; Flatten Itself ;;;
 
@@ -438,8 +491,7 @@
 ;; Note that your compiler file (or whatever file provides your passes)
 ;; should be named "compiler.rkt"
 (define r0-passes
-  `( ("flipper" ,flipper ,interp-scheme)
-     ("partial evaluator" ,pe-arith ,interp-scheme)
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ))
 
 (define pe-arith-pass
