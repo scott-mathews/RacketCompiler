@@ -209,40 +209,50 @@
 (define (map-me-helper x . xs)
   (append x xs))
 
+(define (val->typedval e)
+  (match e
+    [(? fixnum?) `(int ,e)]
+    [(? symbol?) `(var ,e)]
+    [(? boolean?) (if e
+                      `(int 1)
+                      `(int 0))]
+    [else e]))
+
+(define (cmp->cc op)
+  (match op
+    [`> `g]
+    [`< `l]
+    [`>= `ge]
+    [`<= `le]
+    [`eq? `e]))
+
 ;;; Select Instructions Itself ;;;
-;; TODO: write tests for select-instructions, return values properly
+
+;TODO: implement if
+
 (define (select-instructions exp)
   (match exp
-    [`(assign ,lhs (read))                                             (list `(callq read_int)
-                                                                             `(movq (reg rax) (var ,lhs)))]
-    [`(assign ,v ,n)          #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v)))]
-    [`(assign ,v1 ,v2)        #:when (and (symbol? v1) (symbol? v2) (equal? v1 v2))   '()]
-    [`(assign ,v1 ,v2)        #:when (and (symbol? v1) (symbol? v2))   (list `(movq (var ,v2) (var ,v1)))]
-    [`(assign ,v (- ,n))      #:when (fixnum? n)                       (list `(movq (int ,n) (var ,v))
-                                                                             `(negq (var ,v)))]
-    [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2) (equal? v1 v2)) (list `(negq (var ,v1)))]
-    [`(assign ,v1 (- ,v2))    #:when (and (symbol? v2))                (list `(movq (var ,v2) (var ,v1))
-                                                                             `(negq (var ,v1)))]
-    [`(assign ,v (+ ,n1 ,n2)) #:when (and (fixnum? n1) (fixnum? n2))   (list `(movq (int ,n1) (var ,v))
-                                                                             `(addq (int ,n2) (var ,v)))]
-    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2)
-                                          (equal? v1 v2))              (list `(addq (int ,n) (var ,v1)))]
-    [`(assign ,v1 (+ ,n ,v2)) #:when (and (fixnum? n) (symbol? v2))    (list `(movq (var ,v2) (var ,v1))
-                                                                             `(addq (int ,n) (var ,v1)))]
-    [`(assign ,v1 (+ ,v2 ,n)) #:when (and (fixnum? n) (symbol? v2))    (select-instructions `(assign ,v1 (+ ,n ,v2)))]
-    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
-                                          (symbol? v3)(equal? v1 v3))  (list `(addq (var ,v2) (var ,v1)))]
-    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
-                                          (symbol? v3)(equal? v1 v2))  (list `(addq (var ,v3) (var ,v1)))]
-    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
-                                          (symbol? v3)(equal? v2 v3))  (list `(movq (var ,v3) (var ,v1))
-                                                                             `(addq (var ,v3) (var ,v1)))]
-    [`(assign ,v1 (+ ,v2 ,v3))#:when (and (symbol? v1) (symbol? v2)
-                                          (symbol? v3))                (list `(movq (var ,v3) (var ,v1))
-                                                                             `(addq (var ,v2) (var ,v1)))]
-    [`(return ,v)             #:when (symbol? v)                       (list `(movq (var ,v) (reg rax)))]
-    [`(return ,n)                                                      (list `(movq (int ,n) (reg rax)))]
-    [`(program (,vars ...) ,instrs ...)                               `(program ,vars ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
+    [`(assign ,lhs (read)) (list `(callq read_int)
+                                 `(movq (reg rax) (var ,lhs)))]
+    [`(assign ,v1 ,v2) #:when (terminal? v2) (list `(movq ,(val->typedval v2) ,(val->typedval v1)))]
+    [`(assign ,v (- ,e)) (if (equal? v e)
+                             (list `(negq ,(val->typedval v)))
+                             (list `(movq ,(val->typedval e) ,(val->typedval v))
+                                   `(negq ,(val->typedval v))))]
+    [`(assign ,v (not ,e)) (if (equal? v e)
+                              (list `(xorq (int 1) ,(val->typedval v)))
+                              (list `(movq ,(val->typedval e) ,(val->typedval v))
+                                    `(xorq (int 1) ,(val->typedval v))))]
+    [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,e2 ,e1)
+                                       `(set ,(cmp->cc cmp) (byte-reg a1))
+                                       `(movzbq (byte-reg a1) ,(val->typedval v)))]
+    [`(assign ,v (+ ,e1 ,e2)) (cond
+                                [(equal? v e1) (list `(addq ,(val->typedval e2) ,(val->typedval v)))]
+                                [(equal? v e2) (list `(addq ,(val->typedval e1) ,(val->typedval v)))]
+                                [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
+                                            `(addq ,(val->typedval e2) ,(val->typedval v)))])]
+    [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
+    [`(program (,vars ...) ,instrs ...) `(program ,vars ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
 
 (define (remove-duplicate-movq list)
   (cond [(empty? list) '()]
