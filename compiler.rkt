@@ -148,12 +148,10 @@
     [b #:when (boolean? b) (values b '() '())]
     [`(read) (define v (genvar var))
              (values v (list `(assign ,v (read))) (list v))]
-    [`(not ,b) #:when (boolean? b)
-               (define v (genvar var))
-               (values v (list `(assign ,v (not ,b))) (list v))]
     [`(not ,e) (define v (genvar var))
                (define-values (flat-exp assignments vars) (flatten-helper e))
                (values v `(,@assignments (assign ,v (not ,flat-exp))) (cons v vars))]
+    [`(and ,e1 ,e2) (flatten-helper `(if ,e1 ,e2 #f))]
     [`(,op ,e1 ,e2) #:when (or (member op cmp-syms) (member op arith-syms-biadic))
                     (define v (genvar var))
                     (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
@@ -162,6 +160,14 @@
     [`(- ,e) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons v vars))]
+    [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
+                          (define v (genvar var))
+                          (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
+                          (define-values (flat-els assignments-els vars-els) (flatten-helper els))
+                          (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
+                                                            (,@assignments-thn (assign ,v ,flat-thn))
+                                                            (,@assignments-els (assign ,v ,flat-els))))
+                                  (cons v (append vars-cnd vars-thn vars-els)))]
     [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1)
                               (if (equal? '() var)
                                   (flatten-helper e v)
@@ -173,6 +179,22 @@
                                     `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
                                     (set->list (list->set (cons v (append vars1 vars2)))))]
     ))
+
+; tests ;
+(define tf-bk-1 `(program (if #f 0 42)))
+(define tf-bk-2 `(program (if (eq? (read) 0)
+                         777
+                         (+ 2 (if (eq? (read) 0)
+                                  40
+                                  444)))))
+(define tf-ps-1 `(program (let ([x 52]) (if (> x 42)
+                                            (let ([y (+ (- x) 42)])
+                                              (+ y x))
+                                            (let ([y (+ (- 42) x)])
+                                              (+ y x))))))
+(define tf-ps-2 `(program (if (not #f)
+                              (+ 3 39)
+                              (- (+ (- 3) (- 39))))))
 
 
 ;;; === Select Instructions === ;;;
