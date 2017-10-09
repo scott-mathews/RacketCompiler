@@ -14,13 +14,13 @@
 ;(interp-tests "flatten" #f flatten-pass interp-scheme "r1" (range 1 24))
 ;(interp-tests "select instructions" #f select-instructions-pass interp-scheme "r1" (range 1 39))
 ;(interp-tests "allocate registers" #f allocate-registers-pass interp-scheme "r1" (range 1 39))
-;(interp-tests "patch instructions" #f patch-instructions-pass interp-scheme "r1" (range 1 41))
+;(interp-tests "patch instructions" (lambda (e) `(type Fake)) patch-instructions-pass interp-scheme "r1" (range 1 41))
 ;(compiler-tests "r1-compiler" #f r1-passes "r1" (range 1 41))
 
 ;;; === R2 Tests === ;;;
 ;(interp-tests "uniquify" (typecheck-R2 '()) uniquify-pass interp-scheme "r2" (range 1 23))
 ;(interp-tests "flatten" (typecheck-R2 '()) flatten-pass interp-scheme "r2" (range 1 23))
 ;(interp-tests "select-instructions" (typecheck-R2 '()) select-instructions-pass interp-scheme "r2" (range 1 23))
-(interp-tests "allocate-registers" (typecheck-R2 '()) allocate-registers-pass interp-scheme "r2" (range 1 4))
+(interp-tests "allocate-registers" (typecheck-R2 '()) allocate-registers-pass interp-scheme "r2" (range 1 23))
 
 (display "tests passed!") (newline)

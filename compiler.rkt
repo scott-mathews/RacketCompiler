@@ -57,8 +57,6 @@
        `(program (type ,ty) ,body)]
       )))
 
-(define typechecker typecheck-R2)
-
 ; tests ;
 (define tc-int0 `(program (+ 3 4)))
 (define tc-bool0 `(program (>= 3 4)))
@@ -440,23 +438,20 @@
   (cond [(empty? vars) '()] 
         [else (cons (cons (car vars) ctr) (make-homes (cdr vars) (- ctr 8)))]))
 
+(define (type->home arg alist)
+  (match arg
+    [`(,type ,val) (if (equal? type `var)
+                       `(deref rbp ,(lookup val alist))
+                       `(,type ,val))]
+    [else arg])
+  )
+
 (define (assign-homes alist) 
   (lambda (exp) 
-    (match exp 
-      [`(addq (var ,v1) (var ,v2)) (list `(addq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
-      [`(addq (int ,n) (var ,v)) (list `(addq (int ,n) (deref rbp ,(lookup v alist))))] 
-      [`(addq (int ,n1) (int ,n2)) (list exp)]
-      [`(addq (var ,v) (reg ,r)) (list `(addq (deref rbp ,(lookup v alist)) (reg ,r)))]
-      [`(addq (int ,n) (reg ,r)) (list exp)]
-      [`(addq (reg ,r1) (reg ,r2)) (list exp)]
-      [`(negq (var ,v)) (list `(negq (deref rbp ,(lookup v alist))))]
-      [`(negq (reg ,r)) (list exp)]
-      [`(movq (var ,v1) (var ,v2)) (list `(movq (deref rbp ,(lookup v1 alist)) (deref rbp ,(lookup v2 alist))))] 
-      [`(movq (int ,n) (var ,v)) (list `(movq (int ,n) (deref rbp ,(lookup v alist))))]
-      [`(movq (reg ,r) (var ,v)) (list `(movq (reg ,r) (deref rbp ,(lookup v alist))))]
-      [`(movq (var ,v) (reg ,r)) (list `(movq (deref rbp ,(lookup v alist)) (reg ,r)))] 
-      [`(movq (reg ,r1) (reg ,r2)) (list exp)]
-      [`(movq (int ,n) (reg ,r)) (list exp)]
+    (match exp
+      [`(,op ,arg1 ,arg2) (list `(,op ,(type->home arg1 alist) ,(type->home arg2 alist)))]
+      [`(,op ,arg) (list `(,op ,(type->home arg alist)))]
+      [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist) cnd) ,(map-me (assign-homes alist) thn) ,(map-me (assign-homes alist) els)))] 
       [`(callq ,fn) (list exp)] 
       [`(program (,vars ...) ,type ,instrs ...) `(program ,(alloc-size vars) ,type ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))]))) 
 
