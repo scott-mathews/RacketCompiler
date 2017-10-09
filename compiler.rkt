@@ -5,7 +5,7 @@
 (require "utilities.rkt")
 
 ;; This exports passes, defined below, to users of this file.
-(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass)
+(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass typecheck-R2)
 
 (define cmp-syms '(< > <= >= eq?))
 (define bool-syms-biadic '(and))
@@ -26,11 +26,11 @@
        (define new-env (cons (cons x T) env))
        ((typecheck-R2 new-env) body)]
       [`(,op ,(app recur n1) ,(app recur n2)) #:when (member op arith-syms-biadic)
-                     (if (and (eq? n1 `Integer) (eq? n2 `Integer))
+                     (if (and (equal? n1 `Integer) (equal? n2 `Integer))
                          `Integer
                          (error `typecheck-R2 "~a expects integer arguments" op))]
       [`(,op ,(app recur n)) #:when (member op arith-syms-monadic)
-                                          (if (eq? n `Integer)
+                                          (if (equal? n `Integer)
                                               `Integer
                                               (error `typecheck-R2 "~a expects integer arguments" op))]
       [`(not ,(app recur T))
@@ -38,17 +38,17 @@
          [`Boolean `Boolean]
          [else (error `typecheck-R2 "`not` expects a boolean" e)])]
       [`(,op ,(app recur b1) ,(app recur b2)) #:when (member op bool-syms-biadic)
-                                                                        (if (and (eq? b1 `Boolean) (eq? b2 `Boolean))
+                                                                        (if (and (equal? b1 `Boolean) (equal? b2 `Boolean))
                                                                             `Boolean
                                                                             (error `typecheck-R2 "~a expects boolean arguments" op))]
       [`(,op ,(app recur t1) ,(app recur t2)) #:when (member op cmp-syms)
-                                                                        (define accepted-types (if (eq? 'eq? op) '(Boolean Integer) '(Integer)))
-                                                                        (if (and (member t1 accepted-types) (member t2 accepted-types) (eq? t1 t2))
+                                                                        (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
+                                                                        (if (and (member t1 accepted-types) (member t2 accepted-types) (equal? t1 t2))
                                                                             `Boolean
                                                                             (error `typecheck-R2 "~a expects integer arguments (or of the same type if eq?)" op))]
       [`(if ,(app recur cnd) ,(app recur thn) ,(app recur els))
-       (if (eq? `Boolean cnd)
-           (if (eq? thn els)
+       (if (equal? `Boolean cnd)
+           (if (equal? thn els)
                thn
                (error `typecheck-R2 "both branches of if must be same type"))
            (error `typecheck-R2 "if expects a boolean in the conditional"))]
@@ -56,6 +56,8 @@
        (define ty ((typecheck-R2 '()) body))
        `(program (type ,ty) ,body)]
       )))
+
+(define typechecker typecheck-R2)
 
 ; tests ;
 (define tc-int0 `(program (+ 3 4)))
@@ -95,11 +97,13 @@
   (match e
     [(? fixnum?)    e]
     [(? symbol?)    e]
+    [(? boolean?)   e]
     [`(read)       `(read)]
     [`(- ,e1)       (pe-neg2 (pe-arith e1))]
     [`(+ ,e1 ,e2)   (pe-add2 (pe-arith e1) (pe-arith e2))]
     [`(let ([,x ,e]) ,body) `(let ([,x ,(pe-arith e)]) ,(pe-arith body))]
-    [`(program ,e) `(program ,(pe-arith e))]
+    [`(if ,cnd ,thn ,els) `(if ,cnd ,thn ,els)]
+    [`(program ,type ,e) `(program ,type ,(pe-arith e))]
     ))
 
 
@@ -110,10 +114,12 @@
     (match expression
       [v #:when (symbol? v) (lookup v alist)]
       [n   #:when (integer? n) n]
+      [(? boolean?) expression]
       [`(let ([,x ,e]) ,body) (let ([y (gensym x)])
                                 (let ([l (cons (cons x y) alist)])
                                 `(let ([,y ,((uniquify alist) e)]) ,((uniquify l) body))))]
-      [`(program ,e) `(program ,((uniquify alist) e))]
+      [`(if ,cnd ,thn ,els) `(if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els))]
+      [`(program ,type ,e) `(program ,type ,((uniquify alist) e))]
       [`(,op ,es ...) `(,op ,@(map (uniquify alist) es))])))
 
 
@@ -137,8 +143,8 @@
 
 (define (flatten exp)
   (match exp
-    [`(program ,e) (define-values (flat-exp assignments vars) (flatten-helper e))
-                   `(program ,vars ,@assignments (return ,flat-exp))]
+    [`(program ,type ,e) (define-values (flat-exp assignments vars) (flatten-helper e))
+                   `(program ,vars ,type ,@assignments (return ,flat-exp))]
     ))
 
 (define (flatten-helper exp . var)
@@ -246,12 +252,12 @@
                                 [(equal? v e2) (list `(addq ,(val->typedval e1) ,(val->typedval v)))]
                                 [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
                                             `(addq ,(val->typedval e2) ,(val->typedval v)))])]
-    [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,e2 ,e1)
-                                       `(set ,(cmp->cc cmp) (byte-reg a1))
-                                       `(movzbq (byte-reg a1) ,(val->typedval v)))]
-    [`(if ,cnd (,thn ...) (,els ...)) (list `(if ,cnd ,(values (map-me select-instructions thn)) ,(values (map-me select-instructions els))))]
+    [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,(val->typedval e2) ,(val->typedval e1))
+                                       `(set ,(cmp->cc cmp) (byte-reg al))
+                                       `(movzbq (byte-reg al) ,(val->typedval v)))]
+    [`(if (,cmp ,arg1 ,arg2) (,thn ...) (,els ...)) (list `(if (,cmp ,(val->typedval arg1) ,(val->typedval arg2)) ,(values (map-me select-instructions thn)) ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
-    [`(program (,vars ...) ,instrs ...) `(program ,vars ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
+    [`(program (,vars ...) ,type ,instrs ...) `(program ,vars ,type ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
 
 (define (remove-duplicate-movq list)
   (cond [(empty? list) '()]
@@ -263,74 +269,45 @@
                 [else (cons (car list) (remove-duplicate-movq (cdr list)))])]))
 
 ;;; === Uncover Live === ;;;
-(define (ripple func list carry)
-  (cond [(empty? list) '()]
-        [else (let ([result (func (car list) carry)])
-                (cons carry (ripple func (cdr list) result)))]))
 
 (define (live-after-set read written prevset)
   (set-union read (set-subtract prevset written)))
 
 (define (uncover-live exp)
   (match exp
-    [`(program (,vars ...) ,instrs ...) `(program (,vars ,(reverse (ripple get-set-of-vars-from-instruction (reverse instrs) (set)))) ,@instrs)]))
+    [`(program (,vars ...) ,type ,instrs ...) (define-values (sets new-instrs) (get-set-of-vars-from-instructions instrs (set)))
+                                        `(program (,vars ,sets) ,type ,@new-instrs)]))
 
-(define (get-set-of-vars-from-instruction instr prevset)
-  (match instr
-    [`(movq (var ,read) (var ,writ)) (live-after-set (set read) (set writ) prevset)]
-    [`(movq (,type ,x) (var ,writ)) (live-after-set (set) (set writ) prevset)]
-    [`(,op (var ,read) (var ,writ)) (live-after-set (set read) (set) prevset)]
-    [`(,op (var ,read) (,type ,x)) (live-after-set (set read) (set) prevset)]
-    [else                           prevset]))
+(define (get-set-of-vars-from-instructions instrs initial-set)
+  (define sets `(,initial-set))
+  (define new-instrs '())
+  (for ([instr (reverse instrs)])
+    (if (equal? instr '())
+        "pass"
+        (match instr
+          [`(,op (var ,read) (var ,writ)) #:when (or (equal? op `movq) (equal? op `movzbq))
+                                          (set! sets (cons (live-after-set (set read) (set writ) (car sets)) sets))
+                                          (set! new-instrs (cons instr new-instrs))]
+          [`(movq (,type ,x) (var ,writ)) (set! sets (cons (live-after-set (set) (set writ) (car sets)) sets))
+                                          (set! new-instrs (cons instr new-instrs))]
+          [`(,op (var ,read) (,type ,writ)) (set! sets (cons (live-after-set (set read) (set) (car sets)) sets))
+                                            (set! new-instrs (cons instr new-instrs))]
+          [`(if ,cnd ,thns ,elss) (define-values (thns-sets thns-instrs) (get-set-of-vars-from-instructions thns (car sets)))
+                                  (define-values (elss-sets elss-instrs) (get-set-of-vars-from-instructions elss (car sets)))
+                                  (define new-instr `(if ,cnd ,thns-instrs ,thns-sets ,elss-instrs ,elss-sets))
+                                  (define cnd-set (match cnd [`(,op (,type1 ,val1) (,type2 ,val2)) (cond [(and (equal? type1 `var) (equal? type2 `var)) (set val1 val2)]
+                                                                                                         [(equal? type1 `var) (set val1)]
+                                                                                                         [(equal? type2 `var ) (set val2)]
+                                                                                                         [else (set)])]))
+                                  (set! sets (cons (set-union cnd-set (car thns-sets) (car elss-sets)) sets))
+                                  (set! new-instrs (cons new-instr new-instrs))]
+          [else (set! sets (cons (car sets) sets))
+                (set! new-instrs (cons instr new-instrs))])))
+  (values (cdr sets) new-instrs))
 
 ;; test programs ;;
-(define tp-ul-1 `(program (x y z) (movq (int 1) (var x)) (movq (int 3) (var y)) (addq (var y) (var x)) (movq (var x) (var z)) (negq (var z)) (movq (var z) (reg rax))))
-(define tp-ul-2 `(program (v w x y z t.1 t.2)
-                          (movq (int 1) (var v))
-                          (movq (int 46) (var w))
-                          (movq (var v) (var x))
-                          (addq (int 7) (var x))
-                          (movq (var x) (var y))
-                          (addq (int 4) (var y))
-                          (movq (var x) (var z))
-                          (addq (var w) (var z))
-                          (movq (var y) (var t.1))
-                          (negq (var t.1))
-                          (movq (var z) (var t.2))
-                          (addq (var t.1) (var t.2))
-                          (movq (var t.2) (reg rax))))
-(define tp-ul-hard `(program
-  (and127582
-   tmp127586
-   ofJuliet127581
-   tmp127585
-   thanThat127580
-   herRomeo127583
-   woe127579
-   ofMore127578
-   aTale127577
-   wasThere127576
-   never127575)
-  (movq (int 27) (var never127575))
-  (movq (int -6) (var wasThere127576))
-  (movq (var wasThere127576) (var aTale127577))
-  (addq (var never127575) (var aTale127577))
-  (movq (var aTale127577) (var ofMore127578))
-  (negq (var ofMore127578))
-  (movq (var never127575) (var woe127579))
-  (movq (var woe127579) (var thanThat127580))
-  (addq (var never127575) (var thanThat127580))
-  (movq (var aTale127577) (var ofJuliet127581))
-  (negq (var ofJuliet127581))
-  (movq (var ofMore127578) (var and127582))
-  (addq (int 5) (var and127582))
-  (movq (int -7) (var herRomeo127583))
-  (movq (var ofJuliet127581) (var tmp127586))
-  (addq (int 70) (var tmp127586))
-  (movq (var herRomeo127583) (var tmp127585))
-  (addq (var tmp127586) (var tmp127585))
-  (movq (var tmp127585) (reg rax)))
-)
+(define tp-ul-if `(program (x y) (movq (int 10) (var x)) (if (> (int 10) (var x)) ((movq (int 3) (var y))) ((movq (int 42) (var y)))) (movq (var y) (reg rax))))
+
 ;;; End Uncover-Live ;;;
 
 ;;; === Build-Interference === ;;;
@@ -346,10 +323,11 @@
   (for ([lafter live-afters] [instr instrs])
     (define lafter-v (set->list lafter))
     (match instr
-      [`(movq (,type1 ,s) (,type2 ,d)) (for ([var lafter-v])
-                                         (if (or (equal? s var) (equal? d var))
-                                             "pass"
-                                             (add-edge g var d)))]
+      [`(,op (,type1 ,s) (,type2 ,d)) #:when (or (equal? op `movq) (equal? op `movzbq))
+                                      (for ([var lafter-v])
+                                        (if (or (equal? s var) (equal? d var))
+                                            "pass"
+                                            (add-edge g var d)))]
       [`(,op (,type1 ,s) (,type2 ,d)) (for ([var lafter-v])
                                         (if (equal? d var)
                                             "pass"
@@ -359,6 +337,14 @@
       [`(callq ,label) (for ([reg caller-save])
                          (for ([var lafter-v])
                            (add-edge g (register->color reg) var)))]
+      [`(if ,cnd ,thns ,thn-sets ,elss ,els-sets) (define thn-g (graphify g thn-sets thns))
+                                                  (define els-g (graphify g els-sets elss))
+                                                  ; combine thn-g and els-g with g
+                                                  (for ([thn-v (vertices thn-g)] [els-v (vertices els-g)])
+                                                    (for ([adj-v (adjacent thn-g thn-v)])
+                                                      (add-edge g thn-v adj-v))
+                                                    (for ([adj-v (adjacent els-g els-v)])
+                                                      (add-edge g els-v adj-v)))]
       [else "pass"]))
   g)
 ;;; End Build-Interference ;;;
@@ -367,8 +353,8 @@
 
 (define (allocate-registers exp)
     (match exp
-    [`(program (,vars ,graph) ,instrs ...) (define new-names (color-graph graph (build-MoveG vars instrs) vars))
-                                           `(program ,vars ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
+    [`(program (,vars ,graph) ,type ,instrs ...) (define new-names (color-graph graph (build-MoveG vars instrs) vars))
+                                           `(program ,vars ,type ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
 
 (define (prune-vars new-names vars)
   (filter (lambda (var) (> (hash-ref new-names var) (vector-length general-registers))) vars))
@@ -384,6 +370,9 @@
     [`(,op (,type ,v)) `(,op ,(if (and (equal? 'var type) (< (hash-ref new-names v) (vector-length general-registers)))
                                   `(reg ,(vector-ref general-registers (hash-ref new-names v)))
                                   `(,type ,v)))]
+    [`(if ,cnd ,elss ,els-sets ,thns ,thn-sets) `(if ,(update-name new-names cnd)
+                                                     ,(map (lambda (instr) (update-name new-names instr)) elss)
+                                                     ,(map (lambda (instr) (update-name new-names instr)) thns))]
     [else instr]))
 
 (define (color-graph graph mgraph vars)
@@ -405,12 +394,9 @@
     ; Pop first item in W
     (define i (car W))
     (set! W (cdr W))
-    (define priority-set (filter (lambda (x) (not (equal? x (set))))(map (lambda (n) (hash-ref labels
-                                                                                               n
-                                                                                               (set)))
-                                                                         (filter (lambda (x) (not (set-member? (list->set (adjacent graph i)) x))) (set->list (adjacent mgraph i))))))
-    
-
+    (define priority-set (filter (lambda (x) (not (equal? x (set))))
+                                 (map (lambda (n) (hash-ref labels n (set)))
+                                      (filter (lambda (x) (not (set-member? (list->set (adjacent graph i)) x))) (set->list (adjacent mgraph i))))))
     (define count 0)
     (define set-already #f)
     (for ([p-val priority-set])
@@ -434,13 +420,6 @@
       (hash-update! constraints adj-item (lambda (item) (set-union (set count) item)) (set count))))
   labels)
 
-;;; End Allocate-Registers ;;;
-
-
-
-;;; Begine Move Biased ;;;
-
-
 (define (build-MoveG vars inst)
   (define g (make-graph vars))
   (for ([i inst])
@@ -448,11 +427,8 @@
       [`(movq (var ,x) (var ,y)) (add-edge g x y)]
       [else "Pass"]))
    g)
-        
 
-
-
-;;; End Move Biased ;;; 
+;;; End Allocate-Registers ;;;
 
 (define (alloc-size vars) 
   (let ([x (* 8 (length vars))]) 
@@ -482,7 +458,7 @@
       [`(movq (reg ,r1) (reg ,r2)) (list exp)]
       [`(movq (int ,n) (reg ,r)) (list exp)]
       [`(callq ,fn) (list exp)] 
-      [`(program (,vars ...) ,instrs ...) `(program ,(alloc-size vars) ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))]))) 
+      [`(program (,vars ...) ,type ,instrs ...) `(program ,(alloc-size vars) ,type ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))]))) 
 
 
 (define (patch-instructions exp)  
