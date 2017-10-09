@@ -9,10 +9,22 @@ main:
 	pushq %rbx
 	subq $32, %rsp
 
-	movq $20, %rbx
-	movq $22, %rcx
-	movq %rbx, %rbx
-	addq %rcx, %rbx
+	movq $1, %rdx
+	xorq $1, %rdx
+	cmpq $1, %rdx
+	je then13553
+	movq $1, %rcx
+	jmp end13554
+then13553:
+	movq $0, %rcx
+end13554:
+	cmpq $1, %rcx
+	je then13555
+	movq $777, %rbx
+	jmp end13556
+then13555:
+	movq $42, %rbx
+end13556:
 	movq %rbx, %rax
 
 	movq %rax, %rcx

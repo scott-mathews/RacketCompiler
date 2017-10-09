@@ -7,17 +7,24 @@ main:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $32, %rsp
+	subq $16, %rsp
 
-	movq $20, %rbx
-	movq $22, %rcx
-	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq %rbx, %rax
+	movq $0, %rax
+	cmpq $0, %rax
+	sete %al
+	movzbq %al, %rdx
+	cmpq $1, %rdx
+	je then13521
+	movq $777, %rcx
+	jmp end13522
+then13521:
+	movq $42, %rcx
+end13522:
+	movq %rcx, %rax
 
 	movq %rax, %rcx
 	callq print_int
-	addq $32, %rsp
+	addq $16, %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12

@@ -514,8 +514,9 @@
 
 (define (print-x86 exp)
   (match exp
-    [`(,op ,arg1 ,arg2) (string-append "\t" (format "~a" op) " " (arg->string arg1) ", " (arg->string arg2) "\n")]
     [`(jmp-if ,cc ,label) (format "\tj~a ~a\n" cc label)]
+    [`(set ,e ,arg) (string-append "\tsete " (arg->string arg) "\n")]
+    [`(,op ,arg1 ,arg2) (string-append "\t" (format "~a" op) " " (arg->string arg1) ", " (arg->string arg2) "\n")]
     [`(label ,name) (format "~a:\n" name)] 
     [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
