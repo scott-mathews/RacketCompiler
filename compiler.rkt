@@ -302,7 +302,7 @@
                                   (set! new-instrs (cons new-instr new-instrs))]
           [else (set! sets (cons (car sets) sets))
                 (set! new-instrs (cons instr new-instrs))])))
-  (values (cdr sets) new-instrs))
+  (values sets new-instrs))
 
 ;; test programs ;;
 (define tp-ul-if `(program (x y) (movq (int 10) (var x)) (if (> (int 10) (var x)) ((movq (int 3) (var y))) ((movq (int 42) (var y)))) (movq (var y) (reg rax))))

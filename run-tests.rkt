@@ -5,7 +5,7 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 
-(debug-level 3)
+;(debug-level 4)
 
 ;;; === R1 Tests === ;;;
 ;(interp-tests "integers and arithmetic" #f r0-passes interp-scheme "r0" (range 1 5))
