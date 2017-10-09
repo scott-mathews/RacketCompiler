@@ -5,7 +5,8 @@
 (require "utilities.rkt")
 
 ;; This exports passes, defined below, to users of this file.
-(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass typecheck-R2)
+(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass typecheck-R2 lower-conditionals-pass
+         r2-passes)
 
 (define cmp-syms '(< > <= >= eq?))
 (define bool-syms-biadic '(and))
@@ -428,6 +429,7 @@
 
 ;;; End Allocate-Registers ;;;
 
+;;; === Assign Homes === ;;;
 (define (alloc-size vars) 
   (let ([x (* 8 (length vars))]) 
     (if (= (modulo x 16) 0) 
@@ -454,44 +456,72 @@
       [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist) cnd) ,(map-me (assign-homes alist) thn) ,(map-me (assign-homes alist) els)))] 
       [`(callq ,fn) (list exp)] 
       [`(program (,vars ...) ,type ,instrs ...) `(program ,(alloc-size vars) ,type ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))]))) 
+;;; End Assign Homes ;;;
 
+;;; === Lower Conditionals === ;;;
 
+(define (lower-conditionals exp)
+  (match exp
+    [`(if (,cmp ,arg1 ,arg2) ,thns ,elss) (define thnlabel (gensym `then))
+                                          (define endlabel (gensym `end))
+                                          `((cmpq ,arg2 ,arg1)
+                                            (jmp-if ,(cmp->cc cmp) ,thnlabel)
+                                            ,@(map-me lower-conditionals elss)
+                                            (jmp ,endlabel)
+                                            (label ,thnlabel)
+                                            ,@(map-me lower-conditionals thns)
+                                            (label ,endlabel))]
+    [`(program ,n ,type ,instrs ...) `(program ,n ,type ,@(values (map-me lower-conditionals instrs)))]
+    [else `(,exp)]))
+
+;;; End Lower Conditionals ;;;
+
+;;; === Patch Instructions === ;;;
 (define (patch-instructions exp)  
   (match exp  
     [`(addq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) 
                                                    `(addq (reg rax) (deref rbp ,n2)))]
-    [`(movq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) `(movq (reg rax) (deref rbp ,n2)))] 
+    [`(movq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) `(movq (reg rax) (deref rbp ,n2)))]
+    [`(cmpq (,type ,val) (int ,n)) (if (equal? type `int)
+                                       (list `(movq (int ,n) (reg rax))
+                                             `(cmpq (,type ,val) (reg rax)))
+                                       (list `(cmpq (int ,n) (,type ,val))))]
     [`(program ,n ,instrs ...) `(program ,n ,@(values (map-me patch-instructions instrs)))]  
     [else (list exp)] 
     )) 
+;;; End Patch Instructions ;;;
+
+;;; === Print x86 === ;;;
+(define store "\tpushq %r15\n\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
+(define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n\tpopq %r15\n")
 
 (define intro
-  (lambda (n) (cond [(equal? (system-type) `macosx) (format "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)]
-                    [else (format "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $~a, %rsp\n\n" n)])))
+  (lambda (n) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
+                    [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)])))
 
 (define conclusion
-  (lambda (n) (cond [(equal? (system-type) `macosx) (format "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
-                    [(equal? (system-type) `windows) (format "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)]
-                    [else (format "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n\tpopq %rbp\n\tretq" n)])))
+  (lambda (n) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") n)]
+                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") n)]
+                    [else (format (string-append "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") n)])))
+
+(define (arg->string arg)
+  (match arg
+    [`(deref rbp ,n) (format "~a(%rbp)" n)]
+    [`(reg ,r) (format "%~a" r)]
+    [`(byte-reg ,r) (format "%~a" r)]
+    [`(int ,n) (format "$~a" n)]
+    [else (format "~a" arg)]))
 
 (define (print-x86 exp)
   (match exp
-    [`(addq (deref rbp ,n1) (deref rbp ,n2)) (format "\taddq ~a(%rbp), ~a(%rbp)\n" n1 n2)]
-    [`(addq (deref rbp ,n) (reg ,r)) (format "\taddq ~a(%rbp), %~a\n" n r)]
-    [`(addq (int ,n1) (deref rbp ,n2)) (format "\taddq $~a, ~a(%rbp)\n" n1 n2)]
-    [`(addq (int ,n1) (int ,n2)) (format "\taddq $~a, $~a\n" n1 n2)]
-    [`(addq (reg ,r) (deref rbp ,n)) (format "\taddq %~a, ~a(%rbp)\n" r n)]
-    [`(addq (reg ,r1) (reg ,r2)) (format "\taddq %~a, %~a\n" r1 r2)]
-    [`(addq (int ,n) (reg ,r)) (format "\taddq $~a, %~a\n" n r)]
-    [`(negq (deref rbp ,n)) (format "\tnegq ~a(%rbp)\n" n)]
-    [`(negq (reg ,r)) (format "\tnegq %~a\n" r)]
-    [`(movq (int ,n1) (deref rbp ,n2)) (format "\tmovq $~a, ~a(%rbp)\n" n1 n2)]
-    [`(movq (deref rbp ,n) (reg ,r)) (format "\tmovq ~a(%rbp), %~a\n" n r)]
-    [`(movq (int ,n1) (reg ,r)) (format "\tmovq $~a, %~a\n" n1 r)]
-    [`(movq (reg ,r) (deref rbp ,n)) (format "\tmovq %~a, ~a(%rbp)\n" r n)]
-    [`(movq (reg ,r1) (reg ,r2)) (format "\tmovq %~a, %~a\n" r1 r2)]
+    [`(,op ,arg1 ,arg2) (string-append "\t" (format "~a" op) " " (arg->string arg1) ", " (arg->string arg2) "\n")]
+    [`(jmp-if ,cc ,label) (format "\tj~a ~a\n" cc label)]
+    [`(label ,name) (format "~a:\n" name)] 
+    [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
-    [`(program ,n ,instrs ...) (string-append (intro n) (foldr string-append "" (map print-x86 instrs)) (conclusion n))]))
+    [`(program ,n (type ,t) ,instrs ...) (string-append (intro n) (foldr string-append "" (map print-x86 instrs)) (conclusion n))]))
+
+;;; End Print x86 ;;;
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
@@ -532,6 +562,18 @@
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
      ))
 
+(define lower-conditionals-pass
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
+     ("uncover-live" ,uncover-live ,interp-x86)
+     ("build-interference" ,build-interference ,interp-x86)
+     ("allocate-registers" ,allocate-registers ,interp-x86)
+     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("lower-conditionals" ,lower-conditionals ,interp-x86)
+     ))
+
 (define patch-instructions-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
@@ -541,6 +583,7 @@
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("lower-conditionals" ,lower-conditionals ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ))
 
@@ -553,6 +596,21 @@
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
      ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("lower-conditionals" ,lower-conditionals ,interp-x86)
+     ("patch-instructions" ,patch-instructions ,interp-x86)
+     ("print-x86" ,print-x86 ,interp-x86)
+     ))
+
+(define r2-passes
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
+     ("uncover-live" ,uncover-live ,interp-x86)
+     ("build-interference" ,build-interference ,interp-x86)
+     ("allocate-registers" ,allocate-registers ,interp-x86)
+     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("lower-conditionals" ,lower-conditionals ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
      ))
