@@ -98,6 +98,7 @@
     [(? symbol?)    e]
     [(? boolean?)   e]
     [`(read)       `(read)]
+  ;  [`(not ,arg) #:when(boolean? arg) (not arg)]
     [`(- ,e1)       (pe-neg2 (pe-arith e1))]
     [`(+ ,e1 ,e2)   (pe-add2 (pe-arith e1) (pe-arith e2))]
     [`(let ([,x ,e]) ,body) `(let ([,x ,(pe-arith e)]) ,(pe-arith body))]
@@ -165,14 +166,40 @@
     [`(- ,e) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons v vars))]
-    [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
+    [`(if ,cnd ,thn ,els) (define-values (newCnd ifResult) (if-helper cnd));Recursively check helper Returns: newCnd ifResult
+                          (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper newCnd)) 
                           (define v (genvar var))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
                           (define-values (flat-els assignments-els vars-els) (flatten-helper els))
-                          (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
-                                                            (,@assignments-thn (assign ,v ,flat-thn))
-                                                            (,@assignments-els (assign ,v ,flat-els))))
-                                  (cons v (append vars-cnd vars-thn vars-els)))]
+                          (match ifResult
+                            [`#t
+                             (values v `(,@assignments-thn (assign ,v ,flat-thn))
+                                     (cons v vars-thn))]
+                            [`#f
+                             (values v `(,@assignments-thn (assign ,v ,flat-thn))
+                                     (cons v vars-thn))]
+                            [`(not ,arg)
+                             (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
+                                                               (,@assignments-els (assign ,v ,flat-els))
+                                                               (,@assignments-thn (assign ,v ,flat-thn))))
+                                     (cons v (append vars-cnd vars-thn vars-els)))]
+                            [`(eq? ,arg1 ,arg2)
+                             (values v `(,@assignments-cnd (if (eq? ,arg1 ,arg2)
+                                                               (,@assignments-thn (assign ,v ,flat-thn))
+                                                               (,@assignments-els (assign ,v ,flat-els))))
+                                     (cons v (append vars-cnd vars-thn vars-els)))]
+                            [`(let ([,v ,e]) ,body) 
+                             (values v `(,@assignments-cnd (if ,ifResult
+                                                               (,@assignments-thn (assign ,v ,flat-thn))
+                                                               (,@assignments-els (assign ,v ,flat-els))))
+                                     (cons v (append vars-cnd vars-thn vars-els)))]
+                            [else
+                             (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
+                                                               (,@assignments-thn (assign ,v ,flat-thn))
+                                                               (,@assignments-els (assign ,v ,flat-els))))
+                                     (cons v (append vars-cnd vars-thn vars-els)))]
+
+                             )]
     [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1)
                               (if (equal? '() var)
                                   (flatten-helper e v)
@@ -184,6 +211,24 @@
                                     `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
                                     (set->list (list->set (cons v (append vars1 vars2)))))]
     ))
+
+
+
+(define (if-helper cnd)
+  (match cnd
+    [(? boolean?) (values cnd cnd)]
+    [`(read) `(read)]
+   
+    [`(eq? ,arg1 ,arg2) (values cnd cnd)]
+    [`(not ,arg) (values arg cnd)]
+    [`(let ([,v ,e]) ,body)(define-values (newCnd ifResult) (if-helper body)) (values `(let ([,v ,e]) ,newCnd)  ifResult) ]
+    [else (values cnd cnd)]
+    
+    )
+  )
+    
+    
+
 
 ; tests ;
 (define tf-bk-1 `(program (if #f 0 42)))
