@@ -5,7 +5,7 @@
 (require "utilities.rkt")
 
 ;; This exports passes, defined below, to users of this file.
-(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass typecheck-R2 lower-conditionals-pass
+(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass typecheck-R3 lower-conditionals-pass
          r2-passes)
 
 (define cmp-syms '(< > <= >= eq?))
@@ -15,46 +15,83 @@
 
 ;;; === Type Checker === ;;;
 
-(define (typecheck-R2 env)
+(define (typecheck-R3 env)
   (lambda (e)
-    (define recur (typecheck-R2 env))
+    (define recur (typecheck-R3 env))
     (match e
       [(? fixnum?) `Integer]
       [(? boolean?) `Boolean]
       [(? symbol?) (lookup e env)]
       [`(read) `Integer]
+      [`(void) (values `(has-type (void) Void) `Void)]
+      [`(vector ,(app (typecheck-R3 env) e* t*) ...)
+        (let ([t `(Vector ,@t*)])
+          (values `(has-type (vector ,@e*) ,t) t))]
+
+      [`(vector-ref ,(app (typecheck-R3 env) e t) ,i)
+        (match t
+          [`(Vector ,ts ...)
+            (unless (and (exact-nonnegative-integer? i)
+                         (i . < . (length ts)))
+              (error `typecheck-R3 "invalid␣index␣~a" i))
+            (let ([t (list-ref ts i)])
+              (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t)
+                      t))]
+          [else (error "expected␣a␣vector␣in␣vector-ref,␣not" t)])]
+      [`(vector-set! ,(app (typecheck-R3 env) e-vec^ t-vec) ,i
+                     ,(app (typecheck-R3 env) e-arg^ t-arg))
+        (match t-vec
+          [`(Vector ,ts ...)
+            (unless (and (exact-nonnegative-integer? i)
+                         (i . < . (length ts)))
+              (error `typecheck-R3 "invalid␣index␣~a" i))
+            (unless (equal? (list-ref ts i) t-arg)
+              (error `typecheck-R3 "type␣mismatch␣in␣vector-set!␣~a␣~a"
+                     (list-ref ts i) t-arg))
+            (values `(has-type (vector-set! ,e-vec^
+                                            (has-type ,i Integer)
+                                            ,e-arg^) Void) `Void)]
+          [else (error `typecheck-R3
+                       "expected␣a␣vector␣in␣vector-set!,␣not␣~a" t-vec)])]
+      [`(eq? ,(app (typecheck-R3 env) e1 t1)
+             ,(app (typecheck-R3 env) e2 t2))
+        (match* (t1 t2)
+          [(`(Vector ,ts1 ...) `(Vector ,ts2 ...))
+           (values `(has-type (eq? ,e1 ,e2) Boolean) `Boolean)]
+          [(other wise) (typecheck-R3 env)])]
+      
       [`(let ([,x ,(app recur T)]) ,body)
        (define new-env (cons (cons x T) env))
-       ((typecheck-R2 new-env) body)]
+       ((typecheck-R3 new-env) body)]
       [`(,op ,(app recur n1) ,(app recur n2)) #:when (member op arith-syms-biadic)
                      (if (and (equal? n1 `Integer) (equal? n2 `Integer))
                          `Integer
-                         (error `typecheck-R2 "~a expects integer arguments" op))]
+                         (error `typecheck-R3 "~a expects integer arguments" op))]
       [`(,op ,(app recur n)) #:when (member op arith-syms-monadic)
                                           (if (equal? n `Integer)
                                               `Integer
-                                              (error `typecheck-R2 "~a expects integer arguments" op))]
+                                              (error `typecheck-R3 "~a expects integer arguments" op))]
       [`(not ,(app recur T))
        (match T
          [`Boolean `Boolean]
-         [else (error `typecheck-R2 "`not` expects a boolean" e)])]
+         [else (error `typecheck-R3 "`not` expects a boolean" e)])]
       [`(,op ,(app recur b1) ,(app recur b2)) #:when (member op bool-syms-biadic)
                                                                         (if (and (equal? b1 `Boolean) (equal? b2 `Boolean))
                                                                             `Boolean
-                                                                            (error `typecheck-R2 "~a expects boolean arguments" op))]
+                                                                            (error `typecheck-R3 "~a expects boolean arguments" op))]
       [`(,op ,(app recur t1) ,(app recur t2)) #:when (member op cmp-syms)
                                                                         (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
                                                                         (if (and (member t1 accepted-types) (member t2 accepted-types) (equal? t1 t2))
                                                                             `Boolean
-                                                                            (error `typecheck-R2 "~a expects integer arguments (or of the same type if eq?)" op))]
+                                                                            (error `typecheck-R3 "~a expects integer arguments (or of the same type if eq?)" op))]
       [`(if ,(app recur cnd) ,(app recur thn) ,(app recur els))
        (if (equal? `Boolean cnd)
            (if (equal? thn els)
                thn
-               (error `typecheck-R2 "both branches of if must be same type"))
-           (error `typecheck-R2 "if expects a boolean in the conditional"))]
+               (error `typecheck-R3 "both branches of if must be same type"))
+           (error `typecheck-R3 "if expects a boolean in the conditional"))]
       [`(program ,body)
-       (define ty ((typecheck-R2 '()) body))
+       (define ty ((typecheck-R3 '()) body))
        `(program (type ,ty) ,body)]
       )))
 
@@ -121,6 +158,55 @@
       [`(program ,type ,e) `(program ,type ,((uniquify alist) e))]
       [`(,op ,es ...) `(,op ,@(map (uniquify alist) es))])))
 
+
+;;; ==== Expose Allocations ==== ;;;
+
+;; Test expression ;;
+(define test
+  `(let ([t (vector 40 #t (vector 2))])
+     (if (vector-ref t 1)
+         (+ (vector-ref t 0)
+            (vector-ref (vector-ref t 2) 0))
+         44))
+  )
+
+
+
+(define (alloc-helper elist elen mid)
+  (cond
+    [(empty? elist) mid]
+    [else
+     `(let ([,(gensym `vecinit) ,(car elist)])
+        ,(alloc-helper (cdr elist) elen mid))]))
+
+(define (alloc-helper2 v len list)
+  (cond
+    [(eq? 1 (length list)) `(let ([_ (vector-set! ,v ,(- len (length list)) ,(car list))]) ,v)]
+    (else
+     `(let ([_ (vector-set! ,v ,(- len (length list)) ,(car list))])
+        ,(alloc-helper2 v len (cdr list))))))
+
+(define (expose-allocation exp)
+  (match exp
+    [`(has-type (vector ,e* ...) ,type)
+     (let ([v (gensym `alloc)])
+     (let ([mid `(let ([_ (if (< (+ (global-value free_ptr) ,(+ 8 (* 8 (length e*))))
+                                 (global-value fromspace_end)))
+                          (void)
+                          (collect ,(+ 8 (* 8 (length e*))))])
+                   (let ([,v (allocate ,(length e*) ,type)])
+                     ,(alloc-helper2 v (length e*) e*)))])
+     (alloc-helper e* (length e*) mid)))]
+    [`(vector-ref ,v ,i)
+     `(vecor-ref ,(expose-allocation v) ,i)]
+    [`(vector-set! ,v ,i ,new-value)
+     `(vector-set! ,v ,i ,new-value)]
+    [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
+    ))
+
+(define (trymatch exp)
+  (match exp
+    [`(try ,e* ...) (values e*)]))
 
 ;;; ==== Flatten === ;;;
 
@@ -233,8 +319,55 @@
 
 ;;; Select Instructions Itself ;;;
 
+(define (gen-lentag len)
+  (cond
+    [(zero? len) empty]
+    [else (cons (modulo len 2) (gen-lentag (quotient len 2)))]))
+
+(define (fix-zero ls)
+  (cond
+    [(eq? 6 (length ls)) ls]
+    [else (fix-zero (cons 0 ls))]))
+
+(define (gen-tag len typeList)
+  (conv-bi(append (find-ptr len typeList)
+                  (fix-zero (gen-lentag len))
+                  (list 1))))
+
+(define (conv-bi ls)
+  (cond
+    [(empty? ls) 0]
+    [else (+ (* (car ls) (expt 2 (- (length ls) 1))) (conv-bi (cdr ls)))]))
+
+(define (find-ptr len typeList)
+  (cond
+    [(empty? typeList) empty]
+    [(pair? (car typeList))
+     (if (eq? (car (car typeList)) `Vector)
+         (cons 1 (find-ptr len (cdr typeList)))
+         `error)]
+    [else (cons 0 (find-ptr len (cdr typeList)))]))
+
+
 (define (select-instructions exp)
   (match exp
+    [`(assign ,lhs (allocate ,len (Vector ,type* ...)))
+     (let ([tag (gen-tag len type*)])
+       (list `(movq (global-value free_ptr) ,lhs)
+             `(addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
+             `(movq ,lhs (reg r11))
+             `(movq (int ,tag) (deref r11))))] ;fix tag
+    [`(assign ,lhs (vector-ref ,vec ,n))
+     (list `(movq ,vec (reg r11))
+           `(movq (deref r11 ,(* 8 (+ n 1))) lhs))]
+    [`(assign ,lhs (vector-set! ,vec ,n ,arg))
+     (list `(movq ,vec (reg r11))
+           `(movq ,arg (deref rll ,(* 8 (+ n 1))))
+           `(movq (int 0) ,lhs))]
+    [`(assign ,var (void))
+     `((movq (int 0) (var ,var)))]
+    [`(assign ,var (global-value ,space))
+     `((movq (global-value ,space) (var ,var)))]
     [`(assign ,lhs (read)) (list `(callq read_int)
                                  `(movq (reg rax) (var ,lhs)))]
     [`(assign ,v1 ,v2) #:when (terminal? v2) (list `(movq ,(val->typedval v2) ,(val->typedval v1)))]
@@ -254,6 +387,12 @@
     [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,(val->typedval e2) ,(val->typedval e1))
                                        `(set ,(cmp->cc cmp) (byte-reg al))
                                        `(movzbq (byte-reg al) ,(val->typedval v)))]
+    
+    [`(collect ,bytes)
+     (list
+      `(movq (reg 15) (reg rdi))
+      `(movq ,bytes (reg rsi))
+      `(callq collect))]
     [`(if (,cmp ,arg1 ,arg2) (,thn ...) (,els ...)) (list `(if (,cmp ,(val->typedval arg1) ,(val->typedval arg2)) ,(values (map-me select-instructions thn)) ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
     [`(program (,vars ...) ,type ,instrs ...) `(program ,vars ,type ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
