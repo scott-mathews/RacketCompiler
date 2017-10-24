@@ -302,7 +302,31 @@ static void copy_vector(int64_t** vector_ptr_loc);
 
 void cheney(int64_t** rootstack_ptr)
 {
+	// Reset free pointer to be at beginning of tospace
+	free_ptr = tospace_begin;
+	scan_ptr = tospace_begin;
+	// Continue until end of rootstack
+	while(rootstack_ptr < rootstack_end)
+	{
+		// Copy vectors
+		copy_vector(*rootstack_ptr);
+		rootstack_ptr++;
+	}
 
+	// Continue until end of tospace
+	while(scan_ptr < free_ptr)
+	{
+		// Copy vectors
+	}
+
+	// Switch the fromspace and tospace pointers
+	int64_t* temp_ptr;
+	temp_ptr = tospace_begin;
+	tospace_begin = fromspace_begin;
+	fromspace_begin = temp_ptr;
+	temp_ptr = tospace_end;
+	tospace_end = fromspace_end;
+	fromspace_end = temp_ptr;
 }
 
 
@@ -358,6 +382,27 @@ void cheney(int64_t** rootstack_ptr)
 */
 void copy_vector(int64_t** vector_ptr_loc)
 {
+	int64_t tag = **vector_ptr_loc;
+	if(is_forwarding(tag))
+	{
+		// If forwarding, update pointer to new location
+		*vector_ptr_loc = tag;
+	}
+	else
+	{
+		int64_t* new_loc = free_ptr;
+		// Else Copy the contents to tospace
+		int i = 0;
+		for(i;i<get_length(**vector_ptr_loc);i++)
+		{
+			*free_ptr = *vector_ptr_loc[i];
+			free_ptr++;
+		}
+		// set forwarding address of old vector
+		**vector_ptr_loc = new_loc; 
+		// put new address in place where we found old one
+		*vector_ptr_loc = new_loc;
+	}
 
 }
 
