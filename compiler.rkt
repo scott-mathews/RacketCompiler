@@ -6,7 +6,7 @@
 
 ;; This exports passes, defined below, to users of this file.
 (provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass typecheck-R3 lower-conditionals-pass
-         r2-passes)
+         r2-passes expose-allocation-pass)
 
 (define cmp-syms '(< > <= >= eq?))
 (define bool-syms-biadic '(and))
@@ -19,81 +19,75 @@
   (lambda (e)
     (define recur (typecheck-R3 env))
     (match e
-      [(? fixnum?) `Integer]
-      [(? boolean?) `Boolean]
-      [(? symbol?) (lookup e env)]
-      [`(read) `Integer]
+      [(? fixnum?) (values `(has-type ,e Integer) `Integer)]
+      [(? boolean?) (values `(has-type ,e Boolean) `Boolean)]
+      [(? symbol?) (values `(has-type ,e ,(lookup e env)) (lookup e env))]
       [`(void) (values `(has-type (void) Void) `Void)]
-      [`(vector ,(app (typecheck-R3 env) e* t*) ...)
-        (let ([t `(Vector ,@t*)])
-          (values `(has-type (vector ,@e*) ,t) t))]
-
-      [`(vector-ref ,(app (typecheck-R3 env) e t) ,i)
-        (match t
-          [`(Vector ,ts ...)
-            (unless (and (exact-nonnegative-integer? i)
-                         (i . < . (length ts)))
-              (error `typecheck-R3 "invalid␣index␣~a" i))
-            (let ([t (list-ref ts i)])
-              (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t)
-                      t))]
-          [else (error "expected␣a␣vector␣in␣vector-ref,␣not" t)])]
-      [`(vector-set! ,(app (typecheck-R3 env) e-vec^ t-vec) ,i
-                     ,(app (typecheck-R3 env) e-arg^ t-arg))
-        (match t-vec
-          [`(Vector ,ts ...)
-            (unless (and (exact-nonnegative-integer? i)
-                         (i . < . (length ts)))
-              (error `typecheck-R3 "invalid␣index␣~a" i))
-            (unless (equal? (list-ref ts i) t-arg)
-              (error `typecheck-R3 "type␣mismatch␣in␣vector-set!␣~a␣~a"
-                     (list-ref ts i) t-arg))
-            (values `(has-type (vector-set! ,e-vec^
-                                            (has-type ,i Integer)
-                                            ,e-arg^) Void) `Void)]
-          [else (error `typecheck-R3
-                       "expected␣a␣vector␣in␣vector-set!,␣not␣~a" t-vec)])]
-      [`(eq? ,(app (typecheck-R3 env) e1 t1)
-             ,(app (typecheck-R3 env) e2 t2))
-        (match* (t1 t2)
-          [(`(Vector ,ts1 ...) `(Vector ,ts2 ...))
-           (values `(has-type (eq? ,e1 ,e2) Boolean) `Boolean)]
-          [(other wise) (typecheck-R3 env)])]
-      
-      [`(let ([,x ,(app recur T)]) ,body)
+      [`(vector ,(app recur e* t*) ...)
+       (let ([t `(Vector ,@t*)])
+         (values `(has-type (vector ,@e*) ,t) t))]
+      [`(vector-ref ,(app recur e t) ,i)
+       (match t
+         [`(Vector ,ts ...)
+          (unless (and (exact-nonnegative-integer? i)
+                       (i . < . (length ts)))
+            (error `type-check "invalid index ~a" i))
+          (let ([t (list-ref ts i)])
+            (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t)
+                    t))]
+         [else (error `typecheck-R3 "expected a vector in vector-ref, not ~a" t)])]
+      [`(vector-set! ,(app recur e-vec^ t-vec) ,i
+                     ,(app recur e-arg^ t-arg))
+       (match t-vec
+         [`(Vector ,ts ...) (unless (and (exact-nonnegative-integer? i) (i . < . (length ts)))
+                              (error `type-check "invalid index ~a" i))
+                            (unless (equal? (list-ref ts i) t-arg)
+                              (error `type-check "type mistmatch in vector-set! ~a ~a" (list-ref ts i) t-arg))
+                            (values `(has-type (vector-set! ,e-vec^
+                                                            (has-type ,i Integer)
+                                                            ,e-arg^) Void) `Void)]
+         [else (error `type-check "expected a vector in vector-set!, not ~a" t-vec)])]
+      [`(read) (values `(has-type (read) `Integer) `Integer)]
+      [`(let ([,x ,(app recur e T)]) ,body)
        (define new-env (cons (cons x T) env))
-       ((typecheck-R3 new-env) body)]
-      [`(,op ,(app recur n1) ,(app recur n2)) #:when (member op arith-syms-biadic)
-                     (if (and (equal? n1 `Integer) (equal? n2 `Integer))
-                         `Integer
+       (define-values (eb tb) ((typecheck-R3 new-env) body))
+       (values `(let ([,x ,e]) ,eb) tb)]
+      [`(,op ,(app recur n1 t1) ,(app recur n2 t2)) #:when (member op arith-syms-biadic)
+                     (if (and (equal? t1 `Integer) (equal? t2 `Integer))
+                         (values `(has-type (,op ,n1 ,n2) `Integer) `Integer)
                          (error `typecheck-R3 "~a expects integer arguments" op))]
-      [`(,op ,(app recur n)) #:when (member op arith-syms-monadic)
-                                          (if (equal? n `Integer)
-                                              `Integer
+      [`(,op ,(app recur n t)) #:when (member op arith-syms-monadic)
+                                          (if (equal? t `Integer)
+                                              (values `(has-type (,op ,n) ,t) `Integer)
                                               (error `typecheck-R3 "~a expects integer arguments" op))]
-      [`(not ,(app recur T))
+      [`(not ,(app recur e T))
        (match T
-         [`Boolean `Boolean]
+         [`Boolean (values `(has-type (not ,e) ,T) `Boolean)]
          [else (error `typecheck-R3 "`not` expects a boolean" e)])]
-      [`(,op ,(app recur b1) ,(app recur b2)) #:when (member op bool-syms-biadic)
-                                                                        (if (and (equal? b1 `Boolean) (equal? b2 `Boolean))
-                                                                            `Boolean
-                                                                            (error `typecheck-R3 "~a expects boolean arguments" op))]
-      [`(,op ,(app recur t1) ,(app recur t2)) #:when (member op cmp-syms)
-                                                                        (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
-                                                                        (if (and (member t1 accepted-types) (member t2 accepted-types) (equal? t1 t2))
-                                                                            `Boolean
-                                                                            (error `typecheck-R3 "~a expects integer arguments (or of the same type if eq?)" op))]
-      [`(if ,(app recur cnd) ,(app recur thn) ,(app recur els))
-       (if (equal? `Boolean cnd)
-           (if (equal? thn els)
-               thn
+      [`(,op ,(app recur e1 b1) ,(app recur e2 b2)) #:when (member op bool-syms-biadic)
+           (if (and (equal? b1 `Boolean) (equal? b2 `Boolean))
+               (values `(has-type (,op ,e1 ,e2) `Boolean) `Boolean)
+               (error `typecheck-R3 "~a expects boolean arguments" op))]
+      [`(,op ,(app recur e1 t1) ,(app recur e2 t2)) #:when (member op cmp-syms)
+           (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
+           (define vector-type (if (list? t1) (member 'Vector t1) #f))
+           (if (and (or vector-type (member t1 accepted-types)) (or vector-type (member t2 accepted-types)) (equal? t1 t2))
+               (values `(has-type (,op ,e1 ,e2) `Boolean) `Boolean)
+               (error `typecheck-R3 "~a expects integer arguments (or of the same type if eq?)" op))]
+      [`(if ,(app recur cnd-e cnd-T) ,(app recur thn-e thn-T) ,(app recur els-e els-T))
+       (if (equal? cnd-T `Boolean)
+           (if (equal? thn-T els-T)
+               (values `(if ,cnd-e ,thn-e ,els-e) thn-T)
                (error `typecheck-R3 "both branches of if must be same type"))
            (error `typecheck-R3 "if expects a boolean in the conditional"))]
-      [`(program ,body)
-       (define ty ((typecheck-R3 '()) body))
-       `(program (type ,ty) ,body)]
+      [`(program ,(app recur body T))
+       `(program (type ,T) ,body)]
       )))
+
+; r3 tests ;
+(define tc-vector `(program (vector (read) (void) #t 12)))
+(define tc-v `(program (let ([t (vector 40 #t (vector 2))]) (if (vector-ref t 1) (+ (vector-ref t 0) (vector-ref (vector-ref t 2) 0)) 44))))
+(define tc-v2 `(program (let ([t1 (vector 3 7)]) (let ([t2 t1]) (vector-ref t1 0)))))
 
 ; tests ;
 (define tc-int0 `(program (+ 3 4)))
@@ -129,7 +123,8 @@
     [( a            b)           #:when (fixnum? b)                    (pe-add2 b a)] ; exp int -> (pe-add2 int exp)
     [( a            b)                                                `(+ ,a ,b)])) ; exp exp -> (+ exp exp)
 
-(define (pe-arith e)
+
+(define (pe-arith-old e)
   (match e
     [(? fixnum?)    e]
     [(? symbol?)    e]
@@ -142,71 +137,78 @@
     [`(program ,type ,e) `(program ,type ,(pe-arith e))]
     ))
 
+(define (pe-arith e)
+  e)
+
+;;; End Partial Evaluator ;;;
 
 ;;; === Uniquify === ;;;
 
 (define (uniquify alist)
-  (lambda (expression)
-    (match expression
-      [v #:when (symbol? v) (lookup v alist)]
-      [n   #:when (integer? n) n]
-      [(? boolean?) expression]
-      [`(let ([,x ,e]) ,body) (let ([y (gensym x)])
-                                (let ([l (cons (cons x y) alist)])
-                                `(let ([,y ,((uniquify alist) e)]) ,((uniquify l) body))))]
+  (lambda (exp)
+    (match exp
+      [`(has-type ,v ,t) #:when (symbol? v) `(has-type ,(lookup v alist) ,t)]
+      [`(has-type ,n ,t) #:when (integer? n) `(has-type ,n ,t)]
+      [`(has-type ,b ,t) #:when (boolean? b) `(has-type ,b ,t)]
+      [`(let ([,x ,e]) ,body)
+       (let ([y (gensym x)])
+         (let ([l (cons (cons x y) alist)])
+           `(let ([,y ,((uniquify alist) e)]) ,((uniquify l) body))))]
       [`(if ,cnd ,thn ,els) `(if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els))]
       [`(program ,type ,e) `(program ,type ,((uniquify alist) e))]
-      [`(,op ,es ...) `(,op ,@(map (uniquify alist) es))])))
+      [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (uniquify alist) es)) ,t)])))
 
+; tests ;
+(define u-1 ((typecheck-R3 '()) `(program 3)))
+(define u-12 ((typecheck-R3 '()) `(program (if #t 1 2))))
+(define u-13 ((typecheck-R3 '()) `(program (+ 3 4))))
+(define u-2 ((typecheck-R3 '()) `(program (let ([x 4]) x))))
+(define u-3 ((typecheck-R3 '()) `(program (let ([x (if (eq? 3 4) (vector 3 4) (vector 7 8))]) (vector-ref x 0)))))
+(define u-v ((typecheck-R3 '()) `(program (vector 3 4))))
+(define u-v1 ((typecheck-R3 '()) `(program (let ([x (vector 1 2 3)]) (vector-ref x 0)))))
+(define u-v2 ((typecheck-R3 '()) tc-v))
+(define u-v3 ((typecheck-R3 '()) tc-v2))
 
-;;; ==== Expose Allocations ==== ;;;
+;;; End Uniquify ;;;
 
-;; Test expression ;;
-(define test
-  `(let ([t (vector 40 #t (vector 2))])
-     (if (vector-ref t 1)
-         (+ (vector-ref t 0)
-            (vector-ref (vector-ref t 2) 0))
-         44))
-  )
+;;; === Expose Allocation === ;;;
+(define (vec-alloc-size len)
+  (+ 8 (* 8 len)))
 
+(define (build-collector var len type es)
+  (define size (vec-alloc-size len))
+  `(let ([_ (if (< (+ (global-value free_ptr) ,size) (global-value fromspace_end))
+                (void)
+                (collect ,size))])
+     (let ([,var (allocate ,len ,type)])
+       ,(build-setters var len es))))
 
-
-(define (alloc-helper elist elen mid)
+(define (build-setters var len es)
   (cond
-    [(empty? elist) mid]
-    [else
-     `(let ([,(gensym `vecinit) ,(car elist)])
-        ,(alloc-helper (cdr elist) elen mid))]))
+    [(equal? 1 (length es)) `(let ([_ (vector-set! ,var ,(- len (length es)) ,(car es))]) ,var)]
+    [else `(let ([_ (vector-set! ,var ,(- len (length es)) ,(car es))])
+             ,(build-setters var len (cdr es)))]))
 
-(define (alloc-helper2 v len list)
+(define (build-inits len es latter)
   (cond
-    [(eq? 1 (length list)) `(let ([_ (vector-set! ,v ,(- len (length list)) ,(car list))]) ,v)]
-    (else
-     `(let ([_ (vector-set! ,v ,(- len (length list)) ,(car list))])
-        ,(alloc-helper2 v len (cdr list))))))
+    [(empty? es) latter]
+    [else `(let ([,(gensym `vecinit) ,(car es)])
+             ,(build-inits len (cdr es) latter))]))
 
 (define (expose-allocation exp)
   (match exp
-    [`(has-type (vector ,e* ...) ,type)
-     (let ([v (gensym `alloc)])
-     (let ([mid `(let ([_ (if (< (+ (global-value free_ptr) ,(+ 8 (* 8 (length e*))))
-                                 (global-value fromspace_end)))
-                          (void)
-                          (collect ,(+ 8 (* 8 (length e*))))])
-                   (let ([,v (allocate ,(length e*) ,type)])
-                     ,(alloc-helper2 v (length e*) e*)))])
-     (alloc-helper e* (length e*) mid)))]
-    [`(vector-ref ,v ,i)
-     `(vecor-ref ,(expose-allocation v) ,i)]
-    [`(vector-set! ,v ,i ,new-value)
-     `(vector-set! ,v ,i ,new-value)]
+    [`(has-type (vector ,es ...) ,t)
+     (define v (gensym `alloc))
+     (define latter (build-collector v (length es) t es))
+     (build-inits (length es) es latter)]
     [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
-    ))
+    [else exp]))
 
-(define (trymatch exp)
-  (match exp
-    [`(try ,e* ...) (values e*)]))
+; tests ;
+(define e-v ((uniquify '()) u-v2))
+(define e-v2 ((uniquify '()) u-v1))
+
+;;; End Expose Allocation ;;;
 
 ;;; ==== Flatten === ;;;
 
@@ -666,6 +668,8 @@
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
 ;; should be named "compiler.rkt"
+(define type-check typecheck-R3)
+
 (define r0-passes
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ))
@@ -677,6 +681,12 @@
 (define uniquify-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ))
+
+(define expose-allocation-pass
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ))
 
 (define flatten-pass
