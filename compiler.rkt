@@ -175,34 +175,46 @@
 (define (vec-alloc-size len)
   (+ 8 (* 8 len)))
 
-(define (build-collector var len type es)
+(define (build-inits-and-sets var len type es)
+  (cond
+    [(equal? 0 (length es)) (values '() `(has-type ,var ,type))]
+    [(equal? 1 (length es))
+     (define v (gensym `vecinit))
+     (values (list `(let ([,v ,(car es)]))) ;
+             (list `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
+                      (has-type ,var ,type))))]
+    [else
+     (define v (gensym `vecinit))
+     (define-values (inits sets) (build-inits-and-sets var len type (cdr es)))
+     (values `(,inits (let ([,v ,(car es)])))
+             `((let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
+                        (has-type ,var ,type))
+                     ,sets))]))
+
+(define (build-collector var len type sets)
   (define size (vec-alloc-size len))
-  `(let ([_ (if (< (+ (global-value free_ptr) ,size) (global-value fromspace_end))
-                (void)
-                (collect ,size))])
-     (let ([,var (allocate ,len ,type)])
-       ,(build-setters var len es))))
-
-(define (build-setters var len es)
-  (cond
-    [(equal? 1 (length es)) `(let ([_ (vector-set! ,var ,(- len (length es)) ,(car es))]) ,var)]
-    [else `(let ([_ (vector-set! ,var ,(- len (length es)) ,(car es))])
-             ,(build-setters var len (cdr es)))]))
-
-(define (build-inits len es latter)
-  (cond
-    [(empty? es) latter]
-    [else `(let ([,(gensym `vecinit) ,(car es)])
-             ,(build-inits len (cdr es) latter))]))
+  (list `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr) (has-type ,size Integer)) Integer) (global-value fromspace_end)) Boolean)
+                (has-type (void) Void)
+                (has-type (collect ,size) Void))])
+     (let ([,var (has-type (allocate ,len ,type) Void)])
+       ,sets))))
 
 (define (expose-allocation exp)
   (match exp
+    [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
     [`(has-type (vector ,es ...) ,t)
      (define v (gensym `alloc))
-     (define latter (build-collector v (length es) t es))
-     (build-inits (length es) es latter)]
+     (define new-es (map expose-allocation es))
+     (define-values (inits sets) (build-inits-and-sets v (length es) t new-es))
+     `(,@(reverse inits) ,@(build-collector v (length es) t sets))]
+
+    [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
+    [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
+    [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
+    [`(let ([,x ,e]) ,b) `(let ([,x ,(expose-allocation e)]) ,(expose-allocation b))]
+    [`(if ,cnd ,thn ,els) `(if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els))]
     [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
-    [else exp]))
+    ))
 
 ; tests ;
 (define e-v ((uniquify '()) u-v2))
@@ -224,7 +236,7 @@
 
 ; Check if an expression is a terminal one
 (define (terminal? e)
-  (or (fixnum? e) (boolean? e) (symbol? e) (equal? `(read) e)))
+  (or (fixnum? e) (boolean? e) (symbol? e) (equal? `(read) e) (equal? `(void) e)))
 
 ;;; Flatten Itself ;;;
 
@@ -236,41 +248,59 @@
 
 (define (flatten-helper exp . var)
   (match exp
-    [v #:when (symbol? v) (values v '() (list v))]
-    [n #:when (fixnum? n) (values n '() '())]
-    [b #:when (boolean? b) (values b '() '())]
-    [`(read) (define v (genvar var))
-             (values v (list `(assign ,v (read))) (list v))]
-    [`(not ,e) (define v (genvar var))
+    [`(has-type ,v ,t) #:when (symbol? v) (values v '() (list (cons v t)))]
+    [`(has-type ,n ,t) #:when (fixnum? n) (values n '() '())]
+    [`(has-type ,b ,t) #:when (boolean? b) (values b '() '())]
+    [`(has-type (void) ,t) (define v (genvar var))
+                           (values v `((assign ,v (void))) (list (cons v t)))]
+    [`(global-value ,name) (define v (genvar var))
+                           (values v `((assign ,v (global-value ,name))) (list (cons v `Integer)))]
+    [`(has-type (collect ,n) Void) (define v (genvar var))
+                                   (values v `((assign ,v (collect ,n))) (list (cons v `Void)))]
+    [`(has-type (allocate ,n ,t) Void) (define v (genvar var))
+                                       (values v `((assign ,v (allocate ,n ,t))) (list (cons v `Void)))]
+    [`(has-type (read) ,t) (define v (genvar var))
+             (values v (list `(assign ,v (read))) (list (cons v t)))]
+    [`(has-type (not ,e) ,t) (define v (genvar var))
                (define-values (flat-exp assignments vars) (flatten-helper e))
-               (values v `(,@assignments (assign ,v (not ,flat-exp))) (cons v vars))]
-    [`(and ,e1 ,e2) (flatten-helper `(if ,e1 ,e2 #f))]
-    [`(,op ,e1 ,e2) #:when (or (member op cmp-syms) (member op arith-syms-biadic))
+               (values v `(,@assignments (assign ,v (not ,flat-exp))) (cons (cons v t) vars))]
+    [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(if ,e1 ,e2 (has-type #f Boolean)))]
+    [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
                     (define v (genvar var))
                     (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
                     (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
-                    (values v `(,@assignments1 ,@assignments2 (assign ,v (,op ,flat-exp1 ,flat-exp2))) (cons v (append vars1 vars2)))]
-    [`(- ,e) (define v (genvar var))
+                    (values v `(,@assignments1 ,@assignments2 (assign ,v (,op ,flat-exp1 ,flat-exp2))) (cons (cons v t) (append vars1 vars2)))]
+    [`(has-type (,op ,e1 ,e2 ,e3) ,t) (define v (genvar var))
+                                      (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
+                                      (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
+                                      (define-values (flat-exp3 assignments3 vars3) (flatten-helper e3))
+                                      
+                                      (values v `(,@assignments1 ,@assignments2 ,@assignments3 (assign ,v (,op ,flat-exp1 ,flat-exp2 ,flat-exp3))) (cons (cons v t) (append vars1 vars2 vars3)))
+                                      ]
+    [`(has-type (- ,e) ,t) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
-             (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons v vars))]
+             (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
     [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
                           (define v (genvar var))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
                           (define-values (flat-els assignments-els vars-els) (flatten-helper els))
+                          
                           (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
                                                             (,@assignments-thn (assign ,v ,flat-thn))
                                                             (,@assignments-els (assign ,v ,flat-els))))
-                                  (cons v (append vars-cnd vars-thn vars-els)))]
-    [`(let ([,v ,e]) ,body) (define-values (flat-exp1 assignments1 vars1)
-                              (if (equal? '() var)
-                                  (flatten-helper e v)
-                                  (flatten-helper e var)))
-                            (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
-                            (values flat-exp2
-                                    (if (equal? v flat-exp1)
-                                    `(,@assignments1 ,@assignments2)
-                                    `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
-                                    (set->list (list->set (cons v (append vars1 vars2)))))]
+                                  (cons (cons v (if (terminal? flat-cnd) `Boolean (lookup flat-thn vars-thn))) (append vars-cnd vars-thn vars-els)))]
+    [`(let ([,v ,e]) ,body)
+     
+     (define-values (flat-exp1 assignments1 vars1)
+       (if (equal? '() var)
+           (flatten-helper e v)
+           (flatten-helper e var)))
+     (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
+     (values flat-exp2
+             (if (equal? v flat-exp1)
+                 `(,@assignments1 ,@assignments2)
+                 `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
+             (set->list (list->set (cons (cons v (if (terminal? flat-exp1) `Integer (lookup flat-exp1 vars1))) (append vars1 vars2)))))]
     ))
 
 ; tests ;
@@ -692,6 +722,7 @@
 (define flatten-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ))
 
