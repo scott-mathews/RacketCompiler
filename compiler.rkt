@@ -180,15 +180,15 @@
     [(equal? 0 (length es)) (values '() `(has-type ,var ,type))]
     [(equal? 1 (length es))
      (define v (gensym `vecinit))
-     (values (list `(let ([,v ,(car es)]))) ;
-             (list `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
-                      (has-type ,var ,type))))]
+     (values `(let ([,v ,(car es)]) ...) ;
+             `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
+                      (has-type ,var ,type)))]
     [else
      (define v (gensym `vecinit))
      (define-values (inits sets) (build-inits-and-sets var len type (cdr es)))
      (values `(,inits (let ([,v ,(car es)])))
-             `((let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
-                        (has-type ,var ,type))
+             `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
+                        (has-type ,var ,type)
                      ,sets))]))
 
 (define (build-collector var len type sets)
@@ -196,9 +196,9 @@
   (list `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr) (has-type ,size Integer)) Integer) (global-value fromspace_end)) Boolean)
                 (has-type (void) Void)
                 (has-type (collect ,size) Void))])
-     (let ([,var (has-type (allocate ,len ,type) Void)])
-       ,sets))))
-
+           (let ([,var (has-type (allocate ,len ,type) Void)])
+             ,sets))))
+#;
 (define (expose-allocation exp)
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
@@ -206,7 +206,9 @@
      (define v (gensym `alloc))
      (define new-es (map expose-allocation es))
      (define-values (inits sets) (build-inits-and-sets v (length es) t new-es))
-     `(,@(reverse inits) ,@(build-collector v (length es) t sets))]
+    ; (append (car (reverse inits)) (map (lambda (x) (car x)) (cdr (reverse inits))))]
+    ; (car inits)]
+     `( ,@(reverse inits) ,@(build-collector v (length es) t sets))]
 
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
@@ -215,6 +217,53 @@
     [`(if ,cnd ,thn ,els) `(if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els))]
     [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
     ))
+
+
+ 
+ (define (expose-allocation exp)
+   (define vec-assoc (lambda (v) `(well bucko... you done fucked up)))
+   (define (alloc-helper elist elen tiny-env v type e*)
+     (cond
+       [(empty? elist) (begin
+                         (set! vec-assoc tiny-env)
+                         `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr)
+                                                                                     (has-type ,(+ 8 (* 8 (length e*))) Integer)) Integer)
+                                                        (global-value fromspace_end)) Boolean)
+                                                 (has-type (void) Void)
+                                                 (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
+                      (let ([,v (has-type (allocate (has-type ,(length e*) Integer) ,type) void)])
+                        ,(alloc-helper2 v type (length e*) e*))))]
+       [else
+        (let ([x (gensym `vecinit)])
+          `(let ([,x ,(car elist)])
+             ,(alloc-helper (cdr elist) elen (lambda (v)
+                                                   ;(begin
+                                                    ;(set! flipper (cons`(,v ,(car elist) ,(eq? v (car elist))) flipper))
+                                                    (if (eq? v (car elist))
+                                                        x
+                                                        (tiny-env v))) v type e*)))]))
+   
+   (define (alloc-helper2 v type len list)
+     (cond
+       [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
+                                 (has-type ,v ,type))]
+       (else
+        `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
+           ,(alloc-helper2 v type len (cdr list))))))
+   (match exp
+     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
+     [`(has-type (vector ,e* ...) ,type)
+      (let ([v (gensym `alloc)])
+          (alloc-helper e* (length e*) vec-assoc v type e*))]
+     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
+     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
+     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
+     [`(let ([,x ,e]) ,b) `(let ([,x ,(expose-allocation e)]) ,(expose-allocation b))]
+     [`(if ,cnd ,thn ,els) `(if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els))]
+     [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
+     ))
+
+
 
 ; tests ;
 (define e-v ((uniquify '()) u-v2))
@@ -484,11 +533,11 @@
 (define (build-interference exp)
   (match exp
     [`(program (,vars ,live-afters) ,instrs ...) `(program (,vars
-                                                            ,(graphify (make-graph vars) live-afters instrs)
+                                                            ,(graphify vars (make-graph vars) live-afters instrs)
                                                             )
                                                             ,@instrs)]))
 
-(define (graphify graph live-afters instrs)
+(define (graphify vars graph live-afters instrs)
   (define g graph)
   (for ([lafter live-afters] [instr instrs])
     (define lafter-v (set->list lafter))
@@ -504,11 +553,18 @@
                                             (add-edge g var d)))]
       [`(,op (,type ,v)) (for ([var lafter-v])
                            (add-edge g var v))]
+      [`(callq, collect) (for ([var lafter-v])
+                           (if (eq? (look-up-type var vars) `Vector)
+                               ;(set! flipper "was here")
+                               (for ([callee callees])
+                                 (add-edge g var callee))
+                               "pass"))]
+                               ;(set! flipper (list `(var ,var) `(result ,(look-up-type var vars)) vars))))]
       [`(callq ,label) (for ([reg caller-save])
                          (for ([var lafter-v])
                            (add-edge g (register->color reg) var)))]
-      [`(if ,cnd ,thns ,thn-sets ,elss ,els-sets) (define thn-g (graphify g thn-sets thns))
-                                                  (define els-g (graphify g els-sets elss))
+      [`(if ,cnd ,thns ,thn-sets ,elss ,els-sets) (define thn-g (graphify vars g thn-sets thns))
+                                                  (define els-g (graphify vars g els-sets elss))
                                                   ; combine thn-g and els-g with g
                                                   (for ([thn-v (vertices thn-g)] [els-v (vertices els-g)])
                                                     (for ([adj-v (adjacent thn-g thn-v)])
@@ -517,6 +573,17 @@
                                                       (add-edge g els-v adj-v)))]
       [else "pass"]))
   g)
+(define flipper "no one was here")
+(define callees
+  `(rsp rbp rbx r12 r13 r14 r15))
+
+(define (look-up-type var vars)
+  (cond
+    [(empty? vars) "ERROR var not found"]
+    [(and (eq? var (car (car vars))) (pair? (cdr (car vars)))) (car (cdr (car vars)))]
+    [(eq? var (car (car vars))) (cdr (car vars))]
+    [else (look-up-type var (cdr vars))]))
+
 ;;; End Build-Interference ;;;
 
 ;;; === Allocate-Registers === ;;;
@@ -808,3 +875,59 @@
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
      ))
+
+
+
+
+;;; Forgive me my sins for as through only them shall I strive
+(define thing
+  `(program
+((tmp02 . Integer) (tmp01 Vector Integer) (tmp90 Vector Integer)
+(tmp86 . Integer) (tmp88 . Void) (tmp96 . Void) (tmp94 . Integer)
+(tmp93 . Integer) (tmp95 . Integer) (tmp85 Vector Integer)
+(tmp87 . Void) (tmp92 . Void) (tmp00 . Void) (tmp98 . Integer)
+(tmp97 . Integer) (tmp99 . Integer) (tmp89 Vector (Vector Integer))
+(tmp91 . Void)) (type Integer)
+(movq (int 42) (var tmp86))
+(movq (global-value free_ptr) (var tmp93))
+(movq (var tmp93) (var tmp94))
+(addq (int 16) (var tmp94))
+(movq (global-value fromspace_end) (var tmp95))
+(if (< (var tmp94) (var tmp95))
+((movq (int 0) (var tmp96)))
+((movq (reg r15) (reg rdi))
+(movq (int 16) (reg rsi))
+(callq collect)
+(movq (int 0) (var tmp96))))
+(movq (var tmp96) (var tmp88))
+(movq (global-value free_ptr) (var tmp85))
+(addq (int 16) (global-value free_ptr))
+(movq (var tmp85) (reg r11))
+(movq (int 3) (deref r11 0))
+(movq (var tmp85) (reg r11))
+(movq (var tmp86) (deref r11 8))
+(movq (int 0) (var tmp87))
+(movq (var tmp85) (var tmp90))
+(movq (global-value free_ptr) (var tmp97))
+(movq (var tmp97) (var tmp98))
+(addq (int 16) (var tmp98))
+(movq (global-value fromspace_end) (var tmp99))
+(if (< (var tmp98) (var tmp99))
+((movq (int 0) (var tmp00)))
+((movq (reg r15) (reg rdi))
+(movq (int 16) (reg rsi))
+(callq collect)
+(movq (int 0) (var tmp00))))
+(movq (var tmp00) (var tmp92))
+(movq (global-value free_ptr) (var tmp89))
+(addq (int 16) (global-value free_ptr))
+(movq (var tmp89) (reg r11))
+(movq (int 131) (deref r11 0))
+(movq (var tmp89) (reg r11))
+(movq (var tmp90) (deref r11 8))
+(movq (int 0) (var tmp91))
+(movq (var tmp89) (reg r11))
+(movq (deref r11 8) (var tmp01))
+(movq (var tmp01) (reg r11))
+(movq (deref r11 8) (var tmp02))
+(movq (var tmp02) (reg rax))))
