@@ -5,7 +5,7 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 
-(debug-level 2)
+;(debug-level 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Regression Tests ;;;
@@ -43,7 +43,7 @@
 ;;; === R3 Tests === ;;;
 ;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
 ;(interp-tests "uniquify" (typecheck-R3 '()) uniquify-pass interp-scheme "r3" (range 36 37))
-(interp-tests "expose-allocation" (typecheck-R3 '()) expose-allocation-pass interp-scheme "r3" (range 1 37))
+(interp-tests "expose-allocation" (typecheck-R3 '()) expose-allocation-pass interp-scheme "r3" (range 1 36))
 ;(interp-tests "flatten" (typecheck-R3 '()) flatten-pass interp-scheme "r3" (range 23 24))
 
 (display "tests passed!") (newline)

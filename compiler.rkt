@@ -172,44 +172,43 @@
 ;;; End Uniquify ;;;
 
 ;;; === Expose Allocation === ;;;
-(define (vec-alloc-size len)
-  (+ 8 (* 8 len)))
-
-(define (build-inits-and-sets var len type es)
-  (cond
-    [(equal? 0 (length es)) (values '() `(has-type ,var ,type))]
-    [(equal? 1 (length es))
-     (define v (gensym `vecinit))
-     (values `(let ([,v ,(car es)]) ...) ;
-             `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
-                      (has-type ,var ,type)))]
-    [else
-     (define v (gensym `vecinit))
-     (define-values (inits sets) (build-inits-and-sets var len type (cdr es)))
-     (values `(,inits (let ([,v ,(car es)])))
-             `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,var ,type) (has-type ,(- len (length es)) Integer) ,v) Void)])
-                        (has-type ,var ,type)
-                     ,sets))]))
-
-(define (build-collector var len type sets)
-  (define size (vec-alloc-size len))
-  (list `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr) (has-type ,size Integer)) Integer) (global-value fromspace_end)) Boolean)
-                (has-type (void) Void)
-                (has-type (collect ,size) Void))])
-           (let ([,var (has-type (allocate ,len ,type) Void)])
-             ,sets))))
-#;
 (define (expose-allocation exp)
+  (define vec-assoc (lambda (v) `(well bucko... you done fucked up)))
+  (define (alloc-helper elist elen tiny-env v type e*)
+    (cond
+      [(empty? elist) (begin
+                        (set! vec-assoc tiny-env)
+                        `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr)
+                                                                                    (has-type ,(+ 8 (* 8 (length e*))) Integer)) Integer)
+                                                                       (global-value fromspace_end)) Boolean)
+                                                          (has-type (void) Void)
+                                                          (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
+                           ,(if (equal? (length e*) 0)
+                                `(let ([,v (has-type (allocate ,(length e*) ,type) void)]) ,v)
+                                `(let ([,v (has-type (allocate ,(length e*) ,type) void)])
+                                  ,(alloc-helper2 v type (length e*) e*)))))]
+      [else
+       (let ([x (gensym `vecinit)])
+         `(let ([,x ,(car elist)])
+            ,(alloc-helper (cdr elist) elen (lambda (v)
+                                              ;(begin
+                                              ;(set! flipper (cons`(,v ,(car elist) ,(eq? v (car elist))) flipper))
+                                              (if (eq? v (car elist))
+                                                  x
+                                                  (tiny-env v))) v type e*)))]))
+  (define (alloc-helper2 v type len list)
+    (cond
+      ;[(eq? 0 (length list)) ]
+      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
+                                (has-type ,v ,type))]
+      (else
+       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
+          ,(alloc-helper2 v type len (cdr list))))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
-    [`(has-type (vector ,es ...) ,t)
-     (define v (gensym `alloc))
-     (define new-es (map expose-allocation es))
-     (define-values (inits sets) (build-inits-and-sets v (length es) t new-es))
-    ; (append (car (reverse inits)) (map (lambda (x) (car x)) (cdr (reverse inits))))]
-    ; (car inits)]
-     `( ,@(reverse inits) ,@(build-collector v (length es) t sets))]
-
+    [`(has-type (vector ,e* ...) ,type)
+     (let ([v (gensym `alloc)])
+       (alloc-helper e* (length e*) vec-assoc v type e*))]
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
@@ -217,51 +216,6 @@
     [`(if ,cnd ,thn ,els) `(if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els))]
     [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
     ))
-
-
- 
- (define (expose-allocation exp)
-   (define vec-assoc (lambda (v) `(well bucko... you done fucked up)))
-   (define (alloc-helper elist elen tiny-env v type e*)
-     (cond
-       [(empty? elist) (begin
-                         (set! vec-assoc tiny-env)
-                         `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr)
-                                                                                     (has-type ,(+ 8 (* 8 (length e*))) Integer)) Integer)
-                                                        (global-value fromspace_end)) Boolean)
-                                                 (has-type (void) Void)
-                                                 (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
-                      (let ([,v (has-type (allocate (has-type ,(length e*) Integer) ,type) void)])
-                        ,(alloc-helper2 v type (length e*) e*))))]
-       [else
-        (let ([x (gensym `vecinit)])
-          `(let ([,x ,(car elist)])
-             ,(alloc-helper (cdr elist) elen (lambda (v)
-                                                   ;(begin
-                                                    ;(set! flipper (cons`(,v ,(car elist) ,(eq? v (car elist))) flipper))
-                                                    (if (eq? v (car elist))
-                                                        x
-                                                        (tiny-env v))) v type e*)))]))
-   
-   (define (alloc-helper2 v type len list)
-     (cond
-       [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
-                                 (has-type ,v ,type))]
-       (else
-        `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
-           ,(alloc-helper2 v type len (cdr list))))))
-   (match exp
-     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
-     [`(has-type (vector ,e* ...) ,type)
-      (let ([v (gensym `alloc)])
-          (alloc-helper e* (length e*) vec-assoc v type e*))]
-     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
-     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
-     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
-     [`(let ([,x ,e]) ,b) `(let ([,x ,(expose-allocation e)]) ,(expose-allocation b))]
-     [`(if ,cnd ,thn ,els) `(if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els))]
-     [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
-     ))
 
 
 
