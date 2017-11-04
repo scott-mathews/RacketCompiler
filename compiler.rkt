@@ -184,8 +184,8 @@
                                                           (has-type (void) Void)
                                                           (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
                            ,(if (equal? (length e*) 0)
-                                `(let ([,v (has-type (allocate ,(length e*) ,type) void)]) ,v)
-                                `(let ([,v (has-type (allocate ,(length e*) ,type) void)])
+                                `(let ([,v (has-type (allocate ,(length e*) ,type) Void)]) (has-type ,v Void))
+                                `(let ([,v (has-type (allocate ,(length e*) ,type) Void)])
                                   ,(alloc-helper2 v type (length e*) e*)))))]
       [else
        (let ([x (gensym `vecinit)])
@@ -199,14 +199,15 @@
   (define (alloc-helper2 v type len list)
     (cond
       ;[(eq? 0 (length list)) ]
-      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
+      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) Void)) Void)])
                                 (has-type ,v ,type))]
       (else
-       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) ,(vec-assoc (car list))) Void)])
+       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) Void)) Void)])
           ,(alloc-helper2 v type len (cdr list))))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
     [`(has-type (vector ,e* ...) ,type)
+     (set! e* (map expose-allocation e*))
      (let ([v (gensym `alloc)])
        (alloc-helper e* (length e*) vec-assoc v type e*))]
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
@@ -250,6 +251,9 @@
     ))
 
 (define (flatten-helper exp . var)
+  ;(display exp)
+  ;(display (genvar var))
+  ;(display "\n")
   (match exp
     [`(has-type ,v ,t) #:when (symbol? v) (values v '() (list (cons v t)))]
     [`(has-type ,n ,t) #:when (fixnum? n) (values n '() '())]
@@ -259,7 +263,7 @@
     [`(global-value ,name) (define v (genvar var))
                            (values v `((assign ,v (global-value ,name))) (list (cons v `Integer)))]
     [`(has-type (collect ,n) Void) (define v (genvar var))
-                                   (values v `((assign ,v (collect ,n))) (list (cons v `Void)))]
+                                   (values v `((collect ,n)) '(list (cons v `Void)))]
     [`(has-type (allocate ,n ,t) Void) (define v (genvar var))
                                        (values v `((assign ,v (allocate ,n ,t))) (list (cons v `Void)))]
     [`(has-type (read) ,t) (define v (genvar var))
@@ -270,6 +274,7 @@
     [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(if ,e1 ,e2 (has-type #f Boolean)))]
     [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
                     (define v (genvar var))
+                    ;(display (format "Type: ~a" (cons v t)))
                     (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
                     (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
                     (values v `(,@assignments1 ,@assignments2 (assign ,v (,op ,flat-exp1 ,flat-exp2))) (cons (cons v t) (append vars1 vars2)))]
@@ -277,7 +282,6 @@
                                       (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
                                       (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
                                       (define-values (flat-exp3 assignments3 vars3) (flatten-helper e3))
-                                      
                                       (values v `(,@assignments1 ,@assignments2 ,@assignments3 (assign ,v (,op ,flat-exp1 ,flat-exp2 ,flat-exp3))) (cons (cons v t) (append vars1 vars2 vars3)))
                                       ]
     [`(has-type (- ,e) ,t) (define v (genvar var))
@@ -287,23 +291,22 @@
                           (define v (genvar var))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
                           (define-values (flat-els assignments-els vars-els) (flatten-helper els))
-                          
                           (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
                                                             (,@assignments-thn (assign ,v ,flat-thn))
                                                             (,@assignments-els (assign ,v ,flat-els))))
                                   (cons (cons v (if (terminal? flat-cnd) `Boolean (lookup flat-thn vars-thn))) (append vars-cnd vars-thn vars-els)))]
-    [`(let ([,v ,e]) ,body)
-     
+    [`(let ([,v ,e]) ,body)     
      (define-values (flat-exp1 assignments1 vars1)
        (if (equal? '() var)
            (flatten-helper e v)
-           (flatten-helper e var)))
+           (flatten-helper e (car var))))
      (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
      (values flat-exp2
              (if (equal? v flat-exp1)
                  `(,@assignments1 ,@assignments2)
                  `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
              (set->list (list->set (cons (cons v (if (terminal? flat-exp1) `Integer (lookup flat-exp1 vars1))) (append vars1 vars2)))))]
+    ;[else ]
     ))
 
 ; tests ;
@@ -352,57 +355,53 @@
     [`<= `le]
     [`eq? `e]))
 
+; Tag Helpers
+(define (build-pointer-mask type)
+  (define n 0)
+  (for ([item type])
+    (if (list? item)
+        (begin (set! n (arithmetic-shift n 1))
+               (set! n (bitwise-ior n 1)))
+        (set! n (arithmetic-shift n 1))))
+  n)
+
+(define (insert-length len pointer-mask)
+  (bitwise-ior (arithmetic-shift pointer-mask 6) len))
+
+(define (build-tag type len)
+  (define pointer-mask (build-pointer-mask type))
+  (define len-tagged (insert-length len pointer-mask))
+  (bitwise-ior (arithmetic-shift len-tagged 1) 1))
+
 ;;; Select Instructions Itself ;;;
-
-(define (gen-lentag len)
-  (cond
-    [(zero? len) empty]
-    [else (cons (modulo len 2) (gen-lentag (quotient len 2)))]))
-
-(define (fix-zero ls)
-  (cond
-    [(eq? 6 (length ls)) ls]
-    [else (fix-zero (cons 0 ls))]))
-
-(define (gen-tag len typeList)
-  (conv-bi(append (find-ptr len typeList)
-                  (fix-zero (gen-lentag len))
-                  (list 1))))
-
-(define (conv-bi ls)
-  (cond
-    [(empty? ls) 0]
-    [else (+ (* (car ls) (expt 2 (- (length ls) 1))) (conv-bi (cdr ls)))]))
-
-(define (find-ptr len typeList)
-  (cond
-    [(empty? typeList) empty]
-    [(pair? (car typeList))
-     (if (eq? (car (car typeList)) `Vector)
-         (cons 1 (find-ptr len (cdr typeList)))
-         `error)]
-    [else (cons 0 (find-ptr len (cdr typeList)))]))
-
 
 (define (select-instructions exp)
   (match exp
-    [`(assign ,lhs (allocate ,len (Vector ,type* ...)))
-     (let ([tag (gen-tag len type*)])
-       (list `(movq (global-value free_ptr) ,lhs)
+    [`(assign ,lhs (allocate ,len (Vector ,type* ...)))            ; allocate
+     (let ([tag (build-tag type* len)])
+       (list `(movq (global-value free_ptr) (var ,lhs))
              `(addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
-             `(movq ,lhs (reg r11))
-             `(movq (int ,tag) (deref r11))))] ;fix tag
-    [`(assign ,lhs (vector-ref ,vec ,n))
-     (list `(movq ,vec (reg r11))
-           `(movq (deref r11 ,(* 8 (+ n 1))) lhs))]
-    [`(assign ,lhs (vector-set! ,vec ,n ,arg))
-     (list `(movq ,vec (reg r11))
-           `(movq ,arg (deref rll ,(* 8 (+ n 1))))
-           `(movq (int 0) ,lhs))]
+             `(movq (var ,lhs) (reg r11))
+             `(movq (int ,tag) (deref r11 0))))]
+
+    
+    [`(assign ,lhs (vector-ref ,vec ,n))                            ; vector-ref
+     (list `(movq (var ,vec) (reg r11))
+           `(movq (deref r11 ,(* 8 (+ n 1))) (var ,lhs)))]
+    [`(assign ,lhs (vector-set! ,vec ,n ,arg))                       ; vector-set!
+     (list `(movq (var ,vec) (reg r11))
+           `(movq ,(val->typedval arg) (deref r11 ,(* 8 (+ n 1))))
+           `(movq (int 0) (var ,lhs)))]
     [`(assign ,var (void))
      `((movq (int 0) (var ,var)))]
     [`(assign ,var (global-value ,space))
      `((movq (global-value ,space) (var ,var)))]
+    [`(collect ,bytes)                                            ;collect
+     (list
+      `(movq (reg r15) (reg rdi))
+      `(movq ,bytes (reg rsi))
+      `(callq collect))]
+    
     [`(assign ,lhs (read)) (list `(callq read_int)
                                  `(movq (reg rax) (var ,lhs)))]
     [`(assign ,v1 ,v2) #:when (terminal? v2) (list `(movq ,(val->typedval v2) ,(val->typedval v1)))]
@@ -422,12 +421,6 @@
     [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,(val->typedval e2) ,(val->typedval e1))
                                        `(set ,(cmp->cc cmp) (byte-reg al))
                                        `(movzbq (byte-reg al) ,(val->typedval v)))]
-    
-    [`(collect ,bytes)
-     (list
-      `(movq (reg 15) (reg rdi))
-      `(movq ,bytes (reg rsi))
-      `(callq collect))]
     [`(if (,cmp ,arg1 ,arg2) (,thn ...) (,els ...)) (list `(if (,cmp ,(val->typedval arg1) ,(val->typedval arg2)) ,(values (map-me select-instructions thn)) ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
     [`(program (,vars ...) ,type ,instrs ...) `(program ,vars ,type ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
@@ -749,6 +742,7 @@
 
 (define select-instructions-pass
   `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ))
@@ -756,6 +750,7 @@
 (define allocate-registers-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("uncover-live" ,uncover-live ,interp-x86)
