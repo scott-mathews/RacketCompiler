@@ -173,12 +173,21 @@
 
 (define flipper "no one was here")
 
+
+
+
+
+
+
 ;;; === Expose Allocation === ;;;
+
 (define (expose-allocation exp)
   (define vec-assoc (lambda (v) `(well bucko... you done fucked up)))
   (define (alloc-helper elist elen tiny-env v type e*)
     (cond
-      [(empty? elist) (begin
+      [(empty? elist)
+  
+       (begin
                         (set! vec-assoc tiny-env)
                         `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr)
                                                                                     (has-type ,(+ 8 (* 8 (length e*))) Integer)) Integer)
@@ -191,27 +200,40 @@
                                   ,(alloc-helper2 v type (length e*) e*)))))]
       [else
        (let ([x (gensym `vecinit)])
-         `(let ([,x ,(car elist)])
-            ,(alloc-helper (cdr elist) elen (lambda (v)
-                                              (begin
-                                              (set! flipper `(ELIST IS AS FOLLOWS:
-                                                                    ,(car elist)
-                                                                    END OF ELIST))
-                                              (if (eq? v (car elist))
-                                                  `(,x ,type)
-                                                  (tiny-env v)))) v type e*)))]))
+         (if (and (pair? (second (car elist))) (eq? `vector (car (second (car elist)))))
+             (begin
+               (set! flipper (expose-allocation (car elist)))
+               `(let ([,x ,(expose-allocation (car elist))])
+                  ,(alloc-helper (cdr elist) elen (lambda (v)
+                                                (begin
+                                                  ;(set! flipper elist)
+                                                  (if (eq? v (car elist))
+                                                      `(,x ,(last (car elist)))
+                                                      (tiny-env v)))) v type e*)))
+           `(let ([,x ,(car elist)])
+              ,(alloc-helper (cdr elist) elen (lambda (v)
+                                                (begin
+                                                  ;(set! flipper elist)
+                                                  (if (eq? v (car elist))
+                                                      `(,x ,(third (car elist)))
+                                                      (tiny-env v)))) v type e*))))]))
   (define (alloc-helper2 v type len list)
     (cond
       ;[(eq? 0 (length list)) ]
-      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(find (cdr type) len 1))) Void)])
+      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(begin
+                                                                                                                                    ;(set! flipper list)
+                                                                                                                                 (second (vec-assoc (car list)))))) Void)])
                                 (has-type ,v ,type))]
       (else
-       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(find (cdr type) len 1))) Void)])
+       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list)))
+                                                                                                                                 ,(begin
+                                                                                                                                    ;(set! flipper `(,(car (vec-assoc (car list))) ,(second (vec-assoc (car list)))))
+                                                                                                                                 (second (vec-assoc (car list)))))) Void)])
           ,(alloc-helper2 v type len (cdr list))))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
     [`(has-type (vector ,e* ...) ,type)
-     (set! e* (map expose-allocation e*))
+     ;(set! e* (map expose-allocation e*))
      (let ([v (gensym `alloc)])
        (alloc-helper e* (length e*) vec-assoc v type e*))]
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
@@ -281,7 +303,7 @@
     [`(global-value ,name) (define v (genvar var))
                            (values v `((assign ,v (global-value ,name))) (list (cons v `Integer)))]
     [`(has-type (collect ,n) Void) (define v (genvar var))
-                                   (values v `((collect ,n)) (list (cons v `Void)))]
+                                   (values `(void) `((collect ,n)) `())]; (list (cons v `Void)))]
     [`(has-type (allocate ,n ,t) Void) (define v (genvar var))
                                        (values v `((assign ,v (allocate ,n ,t))) (list (cons v `Void)))]
     [`(has-type (read) ,t) (define v (genvar var))
@@ -323,9 +345,24 @@
              (if (equal? v flat-exp1)
                  `(,@assignments1 ,@assignments2)
                  `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
-             (set->list (list->set (cons (cons v (if (terminal? flat-exp1) `Integer (lookup flat-exp1 vars1))) (append vars1 vars2)))))]
+             (set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
     ;[else ]
     ))
+
+(define (flat-type var exp)
+  (define str-exp (substring (symbol->string var) 0 7))
+  (cond
+    [(string=? str-exp "vecinit")
+     (define let-smasher
+       (lambda (x)
+         (match x
+           [`(has-type ,v ,type) type]
+           [`(let [(,v ,e)] ,b) (let-smasher b)])))
+     (let-smasher exp)]
+    [(string=? str-exp "collect") `Void]
+    [else (last exp)]))
+
+
 
 ; tests ;
 (define tf-bk-1 `(program (if #f 0 42)))
@@ -804,17 +841,18 @@
 ;;; End Print x86 ;;;
 
 (define (temp-test exp)
-(patch-instructions
- (lower-conditionals
-  ((assign-homes '() '())
-   (allocate-registers
-   (build-interference
-    (uncover-live
-     (select-instructions
-      (flatten
-       (expose-allocation
-        ((uniquify `())
-         ((typecheck-R3 `()) exp))))))))))))
+  ;(patch-instructions
+   ;(lower-conditionals
+    ;((assign-homes '() '())
+     ;(allocate-registers
+      ;(build-interference
+       ;(uncover-live
+        ;(select-instructions
+         ;(flatten
+          (expose-allocation
+           ((uniquify `())
+            ((typecheck-R3 `()) exp))));))))))))
+
 
 (define book-v
   `(program (vector-ref (vector-ref (vector (vector 42)) 0) 0)))
