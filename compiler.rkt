@@ -202,7 +202,7 @@
       [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) ,(alook-up (car list) list))) Void)])
                                 (has-type ,v ,type))]
       (else
-       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) ,(alook-up (car list)))) Void)])
+       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) ,(alook-up (car list) list))) Void)])
           ,(alloc-helper2 v type len (cdr list))))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
@@ -564,6 +564,11 @@
 ; splits list of var . type into list of list of var . type list of var . type
 ; aka a list containing regular vars, and a list containing rootStack vars
 (define (split-spills vars)
+  ; checking types of vars
+  ;(for ([var vars])
+  ;  (display (car var)) (display " :: ") (display (cdr var)) (display "\n"))
+
+  
   (define regular-vars '())
   (define rootstack-vars '())
   (for ([var (map car vars)])
@@ -726,24 +731,23 @@
 ;;; End Patch Instructions ;;;
 
 ;;; === Print x86 === ;;;
-(define store "\tpushq %r15\n\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
-(define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n\tpopq %r15\n")
+(define store "\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
+(define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n")
 
 (define root-store
   (lambda (m)
   (format
-   "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq _initialize \n\tmovq _rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
+   "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
     m)))
 
-
 (define intro
-  (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") (* 8 (length n)))]
-                    [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store (* 8 (length m)))) (* 8 (length n)))])))
+  (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
+                    [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store m)) n)])))
 
 (define conclusion
-  (lambda (n) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") (length n))]
-                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") (length n))]
-                    [else (format (string-append "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") (length n))])))
+  (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
+                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n\tcallq print_int\n\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
+                    [else (format (string-append "\n\tmovq %rax, %rdi\n\tcallq print_int\n\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)])))
 
 (define (arg->string arg)
   (match arg
@@ -751,33 +755,34 @@
     [`(reg ,r) (format "%~a" r)]
     [`(byte-reg ,r) (format "%~a" r)]
     [`(int ,n) (format "$~a" n)]
-    [`(global-value ,ptr) (format "_~a(%rip)" ptr)]
+    [`(global-value ,ptr) (format "~a(%rip)" ptr)]
     [else (format "~a" arg)]))
 
 (define (print-x86 exp)
   (match exp
     [`(jmp-if ,cc ,label) (format "\tj~a ~a\n" cc label)]
     [`(set ,e ,arg) (string-append "\tsete " (arg->string arg) "\n")]
-    ;[`(movq (global-value ,ptr) ,reg) (string-append (arg->string ptr)  (arg->string reg))]
     [`(,op ,arg1 ,arg2) (string-append "\t" (format "~a" op) " " (arg->string arg1) ", " (arg->string arg2) "\n")]
     [`(label ,name) (format "~a:\n" name)] 
     [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
-    [`(program ,spills (type ,t) ,instrs ...) (string-append (intro (car spills) (car (cdr spills))) (foldr string-append "" (map print-x86 instrs)) (conclusion (car spills)))]))
+    [`(program (,regn ,rootn) (type ,t) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn))]))
 
 ;;; End Print x86 ;;;
 
 (define (temp-test exp)
+ (print-x86
 (patch-instructions
  (lower-conditionals
-  (allocate-registers
+  ((assign-homes '() '())
+   (allocate-registers
    (build-interference
     (uncover-live
      (select-instructions
       (flatten
        (expose-allocation
         ((uniquify `())
-         ((typecheck-R3 `()) exp)))))))))))
+         ((typecheck-R3 `()) exp)))))))))))))
 
 (define book-v
   `(program (vector-ref (vector-ref (vector (vector 42)) 0) 0)))

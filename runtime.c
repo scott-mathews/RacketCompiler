@@ -90,7 +90,7 @@ void initialize(uint64_t rootstack_size, uint64_t heap_size)
   // 1. Check to make sure that our assumptions about the world are correct.
   assert(sizeof(int64_t) == sizeof(int64_t*));
   assert((heap_size % sizeof(int64_t)) == 0);
-  assert((rootstack_size % sizeof(int64_t)) == 0);
+	assert((rootstack_size % sizeof(int64_t)) == 0);
 
   // 2. Allocate memory (You should always check if malloc gave you memory)
   if (!(fromspace_begin = malloc(heap_size))) {
@@ -304,7 +304,7 @@ void cheney(int64_t** rootstack_ptr)
 {
 	// Reset free pointer to be at beginning of tospace
 	free_ptr = tospace_begin;
-	scan_ptr = tospace_begin;
+	int64_t* scan_ptr = tospace_begin;
 	// Continue until end of rootstack
 	while(rootstack_ptr < rootstack_end)
 	{
