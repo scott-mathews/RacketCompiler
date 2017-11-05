@@ -6,7 +6,7 @@
 
 ;; This exports passes, defined below, to users of this file.
 (provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass typecheck-R3 lower-conditionals-pass
-         r2-passes expose-allocation-pass)
+         r2-passes r3-passes expose-allocation-pass)
 
 (define cmp-syms '(< > <= >= eq?))
 (define bool-syms-biadic '(and))
@@ -434,28 +434,34 @@
   (match exp
     [`(assign ,lhs (allocate ,len (Vector ,type* ...)))            ; allocate
      (let ([tag (build-tag type* len)])
-       (list `(movq (global-value free_ptr) (var ,lhs))
+       (list `(movq (global-value free_ptr) (reg rax))
+             `(movq (reg rax) (var ,lhs))
              `(addq (int ,(* 8 (+ 1 len))) (global-value free_ptr))
              `(movq (var ,lhs) (reg r11))
              `(movq (int ,tag) (deref r11 0))))]
-
-    
     [`(assign ,lhs (vector-ref ,vec ,n))                            ; vector-ref
      (list `(movq (var ,vec) (reg r11))
            `(movq (deref r11 ,(* 8 (+ n 1))) (var ,lhs)))]
     [`(assign ,lhs (vector-set! ,vec ,n ,arg))                       ; vector-set!
      (list `(movq (var ,vec) (reg r11))
-           `(movq ,(val->typedval arg) (deref r11 ,(* 8 (+ n 1))))
+           `(movq ,(val->typedval arg) (reg rax))
+           `(movq (reg rax) (deref r11 ,(* 8 (+ n 1))))
            `(movq (int 0) (var ,lhs)))]
     [`(assign ,var (void))
      `((movq (int 0) (var ,var)))]
     [`(assign ,var (global-value ,space))
-     `((movq (global-value ,space) (var ,var)))]
+     `((movq (global-value ,space) (reg rax))
+       (movq (reg rax) (var ,var)))]
     [`(collect ,bytes)                                            ;collect
+     (if (equal? (system-type) `windows)
+     (list
+      `(movq (reg r15) (reg rcx))
+      `(movq ,bytes (reg rdx))
+      `(callq collect))
      (list
       `(movq (reg r15) (reg rdi))
       `(movq ,bytes (reg rsi))
-      `(callq collect))]
+      `(callq collect)))]
     
     [`(assign ,lhs (read)) (list `(callq read_int)
                                  `(movq (reg rax) (var ,lhs)))]
@@ -473,10 +479,15 @@
                                 [(equal? v e2) (list `(addq ,(val->typedval e1) ,(val->typedval v)))]
                                 [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
                                             `(addq ,(val->typedval e2) ,(val->typedval v)))])]
-    [`(assign ,v (,cmp ,e1 ,e2)) (list `(cmpq ,(val->typedval e2) ,(val->typedval e1))
+    [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg rax))
+                                       `(cmpq (reg rax) ,(val->typedval e1))
                                        `(set ,(cmp->cc cmp) (byte-reg al))
-                                       `(movzbq (byte-reg al) ,(val->typedval v)))]
-    [`(if (,cmp ,arg1 ,arg2) (,thn ...) (,els ...)) (list `(if (,cmp ,(val->typedval arg1) ,(val->typedval arg2)) ,(values (map-me select-instructions thn)) ,(values (map-me select-instructions els))))]
+                                       `(movzbq (byte-reg al) (reg rax))
+                                       `(movq (reg rax) ,(val->typedval v)))]
+    [`(if (,cmp ,arg1 ,arg2) (,thn ...) (,els ...)) (list `(movq ,(val->typedval arg2) (reg rax))
+                                                          `(if (,cmp (reg rax) ,(val->typedval arg1))
+                                                               ,(values (map-me select-instructions thn))
+                                                               ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
     [`(program (,vars ...) ,type ,instrs ...) `(program ,vars ,type ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
 
@@ -569,7 +580,7 @@
                            (add-edge g var v))]
       [`(callq ,collect) (for ([var lafter-v])
                            (if (equal? (look-up-type var vars) `Vector)
-                               (for ([callee (set-union callee-save (set 'rdi 'rsi))])
+                               (for ([callee (set-union callee-save (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
                                  (add-edge g var callee))
                                "pass"))]
       [`(callq ,label) (for ([reg caller-save])
@@ -725,12 +736,10 @@
 
 (define (type->home arg alist rootlist)
   (match arg
-    [`(,type ,val) (if (and (equal? type `var) (member val (map car alist)))
-                       `(deref rbp ,(lookup val alist))
-                       `(,type ,val))]
-    [`(,type ,val) (if (and (equal? type `var) (member val (map car rootlist)))
-                       `(deref r15 ,(lookup val rootlist))
-                       `(,type ,val))]
+    [`(,type ,val) #:when (and (equal? type `var) (member val (map car alist)))
+                       `(deref rbp ,(lookup val alist))]
+    [`(,type ,val) #:when (and (equal? type `var) (member val (map car rootlist)))
+                       `(deref r15 ,(lookup val rootlist))]
     [else arg])
   )
 
@@ -784,21 +793,35 @@
 (define root-store
   (lambda (m)
   (format
-   "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
+   (if (equal? (system-type) `windows)
+       "\tmovq $16384, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
+       "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n")
+   
     m)))
 
 (define intro
   (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
                     [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store m)) n)])))
 
+(define (print-result type)
+  (define output-string "")
+  (match type
+    [`Integer (set! output-string "print_int\n")]
+    [`Boolean (set! output-string "print_bool\n")]
+    [`Vector (set! output-string "print_vector\n")])
+  (cond
+    [(equal? (system-type) `macosx) (set! output-string (string-append "\tcallq _" output-string))]
+    [else (set! output-string (string-append "\tcallq " output-string))])
+  output-string)
+
 (define conclusion
-  (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
-                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n\tcallq print_int\n\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
-                    [else (format (string-append "\n\tmovq %rax, %rdi\n\tcallq print_int\n\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)])))
+  (lambda (n m type) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
+                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
+                    [else (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)])))
 
 (define (arg->string arg)
   (match arg
-    [`(deref rbp ,n) (format "~a(%rbp)" n)]
+    [`(deref ,reg ,n) (format "~a(%~a)" n reg)]
     [`(reg ,r) (format "%~a" r)]
     [`(byte-reg ,r) (format "%~a" r)]
     [`(int ,n) (format "$~a" n)]
@@ -813,7 +836,7 @@
     [`(label ,name) (format "~a:\n" name)] 
     [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
-    [`(program (,regn ,rootn) (type ,t) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn))]))
+    [`(program (,regn ,rootn) (type ,t) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
 
 ;;; End Print x86 ;;;
 
@@ -912,6 +935,21 @@
      ))
 
 (define print-x86-pass
+  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+     ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
+     ("flatten" ,flatten ,interp-C)
+     ("select-instructions" ,select-instructions ,interp-x86)
+     ("uncover-live" ,uncover-live ,interp-x86)
+     ("build-interference" ,build-interference ,interp-x86)
+     ("allocate-registers" ,allocate-registers ,interp-x86)
+     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
+     ("lower-conditionals" ,lower-conditionals ,interp-x86)
+     ("patch-instructions" ,patch-instructions ,interp-x86)
+     ("print-x86" ,print-x86 ,interp-x86)
+     ))
+
+(define r3-passes
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)

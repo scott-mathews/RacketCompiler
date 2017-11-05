@@ -7,8 +7,8 @@ main:
 	pushq %r12
 	pushq %rbx
 	subq $0, %rsp
-	movq $16384, %rdi 
-	movq $16, %rsi 
+	movq $16384, %rcx 
+	movq $16, %rdx 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15 
 	movq $0, (%r15) 
