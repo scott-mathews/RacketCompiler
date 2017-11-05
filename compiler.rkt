@@ -803,6 +803,7 @@
 (define lower-conditionals-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("uncover-live" ,uncover-live ,interp-x86)
@@ -815,6 +816,7 @@
 (define patch-instructions-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("uncover-live" ,uncover-live ,interp-x86)
@@ -828,6 +830,7 @@
 (define print-x86-pass
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("uncover-live" ,uncover-live ,interp-x86)
@@ -842,6 +845,7 @@
 (define r2-passes
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("uncover-live" ,uncover-live ,interp-x86)
@@ -856,6 +860,7 @@
 (define r1-passes
   `( ("partial evaluator" ,pe-arith ,interp-scheme)
      ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
      ("uncover-live" ,uncover-live ,interp-x86)
