@@ -6,7 +6,7 @@ main:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $0, %rsp
+	subq $16, %rsp
 	movq $16384, %rcx 
 	movq $16, %rdx 
 	callq initialize 
@@ -15,13 +15,13 @@ main:
 	addq $0, %r15
 
 	callq read_int
-	movq %rax, %rbx
-	movq %rbx, %rax
+	movq %rax, -8(%rbp)
+	movq -8(%rbp), %rax
 
 	movq %rax, %rcx
 	callq print_int
 	subq $0, %r15
-	addq $0, %rsp
+	addq $16, %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12

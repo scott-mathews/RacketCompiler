@@ -398,7 +398,7 @@
          (control-fun 'wait)
          (cond [(eq? (control-fun 'status) 'done-ok)
                 (let ([result (read-line (car progout))])
-                  (if (eq? (string->symbol result) (string->symbol output))
+                  (if (equal? (string->symbol result) (string->symbol output))
                       (begin (display test-name)(display " ")(flush-output))
                       (error (format "test ~a failed, output: ~a, expected ~a"
                                      test-name result output))))]
@@ -640,13 +640,11 @@
 (define arg-registers (vector 'rdi 'rsi 'rdx 'rcx 'r8 'r9))
 
 (define caller-save (set 'rdx 'rcx 'rsi 'rdi 'r8 'r9 'r10 'r11 ))
-(define callee-save (set 'rbx 'r12 'r13 'r14 'r15))
+(define callee-save (set 'rbx 'r12 'r13 'r14 'r15 'rcx 'rdx))
 
 ;; there are 13 general registers:
 ; removed r11; r15
-(define general-registers (vector 'rbx 'rcx 'rdx 'rsi 'rdi
-    				  'r8 'r9 'r10 'r12 
-				  'r13 'r14))
+(define general-registers (vector))
 
 ;; registers-for-alloc should always inlcude the arg-registers. -Jeremy 
 (define registers-for-alloc general-registers)
@@ -667,9 +665,7 @@
 ; removed r11, was 8; r15, was 11
 (define reg-colors
   '((rax . -1) (__flag . -1)
-    (rbx . 0) (rcx . 1) (rdx . 2) (rsi . 3) (rdi . 4)
-    (r8 . 5) (r9 . 6) (r10 . 7) (r12 . 8) (r13 . 9)
-    (r14 . 10)))
+     (r10 . 0) ))
 
 (define (register->color r)
   (cdr (assq r reg-colors)))
