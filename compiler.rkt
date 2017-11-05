@@ -405,10 +405,15 @@
     [`(assign ,var (global-value ,space))
      `((movq (global-value ,space) (var ,var)))]
     [`(collect ,bytes)                                            ;collect
+     (if (equal? (system-type) `windows)
+     (list
+      `(movq (reg r15) (reg rcx))
+      `(movq ,bytes (reg rdx))
+      `(callq collect))
      (list
       `(movq (reg r15) (reg rdi))
       `(movq ,bytes (reg rsi))
-      `(callq collect))]
+      `(callq collect)))]
     
     [`(assign ,lhs (read)) (list `(callq read_int)
                                  `(movq (reg rax) (var ,lhs)))]
@@ -522,7 +527,7 @@
                            (add-edge g var v))]
       [`(callq ,collect) (for ([var lafter-v])
                            (if (equal? (look-up-type var vars) `Vector)
-                               (for ([callee (set-union callee-save (set 'rdi 'rsi))])
+                               (for ([callee (set-union callee-save (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
                                  (add-edge g var callee))
                                "pass"))]
       [`(callq ,label) (for ([reg caller-save])
@@ -737,7 +742,10 @@
 (define root-store
   (lambda (m)
   (format
-   "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
+   (if (equal? (system-type) `windows)
+       "\tmovq $16384, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
+       "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n")
+   
     m)))
 
 (define intro
