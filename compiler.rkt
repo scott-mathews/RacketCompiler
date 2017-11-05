@@ -184,7 +184,7 @@
                                                           (has-type (void) Void)
                                                           (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
                            ,(if (equal? (length e*) 0)
-                                `(let ([,v (has-type (allocate ,(length e*) ,type) Void)]) (has-type ,v Void))
+                                `(let ([,v (has-type (allocate ,(length e*) ,type) Void)]) (has-type ,v ,type))
                                 `(let ([,v (has-type (allocate ,(length e*) ,type) Void)])
                                   ,(alloc-helper2 v type (length e*) e*)))))]
       [else
@@ -199,10 +199,10 @@
   (define (alloc-helper2 v type len list)
     (cond
       ;[(eq? 0 (length list)) ]
-      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) Void)) Void)])
+      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) ,(alook-up (car list) list))) Void)])
                                 (has-type ,v ,type))]
       (else
-       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) Void)) Void)])
+       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) ,(alook-up (car list)))) Void)])
           ,(alloc-helper2 v type len (cdr list))))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
@@ -218,7 +218,15 @@
     [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
     ))
 
-
+(define (alook-up var vars)
+  (cond
+    [(empty? vars) ""]
+    [(eq? var (car vars))
+     (if (pair? (cdr vars))
+         (car (cdr vars))
+         (cdr vars))]
+    [else (alook-up var (cdr vars))]
+    ))
 
 ; tests ;
 (define e-v ((uniquify '()) u-v2))
@@ -721,14 +729,21 @@
 (define store "\tpushq %r15\n\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
 (define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n\tpopq %r15\n")
 
+(define root-store
+  (lambda (m)
+  (format
+   "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq _initialize \n\tmovq _rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
+    m)))
+
+
 (define intro
-  (lambda (n) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
-                    [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)])))
+  (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") (* 8 (length n)))]
+                    [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store (* 8 (length m)))) (* 8 (length n)))])))
 
 (define conclusion
-  (lambda (n) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") n)]
-                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") n)]
-                    [else (format (string-append "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") n)])))
+  (lambda (n) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n\tcallq _print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") (length n))]
+                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") (length n))]
+                    [else (format (string-append "\n\tmovq %rax, %rdi\n\tcallq print_int\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") (length n))])))
 
 (define (arg->string arg)
   (match arg
@@ -736,19 +751,36 @@
     [`(reg ,r) (format "%~a" r)]
     [`(byte-reg ,r) (format "%~a" r)]
     [`(int ,n) (format "$~a" n)]
+    [`(global-value ,ptr) (format "_~a(%rip)" ptr)]
     [else (format "~a" arg)]))
 
 (define (print-x86 exp)
   (match exp
     [`(jmp-if ,cc ,label) (format "\tj~a ~a\n" cc label)]
     [`(set ,e ,arg) (string-append "\tsete " (arg->string arg) "\n")]
+    ;[`(movq (global-value ,ptr) ,reg) (string-append (arg->string ptr)  (arg->string reg))]
     [`(,op ,arg1 ,arg2) (string-append "\t" (format "~a" op) " " (arg->string arg1) ", " (arg->string arg2) "\n")]
     [`(label ,name) (format "~a:\n" name)] 
     [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
-    [`(program ,n (type ,t) ,instrs ...) (string-append (intro n) (foldr string-append "" (map print-x86 instrs)) (conclusion n))]))
+    [`(program ,spills (type ,t) ,instrs ...) (string-append (intro (car spills) (car (cdr spills))) (foldr string-append "" (map print-x86 instrs)) (conclusion (car spills)))]))
 
 ;;; End Print x86 ;;;
+
+(define (temp-test exp)
+(patch-instructions
+ (lower-conditionals
+  (allocate-registers
+   (build-interference
+    (uncover-live
+     (select-instructions
+      (flatten
+       (expose-allocation
+        ((uniquify `())
+         ((typecheck-R3 `()) exp)))))))))))
+
+(define book-v
+  `(program (vector-ref (vector-ref (vector (vector 42)) 0) 0)))
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)

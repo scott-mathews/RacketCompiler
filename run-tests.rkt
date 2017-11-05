@@ -48,5 +48,6 @@
 ;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "lower conditionals" (typecheck-R3 '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "print x86" (typecheck-R3 '()) print-x86-pass interp-scheme "r3" (range 1 37))
 
 (display "tests passed!") (newline)

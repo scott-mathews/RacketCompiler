@@ -7,14 +7,14 @@ main:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $16, %rsp
+	subq $(0 0), %rsp
 
 	movq $1, %rbx
 	movq $42, %rax
 
 	movq %rax, %rcx
 	callq print_int
-	addq $16, %rsp
+	addq $(0 0), %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12
