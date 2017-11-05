@@ -119,7 +119,6 @@ void initialize(uint64_t rootstack_size, uint64_t heap_size)
 
   // Useful for debugging
   initialized = 1;
-
 }
 
 void collect(int64_t** rootstack_ptr, uint64_t bytes_requested)
@@ -309,7 +308,7 @@ void cheney(int64_t** rootstack_ptr)
 	while(rootstack_ptr < rootstack_end)
 	{
 		// Copy vectors
-		copy_vector(*rootstack_ptr);
+		copy_vector(rootstack_ptr);
 		rootstack_ptr++;
 	}
 
@@ -382,7 +381,7 @@ void cheney(int64_t** rootstack_ptr)
 */
 void copy_vector(int64_t** vector_ptr_loc)
 {
-	int64_t tag = **vector_ptr_loc;
+	int64_t tag = *vector_ptr_loc;
 	if(is_forwarding(tag))
 	{
 		// If forwarding, update pointer to new location

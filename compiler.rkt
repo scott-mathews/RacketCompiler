@@ -419,11 +419,11 @@
      (if (equal? (system-type) `windows)
      (list
       `(movq (reg r15) (reg rcx))
-      `(movq ,bytes (reg rdx))
+      `(movq (int ,bytes) (reg rdx))
       `(callq collect))
      (list
       `(movq (reg r15) (reg rdi))
-      `(movq ,bytes (reg rsi))
+      `(movq (int ,bytes) (reg rsi))
       `(callq collect)))]
     
     [`(assign ,lhs (read)) (list `(callq read_int)
@@ -737,9 +737,9 @@
 ;;; === Patch Instructions === ;;;
 (define (patch-instructions exp)  
   (match exp  
-    [`(addq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) 
-                                                   `(addq (reg rax) (deref rbp ,n2)))]
-    [`(movq (deref rbp ,n1) (deref rbp ,n2)) (list `(movq (deref rbp ,n1) (reg rax)) `(movq (reg rax) (deref rbp ,n2)))]
+    [`(addq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) 
+                                                   `(addq (reg rax) (deref ,reg2 ,n2)))]
+    [`(movq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) `(movq (reg rax) (deref ,reg2 ,n2)))]
     [`(cmpq (,type ,val) (int ,n)) (if (equal? type `int)
                                        (list `(movq (int ,n) (reg rax))
                                              `(cmpq (,type ,val) (reg rax)))
