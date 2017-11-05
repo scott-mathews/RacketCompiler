@@ -171,6 +171,8 @@
 
 ;;; End Uniquify ;;;
 
+(define flipper "no one was here")
+
 ;;; === Expose Allocation === ;;;
 (define (expose-allocation exp)
   (define vec-assoc (lambda (v) `(well bucko... you done fucked up)))
@@ -191,18 +193,20 @@
        (let ([x (gensym `vecinit)])
          `(let ([,x ,(car elist)])
             ,(alloc-helper (cdr elist) elen (lambda (v)
-                                              ;(begin
-                                              ;(set! flipper (cons`(,v ,(car elist) ,(eq? v (car elist))) flipper))
+                                              (begin
+                                              (set! flipper `(ELIST IS AS FOLLOWS:
+                                                                    ,(car elist)
+                                                                    END OF ELIST))
                                               (if (eq? v (car elist))
-                                                  x
-                                                  (tiny-env v))) v type e*)))]))
+                                                  `(,x ,type)
+                                                  (tiny-env v)))) v type e*)))]))
   (define (alloc-helper2 v type len list)
     (cond
       ;[(eq? 0 (length list)) ]
-      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) ,(alook-up (car list) list))) Void)])
+      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(find (cdr type) len 1))) Void)])
                                 (has-type ,v ,type))]
       (else
-       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(vec-assoc (car list)) ,(alook-up (car list) list))) Void)])
+       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(find (cdr type) len 1))) Void)])
           ,(alloc-helper2 v type len (cdr list))))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
@@ -227,6 +231,12 @@
          (cdr vars))]
     [else (alook-up var (cdr vars))]
     ))
+
+(define find
+  (lambda (ls ind bs)
+    (cond
+      [(eq? bs ind) (car ls)]
+      [else (find (cdr ls) ind (add1 bs))])))
 
 ; tests ;
 (define e-v ((uniquify '()) u-v2))
@@ -771,7 +781,6 @@
 ;;; End Print x86 ;;;
 
 (define (temp-test exp)
- (print-x86
 (patch-instructions
  (lower-conditionals
   ((assign-homes '() '())
@@ -782,7 +791,7 @@
       (flatten
        (expose-allocation
         ((uniquify `())
-         ((typecheck-R3 `()) exp)))))))))))))
+         ((typecheck-R3 `()) exp))))))))))))
 
 (define book-v
   `(program (vector-ref (vector-ref (vector (vector 42)) 0) 0)))
