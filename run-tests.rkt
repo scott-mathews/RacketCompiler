@@ -46,6 +46,6 @@
 ;(interp-tests "expose-allocation" (typecheck-R3 '()) expose-allocation-pass interp-scheme "r3" (range 23 24))
 ;(interp-tests "flatten" (typecheck-R3 '()) flatten-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r3" (range 1 37))
-(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
+(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 11 12))
 
 (display "tests passed!") (newline)

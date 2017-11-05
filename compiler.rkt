@@ -263,7 +263,7 @@
     [`(global-value ,name) (define v (genvar var))
                            (values v `((assign ,v (global-value ,name))) (list (cons v `Integer)))]
     [`(has-type (collect ,n) Void) (define v (genvar var))
-                                   (values v `((collect ,n)) '(list (cons v `Void)))]
+                                   (values v `((collect ,n)) (list (cons v `Void)))]
     [`(has-type (allocate ,n ,t) Void) (define v (genvar var))
                                        (values v `((assign ,v (allocate ,n ,t))) (list (cons v `Void)))]
     [`(has-type (read) ,t) (define v (genvar var))
@@ -442,7 +442,7 @@
 (define (uncover-live exp)
   (match exp
     [`(program (,vars ...) ,type ,instrs ...) (define-values (sets new-instrs) (get-set-of-vars-from-instructions instrs (set)))
-                                        `(program (,vars ,sets) ,type ,@new-instrs)]))
+                                              `(program (,vars ,sets) ,type ,@new-instrs)]))
 
 (define (get-set-of-vars-from-instructions instrs initial-set)
   (define sets `(,initial-set))
@@ -458,6 +458,9 @@
                                           (set! new-instrs (cons instr new-instrs))]
           [`(,op (var ,read) (,type ,writ)) (set! sets (cons (live-after-set (set read) (set) (car sets)) sets))
                                             (set! new-instrs (cons instr new-instrs))]
+          ; handling deref r11 arg
+          [`(,op (var ,read) (,type ,reg ,arg)) (set! sets (cons (live-after-set (set read) (set) (car sets)) sets))
+                                                (set! new-instrs (cons instr new-instrs))]
           [`(if ,cnd ,thns ,elss) (define-values (thns-sets thns-instrs) (get-set-of-vars-from-instructions thns (car sets)))
                                   (define-values (elss-sets elss-instrs) (get-set-of-vars-from-instructions elss (car sets)))
                                   (define new-instr `(if ,cnd ,thns-instrs ,thns-sets ,elss-instrs ,elss-sets))
@@ -479,9 +482,10 @@
 ;;; === Build-Interference === ;;;
 (define (build-interference exp)
   (match exp
-    [`(program (,vars ,live-afters) ,instrs ...) `(program (,vars
-                                                            ,(graphify vars (make-graph vars) live-afters instrs)
+    [`(program (,vars ,live-afters) ,type ,instrs ...) `(program (,vars
+                                                            ,(graphify vars (make-graph (map car vars)) live-afters instrs)
                                                             )
+                                                            ,type
                                                             ,@instrs)]))
 
 (define (graphify vars graph live-afters instrs)
@@ -498,15 +502,21 @@
                                         (if (equal? d var)
                                             "pass"
                                             (add-edge g var d)))]
+      [`(,op (,type1 ,reg ,arg) (,type2 ,d)) (for ([var lafter-v])
+                                               (if (equal? d var)
+                                                   "pass"
+                                                   (add-edge g var d)))]
+      [`(,op (,type1 ,s) (,type2 ,reg ,arg)) (for ([var lafter-v])
+                                               (if (equal? s var)
+                                                   "pass"
+                                                   (add-edge g var s)))]
       [`(,op (,type ,v)) (for ([var lafter-v])
                            (add-edge g var v))]
-      [`(callq, collect) (for ([var lafter-v])
-                           (if (eq? (look-up-type var vars) `Vector)
-                               ;(set! flipper "was here")
-                               (for ([callee callees])
+      [`(callq ,collect) (for ([var lafter-v])
+                           (if (equal? (look-up-type var vars) `Vector)
+                               (for ([callee (set-union callee-save (set 'rdi 'rsi))])
                                  (add-edge g var callee))
                                "pass"))]
-                               ;(set! flipper (list `(var ,var) `(result ,(look-up-type var vars)) vars))))]
       [`(callq ,label) (for ([reg caller-save])
                          (for ([var lafter-v])
                            (add-edge g (register->color reg) var)))]
@@ -518,17 +528,15 @@
                                                       (add-edge g thn-v adj-v))
                                                     (for ([adj-v (adjacent els-g els-v)])
                                                       (add-edge g els-v adj-v)))]
-      [else "pass"]))
+      [else "pass"]
+      ))
   g)
-(define flipper "no one was here")
-(define callees
-  `(rsp rbp rbx r12 r13 r14 r15))
 
 (define (look-up-type var vars)
   (cond
     [(empty? vars) "ERROR var not found"]
     [(and (eq? var (car (car vars))) (pair? (cdr (car vars)))) (car (cdr (car vars)))]
-    [(eq? var (car (car vars))) (cdr (car vars))]
+    [(equal? var (car (car vars))) (cdr (car vars))]
     [else (look-up-type var (cdr vars))]))
 
 ;;; End Build-Interference ;;;
@@ -537,11 +545,25 @@
 
 (define (allocate-registers exp)
     (match exp
-    [`(program (,vars ,graph) ,type ,instrs ...) (define new-names (color-graph graph (build-MoveG vars instrs) vars))
-                                           `(program ,vars ,type ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
+    [`(program (,vars ,graph) ,type ,instrs ...) (define new-names (color-graph graph (build-MoveG (map car vars) instrs) (map car vars)))
+                                                 (define-values (spill rootstack-spill) (split-spills vars))
+                                                 (define new-vars (prune-vars new-names spill))
+                                                 `(program (,new-vars ,rootstack-spill) ,type ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
 
 (define (prune-vars new-names vars)
-  (filter (lambda (var) (> (hash-ref new-names var) (vector-length general-registers))) vars))
+  (filter (lambda (var) (>= (hash-ref new-names var) (vector-length general-registers))) vars))
+
+; splits list of var . type into list of list of var . type list of var . type
+; aka a list containing regular vars, and a list containing rootStack vars
+(define (split-spills vars)
+  (define regular-vars '())
+  (define rootstack-vars '())
+  (for ([var (map car vars)])
+    (if (equal? (look-up-type var vars) `Vector)
+        (set! rootstack-vars (cons var rootstack-vars))
+        (set! regular-vars (cons var regular-vars))
+        ))
+  (values regular-vars rootstack-vars))
 
 (define (update-name new-names instr)
   (match instr
@@ -551,6 +573,22 @@
                                             ,(if (and (equal? 'var type2) (< (hash-ref new-names v2) (vector-length general-registers)))
                                                  `(reg ,(vector-ref general-registers (hash-ref new-names v2)))
                                                  `(,type2 ,v2)))]
+
+    ; Matches deref reg int clauses
+    [`(,op (,type1 ,v1) (,type2 ,v2 ,arg)) `(,op ,(if (and (equal? 'var type1) (< (hash-ref new-names v1) (vector-length general-registers)))
+                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
+                                                 `(,type1 ,v1))
+                                            ,(if (and (equal? 'var type2) (< (hash-ref new-names v2) (vector-length general-registers)))
+                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v2)))
+                                                 `(,type2 ,v2 ,arg)))]
+    [`(,op (,type1 ,v1 ,arg) (,type2 ,v2)) `(,op ,(if (and (equal? 'var type1) (< (hash-ref new-names v1) (vector-length general-registers)))
+                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
+                                                 `(,type1 ,v1 ,arg))
+                                            ,(if (and (equal? 'var type2) (< (hash-ref new-names v2) (vector-length general-registers)))
+                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v2)))
+                                                 `(,type2 ,v2)))]
+
+    
     [`(,op (,type ,v)) `(,op ,(if (and (equal? 'var type) (< (hash-ref new-names v) (vector-length general-registers)))
                                   `(reg ,(vector-ref general-registers (hash-ref new-names v)))
                                   `(,type ,v)))]
@@ -625,22 +663,25 @@
   (cond [(empty? vars) '()] 
         [else (cons (cons (car vars) ctr) (make-homes (cdr vars) (- ctr 8)))]))
 
-(define (type->home arg alist)
+(define (type->home arg alist rootlist)
   (match arg
-    [`(,type ,val) (if (equal? type `var)
+    [`(,type ,val) (if (and (equal? type `var) (member val (map car alist)))
                        `(deref rbp ,(lookup val alist))
+                       `(,type ,val))]
+    [`(,type ,val) (if (and (equal? type `var) (member val (map car rootlist)))
+                       `(deref r15 ,(lookup val rootlist))
                        `(,type ,val))]
     [else arg])
   )
 
-(define (assign-homes alist) 
+(define (assign-homes alist rootlist) 
   (lambda (exp) 
     (match exp
-      [`(,op ,arg1 ,arg2) (list `(,op ,(type->home arg1 alist) ,(type->home arg2 alist)))]
-      [`(,op ,arg) (list `(,op ,(type->home arg alist)))]
-      [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist) cnd) ,(map-me (assign-homes alist) thn) ,(map-me (assign-homes alist) els)))] 
+      [`(,op ,arg1 ,arg2) (list `(,op ,(type->home arg1 alist rootlist) ,(type->home arg2 alist rootlist)))]
+      [`(,op ,arg) (list `(,op ,(type->home arg alist rootlist)))]
+      [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist rootlist) cnd) ,(map-me (assign-homes alist rootlist) thn) ,(map-me (assign-homes alist rootlist) els)))] 
       [`(callq ,fn) (list exp)] 
-      [`(program (,vars ...) ,type ,instrs ...) `(program ,(alloc-size vars) ,type ,@(values (map-me (assign-homes (make-homes vars -8)) instrs)))]))) 
+      [`(program ((,vars ...) (,rootstack-vars ...)) ,type ,instrs ...) `(program (,(alloc-size vars) ,(alloc-size rootstack-vars)) ,type ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]))) 
 ;;; End Assign Homes ;;;
 
 ;;; === Lower Conditionals === ;;;
@@ -756,7 +797,7 @@
      ("uncover-live" ,uncover-live ,interp-x86)
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ))
 
 (define lower-conditionals-pass
@@ -767,7 +808,7 @@
      ("uncover-live" ,uncover-live ,interp-x86)
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ("lower-conditionals" ,lower-conditionals ,interp-x86)
      ))
 
@@ -779,7 +820,7 @@
      ("uncover-live" ,uncover-live ,interp-x86)
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ("lower-conditionals" ,lower-conditionals ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ))
@@ -792,7 +833,7 @@
      ("uncover-live" ,uncover-live ,interp-x86)
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ("lower-conditionals" ,lower-conditionals ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
@@ -806,7 +847,7 @@
      ("uncover-live" ,uncover-live ,interp-x86)
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ("lower-conditionals" ,lower-conditionals ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
@@ -820,63 +861,7 @@
      ("uncover-live" ,uncover-live ,interp-x86)
      ("build-interference" ,build-interference ,interp-x86)
      ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '()) ,interp-x86)
+     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
      ))
-
-
-
-
-;;; Forgive me my sins for as through only them shall I strive
-(define thing
-  `(program
-((tmp02 . Integer) (tmp01 Vector Integer) (tmp90 Vector Integer)
-(tmp86 . Integer) (tmp88 . Void) (tmp96 . Void) (tmp94 . Integer)
-(tmp93 . Integer) (tmp95 . Integer) (tmp85 Vector Integer)
-(tmp87 . Void) (tmp92 . Void) (tmp00 . Void) (tmp98 . Integer)
-(tmp97 . Integer) (tmp99 . Integer) (tmp89 Vector (Vector Integer))
-(tmp91 . Void)) (type Integer)
-(movq (int 42) (var tmp86))
-(movq (global-value free_ptr) (var tmp93))
-(movq (var tmp93) (var tmp94))
-(addq (int 16) (var tmp94))
-(movq (global-value fromspace_end) (var tmp95))
-(if (< (var tmp94) (var tmp95))
-((movq (int 0) (var tmp96)))
-((movq (reg r15) (reg rdi))
-(movq (int 16) (reg rsi))
-(callq collect)
-(movq (int 0) (var tmp96))))
-(movq (var tmp96) (var tmp88))
-(movq (global-value free_ptr) (var tmp85))
-(addq (int 16) (global-value free_ptr))
-(movq (var tmp85) (reg r11))
-(movq (int 3) (deref r11 0))
-(movq (var tmp85) (reg r11))
-(movq (var tmp86) (deref r11 8))
-(movq (int 0) (var tmp87))
-(movq (var tmp85) (var tmp90))
-(movq (global-value free_ptr) (var tmp97))
-(movq (var tmp97) (var tmp98))
-(addq (int 16) (var tmp98))
-(movq (global-value fromspace_end) (var tmp99))
-(if (< (var tmp98) (var tmp99))
-((movq (int 0) (var tmp00)))
-((movq (reg r15) (reg rdi))
-(movq (int 16) (reg rsi))
-(callq collect)
-(movq (int 0) (var tmp00))))
-(movq (var tmp00) (var tmp92))
-(movq (global-value free_ptr) (var tmp89))
-(addq (int 16) (global-value free_ptr))
-(movq (var tmp89) (reg r11))
-(movq (int 131) (deref r11 0))
-(movq (var tmp89) (reg r11))
-(movq (var tmp90) (deref r11 8))
-(movq (int 0) (var tmp91))
-(movq (var tmp89) (reg r11))
-(movq (deref r11 8) (var tmp01))
-(movq (var tmp01) (reg r11))
-(movq (deref r11 8) (var tmp02))
-(movq (var tmp02) (reg rax))))
