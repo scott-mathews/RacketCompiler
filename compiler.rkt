@@ -5,8 +5,8 @@
 (require "utilities.rkt")
 
 ;; This exports passes, defined below, to users of this file.
-(provide r0-passes r1-passes pe-arith-pass uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass type-check lower-conditionals-pass
-         r2-passes r3-passes expose-allocation-pass)
+(provide r1-passes uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass type-check lower-conditionals-pass
+         r2-passes r3-passes expose-allocation-pass reveal-functions-pass)
 
 (define cmp-syms '(< > <= >= eq?))
 (define bool-syms-biadic '(and))
@@ -18,7 +18,6 @@
 
 
 (define (typecheck-R4 env)
-  
   (lambda (e)
     (define recur (typecheck-R4 env))
     (match e
@@ -60,7 +59,7 @@
        (define function-type `(,@input-types -> ,type)) ; eg. ((Vector Integer) Integer) -> Integer
        (define output-env (append (cons var function-type) env))
        (define-values (eb tb) ((typecheck-R4 new-env) body))
-       (values `(define (,var ,@(reverse new-args)) : ,function-type ,eb) (cons var function-type))] ; return has-typed expression, type, and function name
+       (values `(define ((has-type ,var ,function-type) ,@(reverse new-args)) ,eb) (cons var function-type))] ; return has-typed expression, type, and function name
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
          (values `(has-type (vector ,@e*) ,t) t))]
@@ -160,40 +159,40 @@
 
 ;;; === Partial Evaluator === ;;;
 
-(define (pe-neg2 exp)
-  (match exp
-    [ n         #:when (fixnum? n)                     (fx- 0 n)] ; int -> -int
-    [`(+ ,n ,m) #:when (and (fixnum? n) (fixnum? m))  `(+ ,(pe-neg2 n) (pe-neg2 m))] ; (+ int int) -> (+ -int -int)
-    [`(+ ,n ,e) #:when (fixnum? n)                    `(+ ,(pe-neg2 n) (- ,e))] ; (+ int exp) -> (+ -int (- exp))
-    [`(+ ,e ,n) #:when (fixnum? n)                     (pe-neg2 `(+ n e))] ; (+ exp int) -> (+ -int (-exp))
-    [e                                                `(- ,e)])) ; exp -> (- exp)
+;(define (pe-neg2 exp)
+;  (match exp
+;    [ n         #:when (fixnum? n)                     (fx- 0 n)] ; int -> -int
+;    [`(+ ,n ,m) #:when (and (fixnum? n) (fixnum? m))  `(+ ,(pe-neg2 n) (pe-neg2 m))] ; (+ int int) -> (+ -int -int)
+;    [`(+ ,n ,e) #:when (fixnum? n)                    `(+ ,(pe-neg2 n) (- ,e))] ; (+ int exp) -> (+ -int (- exp))
+;    [`(+ ,e ,n) #:when (fixnum? n)                     (pe-neg2 `(+ n e))] ; (+ exp int) -> (+ -int (-exp))
+;    [e                                                `(- ,e)])) ; exp -> (- exp)
 
-(define (pe-add2 left right)
-  (match* (left right)
-    [( n            m)           #:when (and (fixnum? n) (fixnum? m))  (fx+ n m)] ; int int -> int
-    [( n           `(+ ,m ,b))   #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)] ; int (+ int exp) -> (+ int exp)
-    [(`(+ ,m ,b)    n)           #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)] ; (+ int exp) int -> (+ int exp)
-    [( n           `(+ ,ra ,rb)) #:when (fixnum? n)                    (pe-add2 (pe-add2 n ra) rb)] ; int (+ exp exp) -> (pe-add2 (pe-add2 int exp) exp)
-    [(`(+ ,la ,lb) `(+ ,ra ,rb))                                      `(+ ,(pe-add2 ra la) ,(pe-add2 rb lb))] ; (+ exp exp) (+ exp exp) -> (+ (pe-add2 exp exp) (pe-add2 exp exp))
-    [( a            b)           #:when (fixnum? b)                    (pe-add2 b a)] ; exp int -> (pe-add2 int exp)
-    [( a            b)                                                `(+ ,a ,b)])) ; exp exp -> (+ exp exp)
+;(define (pe-add2 left right)
+;  (match* (left right)
+;    [( n            m)           #:when (and (fixnum? n) (fixnum? m))  (fx+ n m)] ; int int -> int
+;    [( n           `(+ ,m ,b))   #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)] ; int (+ int exp) -> (+ int exp)
+;    [(`(+ ,m ,b)    n)           #:when (and (fixnum? n) (fixnum? m)) `(+ ,(fx+ n m) ,b)] ; (+ int exp) int -> (+ int exp)
+;    [( n           `(+ ,ra ,rb)) #:when (fixnum? n)                    (pe-add2 (pe-add2 n ra) rb)] ; int (+ exp exp) -> (pe-add2 (pe-add2 int exp) exp)
+;    [(`(+ ,la ,lb) `(+ ,ra ,rb))                                      `(+ ,(pe-add2 ra la) ,(pe-add2 rb lb))] ; (+ exp exp) (+ exp exp) -> (+ (pe-add2 exp exp) (pe-add2 exp exp))
+;    [( a            b)           #:when (fixnum? b)                    (pe-add2 b a)] ; exp int -> (pe-add2 int exp)
+;    [( a            b)                                                `(+ ,a ,b)])) ; exp exp -> (+ exp exp)
 
 
-(define (pe-arith-old e)
-  (match e
-    [(? fixnum?)    e]
-    [(? symbol?)    e]
-    [(? boolean?)   e]
-    [`(read)       `(read)]
-    [`(- ,e1)       (pe-neg2 (pe-arith e1))]
-    [`(+ ,e1 ,e2)   (pe-add2 (pe-arith e1) (pe-arith e2))]
-    [`(let ([,x ,e]) ,body) `(let ([,x ,(pe-arith e)]) ,(pe-arith body))]
-    [`(if ,cnd ,thn ,els) `(if ,cnd ,thn ,els)]
-    [`(program ,type ,e) `(program ,type ,(pe-arith e))]
-    ))
+;(define (pe-arith-old e)
+;  (match e
+;    [(? fixnum?)    e]
+;    [(? symbol?)    e]
+;    [(? boolean?)   e]
+;    [`(read)       `(read)]
+;    [`(- ,e1)       (pe-neg2 (pe-arith e1))]
+;    [`(+ ,e1 ,e2)   (pe-add2 (pe-arith e1) (pe-arith e2))];;
+;    [`(let ([,x ,e]) ,body) `(let ([,x ,(pe-arith e)]) ,(pe-arith body))]
+;    [`(if ,cnd ,thn ,els) `(if ,cnd ,thn ,els)]
+;    [`(program ,type ,e) `(program ,type ,(pe-arith e))]
+;    ))
 
-(define (pe-arith e)
-  e)
+;(define (pe-arith e)
+;  e)
 
 ;;; End Partial Evaluator ;;;
 
@@ -217,17 +216,17 @@
          (set! new-env (cons (cons name name) new-env)))
        `(program ,type ,@(reverse new-defines) ,((uniquify new-env) e))]
       
-      [`(has-type (define (,var ,args* ...) ,body) ,type)
+      [`(define ((has-type ,var ,type) ,args* ...) ,body)
        (define new-env alist)
        (define new-args '())
        (for ([arg args*])
          (match arg [`(has-type ,v ,t) (define new-name (gensym v))
                                 (set! new-env (cons (cons v new-name) new-env))
                                 (set! new-args (cons `(has-type ,new-name ,t) new-args))]))
-       (values `(has-type (define (,var ,@(reverse new-args)) ,((uniquify new-env) body)) ,type) var)
+       (values `(define ((has-type ,var ,type) ,@(reverse new-args)) ,((uniquify new-env) body)) var)
        ]
-      [`(has-type (,fname ,args* ...) ,t) #:when (member fname (map car alist))
-                            `(has-type (,(lookup fname alist) ,@(map (uniquify alist) args*)) ,t)]
+      [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname (map car alist))
+                            `(has-type ((has-type ,(lookup fname alist) ,type) ,@(map (uniquify alist) args*)) ,t)]
       [`(let ([,x ,e]) ,body)
        (let ([y (gensym x)])
          (let ([l (cons (cons x y) alist)])
@@ -239,6 +238,39 @@
 ; tests ;
 ;;; End Uniquify ;;;
 
+;;; === Reveal Functions === ;;;
+(define (reveal-functions f-list)
+  ;(define recur (reveal-functions f-list))
+  (lambda (exp)
+    (match exp
+      [`(has-type ,v ,t) #:when (member v f-list) `(has-type (function-ref ,v) ,t)]
+      [`(has-type ,v ,t) #:when (or (symbol? v) (boolean? v) (integer? v)) `(has-type ,v ,t)]
+      [`(program ,type ,exps ...)
+       (define e (last exps))
+       (define defs (reverse (cdr (reverse exps))))
+       (define new-env f-list)
+       (define new-defines '())
+       (for ([def defs])
+         (define-values (new-define name) ((reveal-functions new-env) def))
+         (set! new-env (cons name f-list))
+         (set! new-defines (cons new-define new-defines)))
+       `(program ,type ,@(reverse new-defines) ,((reveal-functions new-env) e))]
+      [`(define ((has-type ,var ,type) ,args* ...) ,body)
+       (define inner-env (cons var f-list))
+       (for ([arg args*])
+         (match arg [`(has-type ,v ,t) (match t [`(,inputs ... -> ,output)
+                                                 (set! inner-env (cons v inner-env))]
+                                         [else "pass"])]
+           [else "pass"]))
+       (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions inner-env) body)) var)]
+      [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname f-list)
+                                          `(has-type (app (has-type (function-ref ,fname) ,type) ,@args*) ,t)]
+      [`(let ([,x ,e]) ,body) `(let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body))]
+      [`(if ,cnd ,thn ,els) `(if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els))]
+      [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
+      ))) ; might need to update x to function-ref here
+;;; End Reveal Functions ;;;
+
 (define flipper "no one was here")
 
 ;;; === Expose Allocation === ;;;
@@ -248,18 +280,17 @@
   (define (alloc-helper elist elen tiny-env v type e*)
     (cond
       [(empty? elist)
-  
        (begin
-                        (set! vec-assoc tiny-env)
-                        `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr)
-                                                                                    (has-type ,(+ 8 (* 8 (length e*))) Integer)) Integer)
-                                                                       (global-value fromspace_end)) Boolean)
-                                                          (has-type (void) Void)
-                                                          (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
-                           ,(if (equal? (length e*) 0)
-                                `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)]) (has-type ,v ,type))
-                                `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)])
-                                  ,(alloc-helper2 v type (length e*) e*)))))]
+         (set! vec-assoc tiny-env)
+         `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr)
+                                                                     (has-type ,(+ 8 (* 8 (length e*))) Integer)) Integer)
+                                                        (global-value fromspace_end)) Boolean)
+                                           (has-type (void) Void)
+                                           (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
+            ,(if (equal? (length e*) 0)
+                 `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)]) (has-type ,v ,type))
+                 `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)])
+                    ,(alloc-helper2 v type (length e*) e*)))))]
       [else
        (let ([x (gensym `vecinit)])
          (if (and (pair? (second (car elist))) (eq? `vector (car (second (car elist)))))
@@ -267,33 +298,34 @@
                (set! flipper (expose-allocation (car elist)))
                `(let ([,x ,(expose-allocation (car elist))])
                   ,(alloc-helper (cdr elist) elen (lambda (v)
-                                                (begin
-                                                  ;(set! flipper elist)
-                                                  (if (eq? v (car elist))
-                                                      `(,x ,(last (car elist)))
-                                                      (tiny-env v)))) v type e*)))
-           `(let ([,x ,(car elist)])
-              ,(alloc-helper (cdr elist) elen (lambda (v)
-                                                (begin
-                                                  ;(set! flipper elist)
-                                                  (if (eq? v (car elist))
-                                                      `(,x ,(third (car elist)))
-                                                      (tiny-env v)))) v type e*))))]))
+                                                    (begin
+                                                      ;(set! flipper elist)
+                                                      (if (eq? v (car elist))
+                                                          `(,x ,(last (car elist)))
+                                                          (tiny-env v)))) v type e*)))
+             `(let ([,x ,(car elist)])
+                ,(alloc-helper (cdr elist) elen (lambda (v)
+                                                  (begin
+                                                    ;(set! flipper elist)
+                                                    (if (eq? v (car elist))
+                                                        `(,x ,(third (car elist)))
+                                                        (tiny-env v)))) v type e*))))]))
   (define (alloc-helper2 v type len list)
     (cond
       ;[(eq? 0 (length list)) ]
       [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(begin
-                                                                                                                                    ;(set! flipper list)
-                                                                                                                                 (second (vec-assoc (car list)))))) Void)])
+                                                                                                                                                                                        ;(set! flipper list)
+                                                                                                                                                                                        (second (vec-assoc (car list)))))) Void)])
                                 (has-type ,v ,type))]
       (else
        `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list)))
                                                                                                                                  ,(begin
                                                                                                                                     ;(set! flipper `(,(car (vec-assoc (car list))) ,(second (vec-assoc (car list)))))
-                                                                                                                                 (second (vec-assoc (car list)))))) Void)])
+                                                                                                                                    (second (vec-assoc (car list)))))) Void)])
           ,(alloc-helper2 v type len (cdr list))))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
+    [`(has-type (function-ref ,f) ,t) exp]
     [`(has-type (vector ,e* ...) ,type)
      ;(set! e* (map expose-allocation e*))
      (let ([v (gensym `alloc)])
@@ -303,8 +335,17 @@
     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
     [`(let ([,x ,e]) ,b) `(let ([,x ,(expose-allocation e)]) ,(expose-allocation b))]
     [`(if ,cnd ,thn ,els) `(if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els))]
-    [`(program ,type ,e) `(program ,type ,(expose-allocation e))]
-    ))
+    [`(define (,var ,args* ...) ,body)
+     `(define (,var ,@args*) ,(expose-allocation body))]
+    [`(app ,fn ,args* ...)
+     `(app ,fn ,@(map expose-allocation args*))]
+    [`(program ,type ,exps ...)
+     (define body (last exps))
+     (define defs (reverse (cdr (reverse exps))))
+     (define new-defs '())
+     (for ([def defs])
+       (set! new-defs (cons (expose-allocation def) new-defs)))
+     `(program ,type ,@(reverse new-defs) ,(expose-allocation body))]))
 
 (define (alook-up var vars)
   (cond
@@ -902,19 +943,25 @@
 
 ;;; End Print x86 ;;;
 
+(define (pre-temp-test exp)
+  ((reveal-functions '())
+   ((uniquify'())
+    ((type-check '()) exp))))
+
 (define (temp-test exp)
   ;(print-x86
-   ;(patch-instructions
-    ;(lower-conditionals
-     ;((assign-homes '() '())
-      ;(allocate-registers
-       ;(build-interference
-        ;(uncover-live
-         (select-instructions
-          (flatten
-           (expose-allocation
-            ((uniquify `())
-             ((type-check `()) exp))))));)));))))
+  ;(patch-instructions
+  ;(lower-conditionals
+  ;((assign-homes '() '())
+  ;(allocate-registers
+  ;(build-interference
+  ;(uncover-live
+  ;(select-instructions
+   ;(flatten
+    (expose-allocation
+     ((reveal-functions '())
+      ((uniquify `())
+       ((type-check `()) exp)))));));)));))))
 
 
 (define book-v
@@ -924,28 +971,30 @@
 ;; Note that your compiler file (or whatever file provides your passes)
 ;; should be named "compiler.rkt"
 
-(define r0-passes
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ))
+;(define r0-passes
+;  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+;     ))
 
-(define pe-arith-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-  ))
+;(define pe-arith-pass
+;  `( ("partial evaluator" ,pe-arith ,interp-scheme)
+;  ))
 
 (define uniquify-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ))
+
+(define reveal-functions-pass
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("reveal functions" ,(reveal-functions '()) ,interp-scheme)
      ))
 
 (define expose-allocation-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ))
 
 (define flatten-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ))
@@ -958,8 +1007,7 @@
      ))
 
 (define allocate-registers-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
@@ -970,8 +1018,7 @@
      ))
 
 (define lower-conditionals-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
@@ -983,8 +1030,7 @@
      ))
 
 (define patch-instructions-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
@@ -997,8 +1043,7 @@
      ))
 
 (define print-x86-pass
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
@@ -1012,8 +1057,7 @@
      ))
 
 (define r3-passes
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
@@ -1027,8 +1071,7 @@
      ))
 
 (define r2-passes
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
@@ -1042,8 +1085,7 @@
      ))
 
 (define r1-passes
-  `( ("partial evaluator" ,pe-arith ,interp-scheme)
-     ("uniquify" ,(uniquify '()) ,interp-scheme)
+  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
