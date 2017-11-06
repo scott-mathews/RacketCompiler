@@ -216,17 +216,17 @@
          (set! new-env (cons (cons name name) new-env)))
        `(program ,type ,@(reverse new-defines) ,((uniquify new-env) e))]
       
-      [`(define (,var ,args* ...) : ,type ,body)
+      [`(has-type (define (,var ,args* ...) ,body) ,type)
        (define new-env alist)
        (define new-args '())
        (for ([arg args*])
-         (match arg [`[,v : ,t] (define new-name (gensym v))
+         (match arg [`([,v : ,t]) (define new-name (gensym v))
                                 (set! new-env (cons (cons v new-name) new-env))
                                 (set! new-args (cons `[,new-name : ,t] new-args))]))
-       (values `(define (,var ,@(reverse new-args)) : ,type ,((uniquify new-env) body)) var)
+       (values `(has-type (define (,var ,@(reverse new-args)) : ,type ,((uniquify new-env) body)) ,type) var)
        ]
-      [`(,fname ,args* ...) #:when (member fname (map car alist))
-                            `(,fname ,@(map (uniquify alist) args*))]
+      [`(has-type (,fname ,args* ...) ,t) #:when (member fname (map car alist))
+                            `(has-type (,fname ,@(map (uniquify alist) args*)) ,t)]
       [`(let ([,x ,e]) ,body)
        (let ([y (gensym x)])
          (let ([l (cons (cons x y) alist)])
