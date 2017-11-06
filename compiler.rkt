@@ -50,15 +50,17 @@
       [`(define (,var ,args* ...) : ,type ,body)
        (define input-types '())
        (define new-env env)
+       (define new-args '())
        (for ([arg args*]) ; add each argument's type to a list
          (match arg
            [`[,name : ,type] (set! input-types (cons type input-types)) ; add input-type
-                             (set! new-env (cons (cons name type) new-env))]))
+                             (set! new-env (cons (cons name type) new-env))
+                             (set! new-args (cons `(has-type ,name ,type) new-args))]))
        (set! input-types (reverse input-types)) ; reverse input-types (because it's backwards from our traversal
        (define function-type `(,@input-types -> ,type)) ; eg. ((Vector Integer) Integer) -> Integer
        (define output-env (append (cons var function-type) env))
        (define-values (eb tb) ((typecheck-R4 new-env) body))
-       (values `(has-type (define (,var ,args*) (has-type ,eb ,tb)) ,function-type) (cons var function-type))] ; return has-typed expression, type, and function name
+       (values `(has-type (define (,var ,@(reverse new-args)) ,eb) ,function-type) (cons var function-type))] ; return has-typed expression, type, and function name
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
          (values `(has-type (vector ,@e*) ,t) t))]
@@ -124,7 +126,7 @@
                                           (if (equal? t arg-t)
                                               "pass"
                                               (error `type-check "Argument types ~a did not match function signature ~a" t* arg-types)))
-                                        (values `(has-type (,fname ,e*) ,output-type) output-type)]
+                                        (values `(has-type ((has-type ,fname ,(lookup fname env)) ,@e*) ,output-type) output-type)]
       
       [`(if ,(app recur cnd-e cnd-T) ,(app recur thn-e thn-T) ,(app recur els-e els-T))
        (if (equal? cnd-T `Boolean)
@@ -198,8 +200,7 @@
 ;;; === Uniquify === ;;;
 
 (define (uniquify alist)
-  (display alist)
-  (trace-lambda (exp)
+  (lambda (exp)
     (match exp
       [`(has-type ,v ,t) #:when (symbol? v) `(has-type ,(lookup v alist) ,t)]
       [`(has-type ,n ,t) #:when (integer? n) `(has-type ,n ,t)]
@@ -220,13 +221,13 @@
        (define new-env alist)
        (define new-args '())
        (for ([arg args*])
-         (match arg [`([,v : ,t]) (define new-name (gensym v))
+         (match arg [`(has-type ,v ,t) (define new-name (gensym v))
                                 (set! new-env (cons (cons v new-name) new-env))
-                                (set! new-args (cons `[,new-name : ,t] new-args))]))
-       (values `(has-type (define (,var ,@(reverse new-args)) : ,type ,((uniquify new-env) body)) ,type) var)
+                                (set! new-args (cons `(has-type ,new-name ,t) new-args))]))
+       (values `(has-type (define (,var ,@(reverse new-args)) ,((uniquify new-env) body)) ,type) var)
        ]
       [`(has-type (,fname ,args* ...) ,t) #:when (member fname (map car alist))
-                            `(has-type (,fname ,@(map (uniquify alist) args*)) ,t)]
+                            `(has-type (,(lookup fname alist) ,@(map (uniquify alist) args*)) ,t)]
       [`(let ([,x ,e]) ,body)
        (let ([y (gensym x)])
          (let ([l (cons (cons x y) alist)])

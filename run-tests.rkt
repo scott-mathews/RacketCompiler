@@ -5,7 +5,7 @@
 (require "interp.rkt")
 (require "compiler.rkt")
 
-(debug-level 2)
+(debug-level 10)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Regression Tests ;;;
@@ -48,7 +48,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; === R4 Tests === ;;;
-(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r4" (range 1 39))
+;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r4" (range 1 39))
 
 
 (display "tests passed!") (newline)
