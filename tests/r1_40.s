@@ -17,8 +17,8 @@ main:
 	movq $10, -8(%rbp)
 	negq -8(%rbp)
 	movq $52, -16(%rbp)
-	movq -8(%rbp), %rax
-	addq %rax, -16(%rbp)
+	movq -8(%rbp), %r9
+	addq %r9, -16(%rbp)
 	movq -16(%rbp), %rax
 
 	movq %rax, %rcx

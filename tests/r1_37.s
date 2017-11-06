@@ -16,8 +16,8 @@ main:
 
 	movq $30, -8(%rbp)
 	addq $10, -8(%rbp)
-	movq -8(%rbp), %rax
-	movq %rax, -16(%rbp)
+	movq -8(%rbp), %r8
+	movq %r8, -16(%rbp)
 	addq $2, -16(%rbp)
 	movq -16(%rbp), %rax
 

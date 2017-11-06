@@ -15,17 +15,17 @@ main:
 	addq $0, %r15
 
 	callq read_int
-	movq %rax, -24(%rbp)
+	movq %rax, -32(%rbp)
 	callq read_int
-	movq %rax, -40(%rbp)
-	movq -40(%rbp), %rax
-	movq %rax, -8(%rbp)
-	negq -8(%rbp)
-	movq -24(%rbp), %rax
 	movq %rax, -16(%rbp)
-	movq -8(%rbp), %rax
-	addq %rax, -16(%rbp)
-	movq -16(%rbp), %rax
+	movq -16(%rbp), %r8
+	movq %r8, -8(%rbp)
+	negq -8(%rbp)
+	movq -32(%rbp), %r8
+	movq %r8, -48(%rbp)
+	movq -8(%rbp), %r9
+	addq %r9, -48(%rbp)
+	movq -48(%rbp), %rax
 
 	movq %rax, %rcx
 	callq print_int

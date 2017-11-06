@@ -18,11 +18,9 @@
 ;(interp-tests "expose-allocation" (typecheck-R3 '()) expose-allocation-pass interp-scheme "r1" (range 1 49))
 ;(interp-tests "flatten" (typecheck-R3 '()) flatten-pass interp-scheme "r1" (range 2 3))
 ;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r1" (range 1 49))
-
-;; In Progress R3 ;;
 ;(interp-tests "allocate registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r1" (range 1 49))
 ;(interp-tests "patch instructions" (typecheck-R3 '()) patch-instructions-pass interp-scheme "r1" (range 1 49))
-;(compiler-tests "r1-compiler" (typecheck-R3 '()) r1-passes "r1" (range 1 49))
+; (compiler-tests "r1-compiler" (typecheck-R3 '()) r1-passes "r1" (range 1 49))
 
 ;;; === R2 Tests === ;;;
 ;(interp-tests "uniquify" (typecheck-R3 '()) uniquify-pass interp-scheme "r2" (range 1 23))

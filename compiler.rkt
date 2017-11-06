@@ -195,8 +195,8 @@
                                                           (has-type (void) Void)
                                                           (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
                            ,(if (equal? (length e*) 0)
-                                `(let ([,v (has-type (allocate ,(length e*) ,type) Void)]) (has-type ,v ,type))
-                                `(let ([,v (has-type (allocate ,(length e*) ,type) Void)])
+                                `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)]) (has-type ,v ,type))
+                                `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)])
                                   ,(alloc-helper2 v type (length e*) e*)))))]
       [else
        (let ([x (gensym `vecinit)])
@@ -304,8 +304,8 @@
                            (values v `((assign ,v (global-value ,name))) (list (cons v `Integer)))]
     [`(has-type (collect ,n) Void) (define v (genvar var))
                                    (values `(void) `((collect ,n)) `())]; (list (cons v `Void)))]
-    [`(has-type (allocate ,n ,t) Void) (define v (genvar var))
-                                       (values v `((assign ,v (allocate ,n ,t))) (list (cons v `Void)))]
+    [`(has-type (allocate ,n ,t) ,type) (define v (genvar var))
+                                       (values v `((assign ,v (allocate ,n ,t))) (list (cons v t)))]
     [`(has-type (read) ,t) (define v (genvar var))
              (values v (list `(assign ,v (read))) (list (cons v t)))]
     [`(has-type (not ,e) ,t) (define v (genvar var))
@@ -328,7 +328,7 @@
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
     [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
-                          (define v (genvar var))
+                          (define v (gensym `tmp))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
                           (define-values (flat-els assignments-els vars-els) (flatten-helper els))
                           (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
@@ -350,7 +350,7 @@
     ))
 
 (define (flat-type var exp)
-  (define str-exp (substring (symbol->string var) 0 7))
+  (define str-exp (substring (symbol->string var) 0 (if (< (string-length (symbol->string var)) 7) 1 7)))
   (cond
     [(string=? str-exp "vecinit")
      (define let-smasher
@@ -479,11 +479,11 @@
                                 [(equal? v e2) (list `(addq ,(val->typedval e1) ,(val->typedval v)))]
                                 [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
                                             `(addq ,(val->typedval e2) ,(val->typedval v)))])]
-    [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg rax))
-                                       `(cmpq (reg rax) ,(val->typedval e1))
+    [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg r10))
+                                       `(cmpq (reg r10) ,(val->typedval e1))
                                        `(set ,(cmp->cc cmp) (byte-reg al))
-                                       `(movzbq (byte-reg al) (reg rax))
-                                       `(movq (reg rax) ,(val->typedval v)))]
+                                       `(movzbq (byte-reg al) (reg r10))
+                                       `(movq (reg r10) ,(val->typedval v)))]
     [`(if (,cmp ,arg1 ,arg2) (,thn ...) (,els ...)) (list `(movq ,(val->typedval arg2) (reg rax))
                                                           `(if (,cmp (reg rax) ,(val->typedval arg1))
                                                                ,(values (map-me select-instructions thn))
@@ -728,7 +728,10 @@
   (let ([x (* 8 (length vars))]) 
     (if (= (modulo x 16) 0) 
         x 
-        (+ x 8))))  
+        (+ x 8))))
+
+(define (rootstack-alloc-size vars)
+  (* (length vars) 8))
 
 (define (make-homes vars ctr) 
   (cond [(empty? vars) '()] 
@@ -750,7 +753,7 @@
       [`(,op ,arg) (list `(,op ,(type->home arg alist rootlist)))]
       [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist rootlist) cnd) ,(map-me (assign-homes alist rootlist) thn) ,(map-me (assign-homes alist rootlist) els)))] 
       [`(callq ,fn) (list exp)] 
-      [`(program ((,vars ...) (,rootstack-vars ...)) ,type ,instrs ...) `(program (,(alloc-size vars) ,(alloc-size rootstack-vars)) ,type ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]))) 
+      [`(program ((,vars ...) (,rootstack-vars ...)) ,type ,instrs ...) `(program (,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,type ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]))) 
 ;;; End Assign Homes ;;;
 
 ;;; === Lower Conditionals === ;;;
@@ -774,12 +777,12 @@
 ;;; === Patch Instructions === ;;;
 (define (patch-instructions exp)  
   (match exp  
-    [`(addq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) 
-                                                   `(addq (reg rax) (deref ,reg2 ,n2)))]
-    [`(movq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) `(movq (reg rax) (deref ,reg2 ,n2)))]
+    [`(addq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg r9)) 
+                                                   `(addq (reg r9) (deref ,reg2 ,n2)))]
+    [`(movq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg r8)) `(movq (reg r8) (deref ,reg2 ,n2)))]
     [`(cmpq (,type ,val) (int ,n)) (if (equal? type `int)
-                                       (list `(movq (int ,n) (reg rax))
-                                             `(cmpq (,type ,val) (reg rax)))
+                                       (list `(movq (int ,n) (reg r13))
+                                             `(cmpq (,type ,val) (reg r13)))
                                        (list `(cmpq (int ,n) (,type ,val))))]
     [`(program ,n ,instrs ...) `(program ,n ,@(values (map-me patch-instructions instrs)))]  
     [else (list exp)] 
@@ -794,10 +797,9 @@
   (lambda (m)
   (format
    (if (equal? (system-type) `windows)
-       "\tmovq $16384, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n"
-       "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15 \n\tmovq $0, (%r15) \n\taddq $~a, %r15\n\n")
-   
-    m)))
+       "\tmovq $16384, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n"
+       "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n")
+    m (- m))))
 
 (define intro
   (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
@@ -841,17 +843,18 @@
 ;;; End Print x86 ;;;
 
 (define (temp-test exp)
-  ;(patch-instructions
-   ;(lower-conditionals
-    ;((assign-homes '() '())
-     ;(allocate-registers
-      ;(build-interference
-       ;(uncover-live
-        ;(select-instructions
-         ;(flatten
-          (expose-allocation
-           ((uniquify `())
-            ((typecheck-R3 `()) exp))));))))))))
+  ;(print-x86
+   ;(patch-instructions
+    ;(lower-conditionals
+     ;((assign-homes '() '())
+      ;(allocate-registers
+       ;(build-interference
+        ;(uncover-live
+         (select-instructions
+          (flatten
+           (expose-allocation
+            ((uniquify `())
+             ((typecheck-R3 `()) exp))))));)));))))
 
 
 (define book-v

@@ -19,12 +19,12 @@ main:
 	movq $4, -8(%rbp)
 	negq -8(%rbp)
 	movq $25, -16(%rbp)
-	movq -8(%rbp), %rax
-	addq %rax, -16(%rbp)
-	movq -24(%rbp), %rax
-	movq %rax, -32(%rbp)
-	movq -16(%rbp), %rax
-	addq %rax, -32(%rbp)
+	movq -8(%rbp), %r9
+	addq %r9, -16(%rbp)
+	movq -24(%rbp), %r8
+	movq %r8, -32(%rbp)
+	movq -16(%rbp), %r9
+	addq %r9, -32(%rbp)
 	movq -32(%rbp), %rax
 
 	movq %rax, %rcx

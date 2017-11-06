@@ -16,10 +16,10 @@ main:
 
 	movq $10, -16(%rbp)
 	movq $32, -8(%rbp)
-	movq -16(%rbp), %rax
-	movq %rax, -24(%rbp)
-	movq -8(%rbp), %rax
-	addq %rax, -24(%rbp)
+	movq -16(%rbp), %r8
+	movq %r8, -24(%rbp)
+	movq -8(%rbp), %r9
+	addq %r9, -24(%rbp)
 	movq -24(%rbp), %rax
 
 	movq %rax, %rcx

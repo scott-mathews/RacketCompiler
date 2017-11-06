@@ -15,8 +15,8 @@ main:
 	addq $0, %r15
 
 	movq $42, -16(%rbp)
-	movq -16(%rbp), %rax
-	movq %rax, -8(%rbp)
+	movq -16(%rbp), %r8
+	movq %r8, -8(%rbp)
 	movq -8(%rbp), %rax
 
 	movq %rax, %rcx

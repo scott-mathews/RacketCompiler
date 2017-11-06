@@ -14,15 +14,15 @@ main:
 	movq $0, (%r15) 
 	addq $0, %r15
 
-	movq $10, -16(%rbp)
-	negq -16(%rbp)
-	movq -16(%rbp), %rax
-	movq %rax, -8(%rbp)
-	addq $11, -8(%rbp)
+	movq $10, -32(%rbp)
+	negq -32(%rbp)
+	movq -32(%rbp), %r8
+	movq %r8, -16(%rbp)
+	addq $11, -16(%rbp)
+	movq -16(%rbp), %r8
+	movq %r8, -8(%rbp)
+	addq $41, -8(%rbp)
 	movq -8(%rbp), %rax
-	movq %rax, -32(%rbp)
-	addq $41, -32(%rbp)
-	movq -32(%rbp), %rax
 
 	movq %rax, %rcx
 	callq print_int

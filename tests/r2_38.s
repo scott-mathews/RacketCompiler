@@ -8,25 +8,25 @@ main:
 	pushq %rbx
 	subq $16, %rsp
 	movq $16384, %rcx 
-	movq $16, %rdx 
+	movq $10000, %rdx 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15 
 	movq $0, (%r15) 
 	addq $0, %r15
 
-	movq $0, %rax
-	cmpq $0, %rax
+	movq $0, %r10
+	cmpq $0, %r10
 	sete %al
-	movzbq %al, %rax
-	movq %rax, -8(%rbp)
+	movzbq %al, %r10
+	movq %r10, -8(%rbp)
 	movq -8(%rbp), %rax
 	cmpq $1, %rax
-	je then62694
+	je then30483
 	movq $777, -16(%rbp)
-	jmp end62695
-then62694:
+	jmp end30484
+then30483:
 	movq $42, -16(%rbp)
-end62695:
+end30484:
 	movq -16(%rbp), %rax
 
 	movq %rax, %rcx
