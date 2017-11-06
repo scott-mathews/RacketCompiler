@@ -48,7 +48,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; === R4 Tests === ;;;
-;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r4" (range 1 39))
+(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r4" (range 1 39))
 
 
 (display "tests passed!") (newline)

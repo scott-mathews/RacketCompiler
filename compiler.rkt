@@ -60,7 +60,7 @@
        (define function-type `(,@input-types -> ,type)) ; eg. ((Vector Integer) Integer) -> Integer
        (define output-env (append (cons var function-type) env))
        (define-values (eb tb) ((typecheck-R4 new-env) body))
-       (values `(has-type (define (,var ,@(reverse new-args)) ,eb) ,function-type) (cons var function-type))] ; return has-typed expression, type, and function name
+       (values `(define (,var ,@(reverse new-args)) : ,function-type ,eb) (cons var function-type))] ; return has-typed expression, type, and function name
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
          (values `(has-type (vector ,@e*) ,t) t))]
