@@ -45,7 +45,7 @@
       [`(let ([,x ,(app recur e T)]) ,body)
        (define new-env (cons (cons x T) env))
        (define-values (eb tb) ((type-check new-env) body))
-       (values `(let ([,x ,e]) ,eb) tb)]     
+       (values `(has-type (let ([,x ,e]) ,eb) ,tb) tb)]     
 
       [`(define (,var ,args* ...) : ,type ,body)
        (define input-types '())
@@ -135,7 +135,7 @@
       [`(if ,(app recur cnd-e cnd-T) ,(app recur thn-e thn-T) ,(app recur els-e els-T))
        (if (equal? cnd-T `Boolean)
            (if (equal? thn-T els-T)
-               (values `(if ,cnd-e ,thn-e ,els-e) thn-T)
+               (values `(has-type (if ,cnd-e ,thn-e ,els-e) ,thn-T) thn-T)
                (error `type-check "both branches of if must be same type"))
            (error `type-check "if expects a boolean in the conditional"))]
       
@@ -232,11 +232,11 @@
        ]
       [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname (map car alist))
                             `(has-type ((has-type ,(lookup fname alist) ,type) ,@(map (uniquify alist) args*)) ,t)]
-      [`(let ([,x ,e]) ,body)
+      [`(has-type (let ([,x ,e]) ,body) ,tb)
        (let ([y (gensym x)])
          (let ([l (cons (cons x y) alist)])
-           `(let ([,y ,((uniquify alist) e)]) ,((uniquify l) body))))]
-      [`(if ,cnd ,thn ,els) `(if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els))]
+           `(has-type (let ([,y ,((uniquify alist) e)]) ,((uniquify l) body)) ,tb)))]
+      [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els)) ,t)]
       
       [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (uniquify alist) es)) ,t)])))
 
@@ -248,6 +248,7 @@
   ;(define recur (reveal-functions f-list))
   (lambda (exp)
     (match exp
+      [(? terminal?) exp]
       [`(has-type ,v ,t) #:when (member v f-list) `(has-type (function-ref ,v) ,t)]
       [`(has-type ,v ,t) #:when (or (symbol? v) (boolean? v) (integer? v)) `(has-type ,v ,t)]
       [`(program ,type ,exps ...)
@@ -272,8 +273,9 @@
        (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions inner-env) body)) var)]
       [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname f-list)
                                           `(has-type (app (has-type (function-ref ,fname) ,type) ,@(map (reveal-functions f-list) args*)) ,t)]
-      [`(let ([,x ,e]) ,body) `(let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body))]
-      [`(if ,cnd ,thn ,els) `(if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els))]
+      [`(has-type (let ([,x ,e]) ,body) ,tb) `(has-type (let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body)) ,tb)]
+      [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els)) ,t)]
+      [`(has-type ((has-type ,op ,t-op) ,es ...) ,t) #:when (function-type t-op) `(has-type (app ,((reveal-functions f-list) `(has-type ,op ,t-op)) ,@(map (reveal-functions f-list) es)) ,t)]
       [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
       ))) ; might need to update x to function-ref here
 ;;; End Reveal Functions ;;;
@@ -340,8 +342,8 @@
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
-    [`(let ([,x ,e]) ,b) `(let ([,x ,(expose-allocation e)]) ,(expose-allocation b))]
-    [`(if ,cnd ,thn ,els) `(if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els))]
+    [`(has-type (let ([,x ,e]) ,b) ,tb) `(has-type (let ([,x ,(expose-allocation e)]) ,(expose-allocation b)) ,tb)]
+    [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els)) ,t)]
     [`(define (,var ,args* ...) ,body)
      `(define (,var ,@args*) ,(expose-allocation body))]
     [`(app ,fn ,args* ...)
@@ -458,7 +460,7 @@
     [`(has-type (- ,e) ,t) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
-    [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
+    [`(has-type (if ,cnd ,thn ,els) ,t) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
                           (define v (gensym `tmp))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
                           (define-values (flat-els assignments-els vars-els) (flatten-helper els))
@@ -466,7 +468,7 @@
                                                             (,@assignments-thn (assign ,v ,flat-thn))
                                                             (,@assignments-els (assign ,v ,flat-els))))
                                   (cons (cons v (if (terminal? flat-cnd) `Boolean (lookup flat-thn vars-thn))) (append vars-cnd vars-thn vars-els)))]
-    [`(let ([,v ,e]) ,body)     
+    [`(has-type (let ([,v ,e]) ,body) ,tb)     
      (define-values (flat-exp1 assignments1 vars1)
        (if (equal? '() var)
            (flatten-helper e v)
@@ -477,6 +479,17 @@
                  `(,@assignments1 ,@assignments2)
                  `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
              (set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
+    [`(app ,op ,args ...)
+     (define-values (flat-op ass-op vars-op) (flatten-helper op))
+     (define flat-args '())
+     (define ass-args '())
+     (define vars-args '())
+     (for ([arg args])
+       (define-values (flat-arg ass-arg vars-arg) (flatten-helper arg))
+       (set! flat-args (cons flat-arg flat-args))
+       (set! ass-args (append ass-arg ass-args))
+       (set! vars-args (cons vars-arg vars-args)))
+     (values )]
     ;[else ]
     ))
 
