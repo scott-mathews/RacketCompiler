@@ -928,6 +928,8 @@
                                        (list `(movq (int ,n) (reg r13))
                                              `(cmpq (,type ,val) (reg r13)))
                                        (list `(cmpq (int ,n) (,type ,val))))]
+    [`(leaq (function-ref ,label) (deref ,reg ,n)) (list `(movq (deref ,reg ,n) (reg rax))
+                                                         `(leaq (function-ref ,label) (reg rax)))]
     [`(program ,n ,instrs ...) `(program ,n ,@(values (map-me patch-instructions instrs)))]  
     [else (list exp)] 
     )) 
@@ -982,6 +984,8 @@
     [`(label ,name) (format "~a:\n" name)] 
     [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
+    [`(indirect-callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" fn) (format "callq *~a\n" fn))]
+    [`(function-ref ,label) (format "~a(%rip)" label)]
     [`(program (,regn ,rootn) (type ,t) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
 
 ;;; End Print x86 ;;;
