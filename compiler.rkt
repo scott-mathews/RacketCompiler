@@ -273,8 +273,8 @@
        (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions inner-env) body)) var)]
       [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname f-list)
                                           `(has-type (app (has-type (function-ref ,fname) ,type) ,@(map (reveal-functions f-list) args*)) ,t)]
-      [`(has-type (let ([,x ,e]) ,body) ,tb) `(has-type (let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body)) ,tb)]
-      [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els)) ,t)]
+      [`(has-type (let ([,x ,e]) ,body) ,tb) `(let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body))]
+      [`(has-type (if ,cnd ,thn ,els) ,t) `(if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els))]
       [`(has-type ((has-type ,op ,t-op) ,es ...) ,t) #:when (function-type t-op) `(has-type (app ,((reveal-functions f-list) `(has-type ,op ,t-op)) ,@(map (reveal-functions f-list) es)) ,t)]
       [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
       ))) ; might need to update x to function-ref here
@@ -460,7 +460,7 @@
     [`(has-type (- ,e) ,t) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
-    [`(has-type (if ,cnd ,thn ,els) ,t) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
+    [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
                           (define v (gensym `tmp))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
                           (define-values (flat-els assignments-els vars-els) (flatten-helper els))
@@ -468,7 +468,7 @@
                                                             (,@assignments-thn (assign ,v ,flat-thn))
                                                             (,@assignments-els (assign ,v ,flat-els))))
                                   (cons (cons v (if (terminal? flat-cnd) `Boolean (lookup flat-thn vars-thn))) (append vars-cnd vars-thn vars-els)))]
-    [`(has-type (let ([,v ,e]) ,body) ,tb)     
+    [`(let ([,v ,e]) ,body)     
      (define-values (flat-exp1 assignments1 vars1)
        (if (equal? '() var)
            (flatten-helper e v)
@@ -987,10 +987,10 @@
 ;;; End Print x86 ;;;
 
 (define (pre-temp-test exp)
-  ;(expose-allocation
+  (expose-allocation
    ((reveal-functions '())
    ((uniquify'())
-    ((type-check '()) exp))));)
+    ((type-check '()) exp)))))
 
 (define (temp-test exp)
   ;(print-x86
