@@ -317,51 +317,44 @@ void cheney(int64_t** rootstack_ptr)
 
 	rootstack_ptr++;
 
-	// Continue until end of rootstack
-	while(rootstack_ptr > rootstack_begin)
+	// Continue until end of tospace
+  for (int64_t** root_loc = rootstack_begin; root_loc != rootstack_ptr; ++root_loc)
 	{
-		rootstack_ptr--;
-
-		if (*rootstack_ptr == 0x0)
-		{
-			continue;
-		}
-
-		if (*rootstack_ptr == 0xbaadf00dbaadf00d)
-		{
-			continue;
-		}
-
-		// Copy vectors
-		copy_vector(rootstack_ptr);
-	}
-
+    copy_vector(root_loc);
+  }
 
 	// Continue until end of vectors in tospace
-	while(scan_ptr < free_ptr)
+	while(scan_ptr != free_ptr)
 	{
-		int64_t tag = *scan_ptr; scan_ptr++;
-    int64_t* data = scan_ptr + 1;
+		int64_t tag = *scan_ptr;
 		int len = get_length(tag);
-		int64_t isPtrBits = get_ptr_bitfield(tag);
-		scan_ptr = scan_ptr + len;
 
-    for (int i = 0; i != len; i++){
-      if ((isPtrBits >> i) & 1){
-        int64_t* ptr = (int64_t*) data[i];
-				copy_vector(&ptr);
+    int64_t* next_ptr = scan_ptr + len + 1;
+		int64_t isPtrBits = get_ptr_bitfield(tag);
+
+		scan_ptr++;
+
+		while(scan_ptr != next_ptr)
+		{
+      if ((isPtrBits & 1) == 1)
+			{
+				copy_vector((int64_t**)scan_ptr);
       }
+
+			isPtrBits = isPtrBits >> 1;
+			scan_ptr += 1;
     }
 	}
 
 	// Swap the fromspace and tospace pointers
-	int64_t* temp_ptr;
-	temp_ptr = tospace_begin;
+	int64_t* temp_begin = tospace_begin;
+	int64_t* temp_end = tospace_end;
+
 	tospace_begin = fromspace_begin;
-	fromspace_begin = temp_ptr;
-	temp_ptr = tospace_end;
 	tospace_end = fromspace_end;
-	fromspace_end = temp_ptr;
+
+	fromspace_begin = temp_begin;
+	fromspace_end = temp_end;
 }
 
 
@@ -419,27 +412,34 @@ void copy_vector(int64_t** vector_ptr_loc)
 {
 	int64_t* old_vector_ptr = *vector_ptr_loc;
 
+	int old_tag = any_tag((int64_t)old_vector_ptr);
+
+	if (!is_ptr(old_vector_ptr))
+		return;
+	old_vector_ptr = to_ptr(old_vector_ptr);
+
 	int64_t tag = old_vector_ptr[0];
 
+	// If forwarding, update old vector pointer location to point to new location
 	if(is_forwarding(tag))
 	{
-		// If forwarding, update old vector pointer location to point to new location
-		vector_ptr_loc = (int64_t**)tag;
+		*vector_ptr_loc = (int64_t*) (tag | old_tag);
 	}
 	else
 	{
+		int len = get_length(tag);
 		int64_t* new_loc = free_ptr;
 
 		// Else Copy the contents to tospace
 		int i = 0;
-		int len = get_length(tag);
 		for(i;i<=len;i++)
 		{
 			*free_ptr = old_vector_ptr[i];
 			free_ptr++;
 		}
 		// set forwarding address for old tag
-		*old_vector_ptr = (int64_t)new_loc; 
+		old_vector_ptr[0] = (int64_t) new_loc; 
+		new_loc = (int64_t*)((int64_t)new_loc | old_tag);
 		*vector_ptr_loc = new_loc;
 	}
 
