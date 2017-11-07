@@ -438,7 +438,7 @@
                                            (define-values (arg-exp arg-ass arg-var) (flatten-helper arg))
                                            (set! arg-exps (cons arg-exp arg-exps))
                                            (set! arg-assignments (append arg-ass arg-assignments))
-                                           (set! arg-vars (cons arg-var arg-vars)))
+                                           (set! arg-vars (append arg-var arg-vars)))
                                          (values v `(,@(reverse arg-assignments) ,@fn-assignments (assign ,v (app, fn-exp ,@(reverse arg-exps)))) (cons (cons v t) (append arg-vars fn-vars)))]
 
     [`(define (,fn ,args* ...) ,body)
@@ -479,17 +479,17 @@
                  `(,@assignments1 ,@assignments2)
                  `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
              (set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
-    [`(app ,op ,args ...)
-     (define-values (flat-op ass-op vars-op) (flatten-helper op))
-     (define flat-args '())
-     (define ass-args '())
-     (define vars-args '())
-     (for ([arg args])
-       (define-values (flat-arg ass-arg vars-arg) (flatten-helper arg))
-       (set! flat-args (cons flat-arg flat-args))
-       (set! ass-args (append ass-arg ass-args))
-       (set! vars-args (cons vars-arg vars-args)))
-     (values )]
+    ;[`(app ,op ,args ...)
+    ; (define-values (flat-op ass-op vars-op) (flatten-helper op))
+    ; (define flat-args '())
+    ; (define ass-args '())
+    ;; (define vars-args '())
+    ; (for ([arg args])
+    ;   (define-values (flat-arg ass-arg vars-arg) (flatten-helper arg))
+    ;   (set! flat-args (cons flat-arg flat-args))
+    ;   (set! ass-args (append ass-arg ass-args))
+    ;   (set! vars-args (append vars-arg vars-args)))
+    ; (values )]
     ;[else ]
     ))
 
@@ -579,20 +579,17 @@
   (lambda (args vars regs inst stack-loc)
     (cond
       [(empty? vars)  (if (empty? inst) `() (map-me select-instructions inst))]
-      [(empty? regs) (cons `(movq (deref rbp ,stack-loc) ,(car vars)) (def-helper args (cdr vars) regs inst (+ 8 stack-loc)))]
-      [else (cons `(movq ,(car regs) ,(car vars)) (def-helper args (cdr vars) (cdr regs) inst stack-loc))])))
+      [(empty? regs) (cons `(movq (deref rbp ,stack-loc) (var ,(car (car vars)))) (def-helper args (cdr vars) regs inst (+ 8 stack-loc)))]
+      [else (cons `(movq ,(car regs) ,(if (pair? (car vars)) `(var ,(car (car vars))) `(var (car vars)))) (def-helper args (cdr vars) (cdr regs) inst stack-loc))])))
 
 (define (select-define-helper def)
   (match def
     [`(define (,fname ,args ...) ,vars ,inst ...)
-     (let [(vars (foldr (lambda (x y) (if (pair? (car x))
-                                          (cons (car (car x)) (cons (car (car (cdr x))) y))
-                                          (cons (car x) y))) `()
-                                                             vars))]
+     (let [(vars vars)]
      `(define (,(second fname)) ,(length args) (,vars ,(if (< (length vars) (length def-reg-list))
                                                            0
                                                            (- (length vars) (length def-reg-list))))
-        (!!instructions_Below!! ,(def-helper args vars def-reg-list inst 0))))]
+        ,(def-helper args vars def-reg-list inst 0)))]
     [else `(didn't_pick ,def)]))
 
 ;;; Select Instructions Itself ;;;
@@ -649,7 +646,7 @@
     [`(assign ,v (app ,fun ,args ...))  (append (map (lambda (x) (list (first x) (third x) (second x))) (def-helper `() args def-reg-list `() 0))
                                              `((indirect-callq ,fun))
                                              `((movq (reg rax) (var ,v))))]
-    [`(assign ,v (function-ref ,fname)) `((leaq (function-ref ,fname) ,v))]
+    [`(assign ,v (function-ref ,fname)) `((leaq (function-ref ,fname) (var ,v)))]
     [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg r10))
                                        `(cmpq (reg r10) ,(val->typedval e1))
                                        `(set ,(cmp->cc cmp) (byte-reg al))
@@ -660,7 +657,7 @@
                                                                ,(values (map-me select-instructions thn))
                                                                ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
-    [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...) `(program ,vars ,type (defines ,(map select-define-helper defs)) ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]
+    [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...) `(program ,vars ,type (defines ,@(map select-define-helper defs)) ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]
     ))
 
 (define (remove-duplicate-movq list)
@@ -679,8 +676,14 @@
 
 (define (uncover-live exp)
   (match exp
-    [`(program (,vars ...) ,type ,instrs ...) (define-values (sets new-instrs) (get-set-of-vars-from-instructions instrs (set)))
-                                              `(program (,vars ,sets) ,type ,@new-instrs)]))
+    [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...)
+     (define-values (sets new-instrs) (get-set-of-vars-from-instructions instrs (set)))
+     (define new-defs '())
+     (for ([def defs])
+       (match def [`(define (,f) ,n ((,vars* ...) ,m) (,instrs* ...))
+                    (define-values (def-set def-instrs) (get-set-of-vars-from-instructions instrs* (set)))
+                    (set! new-defs (cons `(define (,f) ,n ((,vars* ,def-set) ,m) ,@def-instrs) new-defs))]))
+     `(program (,vars ,sets) ,type (defines ,@(reverse new-defs)) ,@new-instrs)]))
 
 (define (get-set-of-vars-from-instructions instrs initial-set)
   (define sets `(,initial-set))
@@ -720,10 +723,11 @@
 ;;; === Build-Interference === ;;;
 (define (build-interference exp)
   (match exp
-    [`(program (,vars ,live-afters) ,type ,instrs ...) `(program (,vars
-                                                            ,(graphify vars (make-graph (map car vars)) live-afters instrs)
-                                                            )
+    [`(define (,f) ,n ((,vars ,live-afters) ,m) ,instrs ...)
+     `(define (,f) ,n ((,vars ,(graphify vars (make-graph (map car vars)) live-afters instrs)) ,m) ,@instrs)]
+    [`(program (,vars ,live-afters) ,type (defines ,defs ...),instrs ...) `(program (,vars ,(graphify vars (make-graph (map car vars)) live-afters instrs))
                                                             ,type
+                                                            (defines ,@(map build-interference defs))
                                                             ,@instrs)]))
 
 (define (graphify vars graph live-afters instrs)
@@ -783,10 +787,16 @@
 
 (define (allocate-registers exp)
     (match exp
-    [`(program (,vars ,graph) ,type ,instrs ...) (define new-names (color-graph graph (build-MoveG (map car vars) instrs) (map car vars)))
-                                                 (define-values (spill rootstack-spill) (split-spills vars))
-                                                 (define new-vars (prune-vars new-names spill))
-                                                 `(program (,new-vars ,rootstack-spill) ,type ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
+      [`(define (,f) ,n ((,vars ,graph) ,m) ,instrs ...)
+       (define new-names (color-graph graph (build-MoveG (map car vars) instrs) (map car vars)))
+       (define-values (spill rootstack-spill) (split-spills vars))
+       (define new-vars (prune-vars new-names spill))
+       `(define (,f) ,n ((,new-vars ,rootstack-spill) ,m) ,@(map (lambda (instr) (update-name new-names instr)) instrs))]
+      [`(program (,vars ,graph) ,type (defines ,defs ...) ,instrs ...)
+       (define new-names (color-graph graph (build-MoveG (map car vars) instrs) (map car vars)))
+       (define-values (spill rootstack-spill) (split-spills vars))
+       (define new-vars (prune-vars new-names spill))
+       `(program (,new-vars ,rootstack-spill) ,type (defines ,@(map allocate-registers defs)) ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
 
 (define (prune-vars new-names vars)
   (filter (lambda (var) (>= (hash-ref new-names var) (vector-length general-registers))) vars))
@@ -801,7 +811,9 @@
   
   (define regular-vars '())
   (define rootstack-vars '())
-  (for ([var (map car vars)])
+  (for ([var (if (pair? (car vars))
+                 (map car vars)
+                 vars)])
     (if (equal? (look-up-type var vars) `Vector)
         (set! rootstack-vars (cons var rootstack-vars))
         (set! regular-vars (cons var regular-vars))
@@ -924,8 +936,14 @@
       [`(,op ,arg1 ,arg2) (list `(,op ,(type->home arg1 alist rootlist) ,(type->home arg2 alist rootlist)))]
       [`(,op ,arg) (list `(,op ,(type->home arg alist rootlist)))]
       [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist rootlist) cnd) ,(map-me (assign-homes alist rootlist) thn) ,(map-me (assign-homes alist rootlist) els)))] 
-      [`(callq ,fn) (list exp)] 
-      [`(program ((,vars ...) (,rootstack-vars ...)) ,type ,instrs ...) `(program (,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,type ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]))) 
+      [`(callq ,fn) (list exp)]
+      [`(define (,f) ,n ((,vars ,rootstack-vars) ,m) ,instrs ...)
+       `(define (,f) ,n ((,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,m) ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]
+      [`(program ((,vars ...) (,rootstack-vars ...)) ,type (defines ,defs ...) ,instrs ...)
+       (define new-defs '())
+       (for ([def defs])
+         (set! new-defs (cons ((assign-homes alist rootlist) def) new-defs)))
+       `(program (,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,type (defines ,@(reverse new-defs)) ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]))) 
 ;;; End Assign Homes ;;;
 
 ;;; === Lower Conditionals === ;;;
@@ -1014,30 +1032,40 @@
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
     [`(indirect-callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" fn) (format "callq *~a\n" fn))]
     [`(function-ref ,label) (format "~a(%rip)" label)]
-    [`(program (,regn ,rootn) (type ,t) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
+    [`(define (,f) ,n ((,regn ,rootn) ,m) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]
+    [`(program (,regn ,rootn) (type ,t) (define ,defs ...) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 defs)) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
 
 ;;; End Print x86 ;;;
 
 (define (pre-temp-test exp)
-  (expose-allocation
-   ((reveal-functions '())
-   ((uniquify'())
-    ((type-check '()) exp)))))
+  (print-x86
+   (patch-instructions
+    (lower-conditionals
+     ((assign-homes '() '())
+      (allocate-registers
+       (build-interference
+        (uncover-live
+         (select-instructions
+          (flatten
+           (expose-allocation
+            ((reveal-functions '())
+             ((uniquify `())
+              ((type-check `()) exp))))))))))))))
 
 (define (temp-test exp)
   ;(print-x86
-  ;(patch-instructions
-  ;(lower-conditionals
-  ;((assign-homes '() '())
-  ;(allocate-registers
-  ;(build-interference
-  ;(uncover-live
-  ;(select-instructions
-   (flatten
-    (expose-allocation
-     ((reveal-functions '())
-      ((uniquify `())
-       ((type-check `()) exp)))))););)));))))
+   ;(patch-instructions
+    ;(lower-conditionals
+     ((assign-homes '() '())
+      (allocate-registers
+       (build-interference
+        (uncover-live
+         (select-instructions
+          (flatten
+           (expose-allocation
+            ((reveal-functions '())
+             ((uniquify `())
+              ((type-check `()) exp)))))))))));)))
 
 
 (define book-v
