@@ -15,7 +15,10 @@
 
 ;;; === Type Checker === ;;;
 
-
+(define (function-type arg)
+  (match arg
+    [`(,args* ... -> ,output-type) output-type]
+    [else #f]))
 
 (define (typecheck-R4 env)
   (lambda (e)
@@ -42,9 +45,7 @@
       [`(let ([,x ,(app recur e T)]) ,body)
        (define new-env (cons (cons x T) env))
        (define-values (eb tb) ((type-check new-env) body))
-       (values `(let ([,x ,e]) ,eb) tb)]
-
-      
+       (values `(let ([,x ,e]) ,eb) tb)]     
 
       [`(define (,var ,args* ...) : ,type ,body)
        (define input-types '())
@@ -101,6 +102,8 @@
                                               (values `(has-type (,op ,n) ,t) `Integer)
                                               (error `typecheck-R4 "~a expects integer arguments" op))]
 
+      
+
       [`(not ,(app recur e T))
        (match T
          [`Boolean (values `(has-type (not ,e) ,T) `Boolean)]
@@ -126,6 +129,8 @@
                                               "pass"
                                               (error `type-check "Argument types ~a did not match function signature ~a" t* arg-types)))
                                         (values `(has-type ((has-type ,fname ,(lookup fname env)) ,@e*) ,output-type) output-type)]
+
+      
       
       [`(if ,(app recur cnd-e cnd-T) ,(app recur thn-e thn-T) ,(app recur els-e els-T))
        (if (equal? cnd-T `Boolean)
@@ -133,8 +138,8 @@
                (values `(if ,cnd-e ,thn-e ,els-e) thn-T)
                (error `type-check "both branches of if must be same type"))
            (error `type-check "if expects a boolean in the conditional"))]
-            
       
+      [`(,(app recur op op-t) ,(app recur args ts) ...) (define output-type (function-type op-t)) (values `(has-type (,op ,@args) ,output-type) output-type)]
       )))
 
 (define type-check typecheck-R4)
