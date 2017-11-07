@@ -436,7 +436,7 @@
 
     [`(define (,fn ,args* ...) ,body)
      (define-values (flat-exp assignments vars) (flatten-helper body))
-     `(define (,fn ,@args*) ,@assignments (return ,flat-exp))]
+     `(define (,fn ,@args*) ,vars ,@assignments (return ,flat-exp))]
     
     [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(if ,e1 ,e2 (has-type #f Boolean)))]
     [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
@@ -534,7 +534,8 @@
     [`< `l]
     [`>= `ge]
     [`<= `le]
-    [`eq? `e]))
+    [`eq? `e]
+    [else `WWWWWWWWWW]))
 
 ; Tag Helpers
 (define (build-pointer-mask type)
@@ -553,6 +554,28 @@
   (define pointer-mask (build-pointer-mask type))
   (define len-tagged (insert-length len pointer-mask))
   (bitwise-ior (arithmetic-shift len-tagged 1) 1))
+
+(define def-reg-list `(rdi rsi rdx rcx r8 r9))
+
+(define def-helper
+  (lambda (args vars regs inst stack-loc)
+    (cond
+      [(empty? vars)  (if (empty? inst) `() (map-me select-instructions inst))]
+      [(empty? regs) (cons `(movq (deref rbp ,stack-loc) ,(car vars)) (def-helper args (cdr vars) regs inst (+ 8 stack-loc)))]
+      [else (cons `(movq ,(car regs) ,(car vars)) (def-helper args (cdr vars) (cdr regs) inst stack-loc))])))
+
+(define (select-define-helper def)
+  (match def
+    [`(define (,fname ,args ...) ,vars ,inst ...)
+     (let [(vars (foldr (lambda (x y) (if (pair? (car x))
+                                          (cons (car (car x)) (cons (car (car (cdr x))) y))
+                                          (cons (car x) y))) `()
+                                                             vars))]
+     `(define (,(second fname)) ,(length args) (,vars ,(if (< (length vars) (length def-reg-list))
+                                                           0
+                                                           (- (length vars) (length def-reg-list))))
+        (!!instructions_Below!! ,(def-helper args vars def-reg-list inst 0))))]
+    [else `(didn't_pick ,def)]))
 
 ;;; Select Instructions Itself ;;;
 
@@ -605,6 +628,10 @@
                                 [(equal? v e2) (list `(addq ,(val->typedval e1) ,(val->typedval v)))]
                                 [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
                                             `(addq ,(val->typedval e2) ,(val->typedval v)))])]
+    [`(assign ,v (app ,fun ,args ...))  (append (map (lambda (x) (list (first x) (third x) (second x))) (def-helper `() args def-reg-list `() 0))
+                                             `((indirect-callq ,fun))
+                                             `((movq (reg rax) (var ,v))))]
+    [`(assign ,v (function-ref ,fname)) `((leaq (function-ref ,fname) ,v))]
     [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg r10))
                                        `(cmpq (reg r10) ,(val->typedval e1))
                                        `(set ,(cmp->cc cmp) (byte-reg al))
@@ -615,7 +642,8 @@
                                                                ,(values (map-me select-instructions thn))
                                                                ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
-    [`(program (,vars ...) ,type ,instrs ...) `(program ,vars ,type ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]))
+    [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...) `(program ,vars ,type (defines ,(map select-define-helper defs)) ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]
+    ))
 
 (define (remove-duplicate-movq list)
   (cond [(empty? list) '()]
