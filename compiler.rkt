@@ -982,8 +982,8 @@
 ;;; End Patch Instructions ;;;
 
 ;;; === Print x86 === ;;;
-(define store "\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
-(define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n")
+(define store "\tpushq %r15\n\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
+(define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n\tpopq %r15\n")
 
 (define root-store
   (lambda (m)
@@ -996,6 +996,9 @@
 (define intro
   (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
                     [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store m)) n)])))
+
+(define fn-intro
+  (lambda (name n) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _~a\n_~a:\n\tpushq %rbp\n\tmovq%rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") name name n)])))
 
 (define (print-result type)
   (define output-string "")
@@ -1012,6 +1015,9 @@
   (lambda (n m type) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
                     [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
                     [else (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)])))
+
+(define fn-conclusion
+  (lambda (n) (format (string-append "\n\taddq $~a, %rsp" restore "\n\tretq") n)))
 
 (define (arg->string arg)
   (match arg
@@ -1032,7 +1038,7 @@
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
     [`(indirect-callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" fn) (format "callq *~a\n" fn))]
     [`(function-ref ,label) (format "~a(%rip)" label)]
-    [`(define (,f) ,n ((,regn ,rootn) ,m) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]
+    [`(define (,f) ,n ((,regn ,rootn) ,m) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (fn-conclusion regn))]
     [`(program (,regn ,rootn) (type ,t) (define ,defs ...) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 defs)) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
 
 ;;; End Print x86 ;;;
