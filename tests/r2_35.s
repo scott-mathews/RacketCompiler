@@ -2,34 +2,35 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
+	pushq %r15
 	pushq %r14
 	pushq %r13
 	pushq %r12
 	pushq %rbx
 	subq $16, %rsp
 	movq $16384, %rcx 
-	movq $10000, %rdx 
+	movq $16, %rdx 
 	callq initialize 
-	movq rootstack_begin(%rip), %r15 
-	movq $0, (%r15) 
+	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
+	movq $0, 0(%r15)
 
 	movq $0, %rax
 	cmpq $1, %rax
-	je then30447
+	je then184655
 	movq $0, -8(%rbp)
-	jmp end30448
-then30447:
+	jmp end184656
+then184655:
 	movq $0, -8(%rbp)
-end30448:
+end184656:
 	movq -8(%rbp), %rax
 	cmpq $1, %rax
-	je then30449
+	je then184657
 	movq $42, -16(%rbp)
-	jmp end30450
-then30449:
+	jmp end184658
+then184657:
 	movq $777, -16(%rbp)
-end30450:
+end184658:
 	movq -16(%rbp), %rax
 
 	movq %rax, %rcx
@@ -41,5 +42,6 @@ end30450:
 	popq %r12
 	popq %r13
 	popq %r14
+	popq %r15
 	popq %rbp
 	retq

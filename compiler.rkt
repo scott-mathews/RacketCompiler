@@ -106,12 +106,12 @@
 
       [`(not ,(app recur e T))
        (match T
-         [`Boolean (values `(has-type (not ,e) ,T) `Boolean)]
+         [`Boolean (values `(has-type (not ,e) ,T) 'Boolean)]
          [else (error `type-check "`not` expects a boolean" e)])]
 
       [`(,op ,(app recur e1 b1) ,(app recur e2 b2)) #:when (member op bool-syms-biadic)
            (if (and (equal? b1 `Boolean) (equal? b2 `Boolean))
-               (values `(has-type (,op ,e1 ,e2) `Boolean) `Boolean)
+               (values `(has-type (,op ,e1 ,e2) Boolean) 'Boolean)
                (error `type-check "~a expects boolean arguments" op))]
 
       [`(,op ,(app recur e1 t1) ,(app recur e2 t2)) #:when (member op cmp-syms)
@@ -273,8 +273,8 @@
        (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions inner-env) body)) var)]
       [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname f-list)
                                           `(has-type (app (has-type (function-ref ,fname) ,type) ,@(map (reveal-functions f-list) args*)) ,t)]
-      [`(has-type (let ([,x ,e]) ,body) ,tb) `(let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body))]
-      [`(has-type (if ,cnd ,thn ,els) ,t) `(if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els))]
+      [`(has-type (let ([,x ,e]) ,body) ,tb) `(has-type (let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body)) ,tb)]
+      [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els)) ,t)]
       [`(has-type ((has-type ,op ,t-op) ,es ...) ,t) #:when (function-type t-op) `(has-type (app ,((reveal-functions f-list) `(has-type ,op ,t-op)) ,@(map (reveal-functions f-list) es)) ,t)]
       [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
       ))) ; might need to update x to function-ref here
@@ -291,47 +291,47 @@
       [(empty? elist)
        (begin
          (set! vec-assoc tiny-env)
-         `(let ([,(gensym `collectret) (if (has-type (< (has-type (+ (global-value free_ptr)
+         `(has-type (let ([,(gensym `collectret) (has-type (if (has-type (< (has-type (+ (global-value free_ptr)
                                                                      (has-type ,(+ 8 (* 8 (length e*))) Integer)) Integer)
                                                         (global-value fromspace_end)) Boolean)
                                            (has-type (void) Void)
-                                           (has-type (collect ,(+ 8 (* 8 (length e*)))) Void))])
+                                           (has-type (collect ,(+ 8 (* 8 (length e*)))) Void)) Void)])
             ,(if (equal? (length e*) 0)
-                 `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)]) (has-type ,v ,type))
-                 `(let ([,v (has-type (allocate ,(length e*) ,type) ,type)])
-                    ,(alloc-helper2 v type (length e*) e*)))))]
+                 `(has-type (let ([,v (has-type (allocate ,(length e*) ,type) ,type)]) (has-type ,v ,type)) ,type)
+                 `(has-type (let ([,v (has-type (allocate ,(length e*) ,type) ,type)])
+                    ,(alloc-helper2 v type (length e*) e*)) ,type))) ,type))]
       [else
        (let ([x (gensym `vecinit)])
          (if (and (pair? (second (car elist))) (eq? `vector (car (second (car elist)))))
              (begin
                (set! flipper (expose-allocation (car elist)))
-               `(let ([,x ,(expose-allocation (car elist))])
+               `(has-type (let ([,x ,(expose-allocation (car elist))])
                   ,(alloc-helper (cdr elist) elen (lambda (v)
                                                     (begin
                                                       ;(set! flipper elist)
                                                       (if (eq? v (car elist))
                                                           `(,x ,(last (car elist)))
-                                                          (tiny-env v)))) v type e*)))
-             `(let ([,x ,(car elist)])
+                                                          (tiny-env v)))) v type e*)) ,type))
+             `(has-type (let ([,x ,(car elist)])
                 ,(alloc-helper (cdr elist) elen (lambda (v)
                                                   (begin
                                                     ;(set! flipper elist)
                                                     (if (eq? v (car elist))
                                                         `(,x ,(third (car elist)))
-                                                        (tiny-env v)))) v type e*))))]))
+                                                        (tiny-env v)))) v type e*)) ,type)))]))
   (define (alloc-helper2 v type len list)
     (cond
       ;[(eq? 0 (length list)) ]
-      [(eq? 1 (length list)) `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(begin
+      [(eq? 1 (length list)) `(has-type (let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list))) ,(begin
                                                                                                                                                                                         ;(set! flipper list)
                                                                                                                                                                                         (second (vec-assoc (car list)))))) Void)])
-                                (has-type ,v ,type))]
+                                (has-type ,v ,type)) Void)]
       (else
-       `(let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list)))
+       `(has-type (let ([,(gensym `initret) (has-type (vector-set! (has-type ,v ,type) (has-type ,(- len (length list)) Integer) (has-type ,(car (vec-assoc (car list)))
                                                                                                                                  ,(begin
                                                                                                                                     ;(set! flipper `(,(car (vec-assoc (car list))) ,(second (vec-assoc (car list)))))
                                                                                                                                     (second (vec-assoc (car list)))))) Void)])
-          ,(alloc-helper2 v type len (cdr list))))))
+          ,(alloc-helper2 v type len (cdr list))) Void))))
   (match exp
     [`(has-type ,terminal ,type) #:when (terminal? terminal) exp]
     [`(has-type (function-ref ,f) ,t) exp]
@@ -339,11 +339,12 @@
      ;(set! e* (map expose-allocation e*))
      (let ([v (gensym `alloc)])
        (alloc-helper e* (length e*) vec-assoc v type e*))]
+    [`(has-type (let ([,x ,e]) ,b) ,tb) `(has-type (let ([,x ,(expose-allocation e)]) ,(expose-allocation b)) ,tb)]
+    [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els)) ,t)]
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
-    [`(has-type (let ([,x ,e]) ,b) ,tb) `(has-type (let ([,x ,(expose-allocation e)]) ,(expose-allocation b)) ,tb)]
-    [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els)) ,t)]
+    
     [`(define (,var ,args* ...) ,body)
      `(define (,var ,@args*) ,(expose-allocation body))]
     [`(app ,fn ,args* ...)
@@ -411,6 +412,14 @@
   ;(display (genvar var))
   ;(display "\n")
   (match exp
+    [`(has-type (if ,cnd ,thn ,els) ,t) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
+                          (define v (gensym `tmp))
+                          (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
+                          (define-values (flat-els assignments-els vars-els) (flatten-helper els))
+                          (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
+                                                            (,@assignments-thn (assign ,v ,flat-thn))
+                                                            (,@assignments-els (assign ,v ,flat-els))))
+                                  (cons (cons v (if (terminal? flat-cnd) `Boolean (lookup flat-thn vars-thn))) (append vars-cnd vars-thn vars-els)))]
     [`(has-type ,v ,t) #:when (symbol? v) (values v '() (list (cons v t)))]
     [`(has-type ,n ,t) #:when (fixnum? n) (values n '() '())]
     [`(has-type ,b ,t) #:when (boolean? b) (values b '() '())]
@@ -445,7 +454,18 @@
      (define-values (flat-exp assignments vars) (flatten-helper body))
      `(define (,fn ,@args*) ,vars ,@assignments (return ,flat-exp))]
     
-    [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(if ,e1 ,e2 (has-type #f Boolean)))]
+    [`(has-type (let ([,v ,e]) ,body) ,t)     
+     (define-values (flat-exp1 assignments1 vars1)
+       (if (equal? '() var)
+           (flatten-helper e v)
+           (flatten-helper e (car var))))
+     (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
+     (values flat-exp2
+             (if (equal? v flat-exp1)
+                 `(,@assignments1 ,@assignments2)
+                 `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
+             (set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
+    [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(has-type (if ,e1 ,e2 (has-type #f Boolean)) Boolean))]
     [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
                     (define v (genvar var))
                     ;(display (format "Type: ~a" (cons v t)))
@@ -460,25 +480,8 @@
     [`(has-type (- ,e) ,t) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
-    [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
-                          (define v (gensym `tmp))
-                          (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
-                          (define-values (flat-els assignments-els vars-els) (flatten-helper els))
-                          (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
-                                                            (,@assignments-thn (assign ,v ,flat-thn))
-                                                            (,@assignments-els (assign ,v ,flat-els))))
-                                  (cons (cons v (if (terminal? flat-cnd) `Boolean (lookup flat-thn vars-thn))) (append vars-cnd vars-thn vars-els)))]
-    [`(let ([,v ,e]) ,body)     
-     (define-values (flat-exp1 assignments1 vars1)
-       (if (equal? '() var)
-           (flatten-helper e v)
-           (flatten-helper e (car var))))
-     (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
-     (values flat-exp2
-             (if (equal? v flat-exp1)
-                 `(,@assignments1 ,@assignments2)
-                 `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
-             (set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
+    
+    
     ;[`(app ,op ,args ...)
     ; (define-values (flat-op ass-op vars-op) (flatten-helper op))
     ; (define flat-args '())
@@ -811,13 +814,15 @@
   
   (define regular-vars '())
   (define rootstack-vars '())
+  (if (empty? vars)
+      (values regular-vars rootstack-vars)
   (for ([var (if (pair? (car vars))
                  (map car vars)
                  vars)])
     (if (equal? (look-up-type var vars) `Vector)
         (set! rootstack-vars (cons var rootstack-vars))
         (set! regular-vars (cons var regular-vars))
-        ))
+        )))
   (values regular-vars rootstack-vars))
 
 (define (update-name new-names instr)
@@ -989,9 +994,9 @@
   (lambda (m)
   (format
    (if (equal? (system-type) `windows)
-       "\tmovq $16384, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n"
-       "\tmovq $16384, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n")
-    m (- m))))
+       "\tmovq $~a, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n"
+       "\tmovq $~a, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n")
+    (+ m 8) m (- m))))
 
 (define intro
   (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
@@ -1039,24 +1044,24 @@
     [`(indirect-callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" fn) (format "callq *~a\n" fn))]
     [`(function-ref ,label) (format "~a(%rip)" label)]
     [`(define (,f) ,n ((,regn ,rootn) ,m) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (fn-conclusion regn))]
-    [`(program (,regn ,rootn) (type ,t) (define ,defs ...) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 defs)) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
+    [`(program (,regn ,rootn) (type ,t) (defines ,defs ...) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 defs)) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
 
 ;;; End Print x86 ;;;
 
 (define (pre-temp-test exp)
-  (print-x86
-   (patch-instructions
-    (lower-conditionals
-     ((assign-homes '() '())
-      (allocate-registers
-       (build-interference
-        (uncover-live
-         (select-instructions
+  ;(print-x86
+   ;(patch-instructions
+    ;(lower-conditionals
+     ;((assign-homes '() '())
+      ;(allocate-registers
+       ;(build-interference
+        ;(uncover-live
+         ;(select-instructions
           (flatten
            (expose-allocation
             ((reveal-functions '())
              ((uniquify `())
-              ((type-check `()) exp))))))))))))))
+              ((type-check `()) exp))))));))))))))
 
 (define (temp-test exp)
   ;(print-x86
