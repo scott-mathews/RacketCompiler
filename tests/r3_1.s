@@ -19,7 +19,6 @@ main:
 	movq $2, %rcx
 	movq free_ptr(%rip), %rax
 	movq %rax, %rdx
-	movq %rdx, %rdx
 	addq $24, %rdx
 	movq fromspace_end(%rip), %rax
 	movq %rax, %rdx
@@ -30,17 +29,16 @@ main:
 	movq %rax, %rdx
 	movq %rdx, %rax
 	cmpq $1, %rax
-	je then334314
+	je then1781
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rdx
-	jmp end334315
-then334314:
+	jmp end1782
+then1781:
 	movq $0, %rdx
 	movq %rdx, %rdx
-end334315:
-	movq %rdx, %rdx
+end1782:
 	movq free_ptr(%rip), %rax
 	movq %rax, %rdx
 	addq $24, free_ptr(%rip)
@@ -54,7 +52,6 @@ end334315:
 	movq %rcx, %rax
 	movq %rax, 16(%r11)
 	movq $0, %rbx
-	movq %rdx, %rdx
 	movq $42, %rax
 
 	movq %rax, %rdi

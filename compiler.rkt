@@ -457,14 +457,14 @@
     [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)     
      (define-values (flat-exp1 assignments1 vars1)
        (if (equal? '() var)
-           (flatten-helper e v)
-           (flatten-helper e (car var))))
+           (flatten-helper `(has-type ,e ,te) v)
+           (flatten-helper `(has-type ,e ,te) (car var))))
      (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
      (values flat-exp2
              (if (equal? v flat-exp1)
                  `(,@assignments1 ,@assignments2)
                  `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
-             ;(set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2))))
+             ;(set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
              (set->list (list->set (cons (cons v te) (append vars1 vars2)))))]
     [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(has-type (if ,e1 ,e2 (has-type #f Boolean)) Boolean))]
     [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
@@ -669,8 +669,11 @@
         [(empty? (cdr list)) `(,(car list))]
         [else (match (car list)
                 [`(movq ,a ,b) (if (equal? (car list) (cadr list))
-                  (remove-duplicate-movq (cdr list))
-                  (cons (car list) (remove-duplicate-movq (cdr list))))]
+                                   (remove-duplicate-movq (cdr list))
+                                   (if (equal? a b)
+                                       (remove-duplicate-movq (cdr list))
+                                       (cons (car list) (remove-duplicate-movq (cdr list)))))]
+                [`(if ,cnd ,thn ,els) (cons `(if ,cnd ,(remove-duplicate-movq thn) ,(remove-duplicate-movq els)) (remove-duplicate-movq (cdr list)))]
                 [else (cons (car list) (remove-duplicate-movq (cdr list)))])]))
 
 ;;; === Uncover Live === ;;;
@@ -769,8 +772,8 @@
                            (add-edge g var v))]
       [`(callq collect) (for ([var lafter-v])
                            (if (equal? (look-up-type var vars) `Vector)
-                               (for ([caller (set-union caller-save (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
-                                 (add-edge g var caller))
+                               (for ([callee (set-union callee-save)]); (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
+                                 (add-edge g var callee))
                                "pass"))]
       [`(callq ,label) ; add call-clobbered registers to interference
                        (for ([reg caller-save])
@@ -785,7 +788,7 @@
                                                       (add-edge g thn-v adj-v))
                                                     (for ([adj-v (adjacent els-g els-v)])
                                                       (add-edge g els-v adj-v)))]
-      [else (displayln "not matched in build-interference") (displayln instr) (displayln lafter-v) (displayln "")
+      [else ;(displayln "not matched in build-interference") (displayln instr) (displayln lafter-v) (displayln "")
             "pass"]
       ))
   g)
@@ -965,7 +968,8 @@
        (define new-defs '())
        (for ([def defs])
          (set! new-defs (cons ((assign-homes alist rootlist) def) new-defs)))
-       `(program (,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,type (defines ,@(reverse new-defs)) ,@(values (map-me (assign-homes (make-homes vars -48) (make-homes rootstack-vars -8)) instrs)))]))) 
+       `(program (,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,type (defines ,@(reverse new-defs)) ,@(values (remove-duplicate-movq (map-me (assign-homes (make-homes vars -48) (make-homes rootstack-vars -8)) instrs))))]))) 
+
 ;;; End Assign Homes ;;;
 
 ;;; === Lower Conditionals === ;;;

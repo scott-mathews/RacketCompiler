@@ -20,10 +20,9 @@ main:
 	movq $0, -16(%r15)
 	movq $0, -8(%r15)
 
-	movq $777, %rdx
+	movq $777, %rbx
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
-	movq %rcx, %rcx
 	addq $16, %rcx
 	movq fromspace_end(%rip), %rax
 	movq %rax, %rcx
@@ -34,74 +33,68 @@ main:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then334115
+	je then4920
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end334116
-then334115:
+	jmp end4921
+then4920:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end334116:
-	movq %rcx, %rcx
+end4921:
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $3, 0(%r11)
 	movq %rcx, %r11
-	movq %rdx, %rax
+	movq %rbx, %rax
 	movq %rax, 8(%r11)
-	movq $0, %rdx
-	movq %rcx, %rdx
-	movq %rdx, %rsi
-	movq %rdx, %rdx
+	movq $0, %rbx
+	movq %rcx, %rbx
 	movq free_ptr(%rip), %rax
-	movq %rax, %rcx
-	movq %rcx, %rcx
-	addq $24, %rcx
+	movq %rax, %rdx
+	addq $24, %rdx
 	movq fromspace_end(%rip), %rax
-	movq %rax, %rcx
-	movq %rcx, %rax
-	cmpq %rax, %rcx
+	movq %rax, %rdx
+	movq %rdx, %rax
+	cmpq %rax, %rdx
 	sete %al
 	movzbq %al, %rax
-	movq %rax, %rcx
-	movq %rcx, %rax
+	movq %rax, %rdx
+	movq %rdx, %rax
 	cmpq $1, %rax
-	je then334117
+	je then4922
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
-	movq $0, %rcx
-	jmp end334118
-then334117:
-	movq $0, %rcx
-	movq %rcx, %rcx
-end334118:
-	movq %rcx, %rcx
+	movq $0, %rdx
+	jmp end4923
+then4922:
+	movq $0, %rdx
+	movq %rdx, %rdx
+end4923:
 	movq free_ptr(%rip), %rax
-	movq %rax, %rcx
+	movq %rax, %rdx
 	addq $24, free_ptr(%rip)
-	movq %rcx, %r11
+	movq %rdx, %r11
 	movq $389, 0(%r11)
-	movq %rcx, %r11
-	movq %rsi, %rax
+	movq %rdx, %r11
+	movq %rbx, %rax
 	movq %rax, 8(%r11)
-	movq $0, %rsi
-	movq %rcx, %r11
-	movq %rdx, %rax
+	movq $0, %rbx
+	movq %rdx, %r11
+	movq %rcx, %rax
 	movq %rax, 16(%r11)
-	movq $0, %rsi
-	movq %rcx, %rcx
-	movq %rcx, %r11
-	movq 8(%r11), %rdi
-	movq %rdi, %r11
+	movq $0, %rbx
+	movq %rdx, %r11
+	movq 8(%r11), %rbx
+	movq %rbx, %r11
 	movq $42, %rax
 	movq %rax, 8(%r11)
-	movq $0, %rcx
-	movq %rdx, %r11
+	movq $0, %rbx
+	movq %rcx, %r11
 	movq 8(%r11), %rbx
 	movq %rbx, %rax
 
