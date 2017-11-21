@@ -2,47 +2,45 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	pushq %r15
 	pushq %r14
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $64, %rsp
-	movq $16384, %rcx 
-	movq $16, %rdx 
+	subq $48, %rsp
+	movq $16384, %rdi 
+	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
-	movq $0, 0(%r15)
 
 	callq read_int
-	movq %rax, -40(%rbp)
+	movq %rax, %rbx
 	callq read_int
-	movq %rax, -32(%rbp)
-	movq -32(%rbp), %r10
-	cmpq %r10, -40(%rbp)
+	movq %rax, %rbx
+	movq %rbx, %rax
+	cmpq %rax, %rbx
 	sete %al
-	movzbq %al, %r10
-	movq %r10, -8(%rbp)
-	movq -8(%rbp), %rax
+	movzbq %al, %rax
+	movq %rax, %rbx
+	movq %rbx, %rax
 	cmpq $1, %rax
-	je then184395
-	movq $777, -16(%rbp)
-	jmp end184396
-then184395:
-	movq $42, -16(%rbp)
-end184396:
-	movq -16(%rbp), %rax
+	je then324767
+	movq $777, %rbx
+	jmp end324768
+then324767:
+	movq $42, %rbx
+end324768:
+	movq %rbx, %rax
 
-	movq %rax, %rcx
-	callq print_int
+	movq %rax, %rdi
+	movq	%rax, %rdi
+	callq	print_int
 	subq $0, %r15
-	addq $64, %rsp
+	addq $48, %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12
 	popq %r13
 	popq %r14
-	popq %r15
 	popq %rbp
 	retq

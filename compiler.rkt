@@ -5,8 +5,8 @@
 (require "utilities.rkt")
 
 ;; This exports passes, defined below, to users of this file.
-(provide r1-passes uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass type-check lower-conditionals-pass
-         r2-passes r3-passes expose-allocation-pass reveal-functions-pass)
+(provide uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass type-check lower-conditionals-pass
+         r3-passes expose-allocation-pass reveal-functions-pass)
 
 (define cmp-syms '(< > <= >= eq?))
 (define bool-syms-biadic '(and))
@@ -88,13 +88,13 @@
                                                             ,e-arg^) Void) `Void)]
          [else (error `type-check "expected a vector in vector-set!, not ~a" t-vec)])]
 
-      [`(read) (values `(has-type (read) `Integer) `Integer)]
+      [`(read) (values `(has-type (read) Integer) `Integer)]
 
       
 
       [`(,op ,(app recur n1 t1) ,(app recur n2 t2)) #:when (member op arith-syms-biadic)
                      (if (and (equal? t1 `Integer) (equal? t2 `Integer))
-                         (values `(has-type (,op ,n1 ,n2) `Integer) `Integer)
+                         (values `(has-type (,op ,n1 ,n2) Integer) `Integer)
                          (error `typecheck-R4 "~a expects integer arguments" op))]
 
       [`(,op ,(app recur n t)) #:when (member op arith-syms-monadic)
@@ -454,7 +454,7 @@
      (define-values (flat-exp assignments vars) (flatten-helper body))
      `(define (,fn ,@args*) ,vars ,@assignments (return ,flat-exp))]
     
-    [`(has-type (let ([,v ,e]) ,body) ,t)     
+    [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)     
      (define-values (flat-exp1 assignments1 vars1)
        (if (equal? '() var)
            (flatten-helper e v)
@@ -464,7 +464,8 @@
              (if (equal? v flat-exp1)
                  `(,@assignments1 ,@assignments2)
                  `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
-             (set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
+             ;(set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2))))
+             (set->list (list->set (cons (cons v te) (append vars1 vars2)))))]
     [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(has-type (if ,e1 ,e2 (has-type #f Boolean)) Boolean))]
     [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
                     (define v (genvar var))
@@ -650,11 +651,11 @@
                                              `((indirect-callq ,fun))
                                              `((movq (reg rax) (var ,v))))]
     [`(assign ,v (function-ref ,fname)) `((leaq (function-ref ,fname) (var ,v)))]
-    [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg r10))
-                                       `(cmpq (reg r10) ,(val->typedval e1))
+    [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg rax))
+                                       `(cmpq (reg rax) ,(val->typedval e1))
                                        `(set ,(cmp->cc cmp) (byte-reg al))
-                                       `(movzbq (byte-reg al) (reg r10))
-                                       `(movq (reg r10) ,(val->typedval v)))]
+                                       `(movzbq (byte-reg al) (reg rax))
+                                       `(movq (reg rax) ,(val->typedval v)))]
     [`(if (,cmp ,arg1 ,arg2) (,thn ...) (,els ...)) (list `(movq ,(val->typedval arg2) (reg rax))
                                                           `(if (,cmp (reg rax) ,(val->typedval arg1))
                                                                ,(values (map-me select-instructions thn))
@@ -702,8 +703,12 @@
                                           (set! new-instrs (cons instr new-instrs))]
           [`(,op (var ,read) (,type ,writ)) (set! sets (cons (live-after-set (set read) (set) (car sets)) sets))
                                             (set! new-instrs (cons instr new-instrs))]
+          [`(,op (,type ,read) (var ,writ)) (set! sets (cons (live-after-set (set) (set writ) (car sets)) sets))
+                                            (set! new-instrs (cons instr new-instrs))]
           ; handling deref r11 arg
           [`(,op (var ,read) (,type ,reg ,arg)) (set! sets (cons (live-after-set (set read) (set) (car sets)) sets))
+                                                (set! new-instrs (cons instr new-instrs))]
+          [`(,op (,type ,reg ,arg) (var ,writ)) (set! sets (cons (live-after-set (set) (set writ) (car sets)) sets))
                                                 (set! new-instrs (cons instr new-instrs))]
           [`(if ,cnd ,thns ,elss) (define-values (thns-sets thns-instrs) (get-set-of-vars-from-instructions thns (car sets)))
                                   (define-values (elss-sets elss-instrs) (get-set-of-vars-from-instructions elss (car sets)))
@@ -714,7 +719,12 @@
                                                                                                          [else (set)])]))
                                   (set! sets (cons (set-union cnd-set (car thns-sets) (car elss-sets)) sets))
                                   (set! new-instrs (cons new-instr new-instrs))]
-          [else (set! sets (cons (car sets) sets))
+          [`(,op (var ,read-writ)) (set! sets (cons (car sets) sets))
+                                   (set! new-instrs (cons instr new-instrs))]
+          [`(callq ,name) (set! sets (cons (car sets) sets))
+                          (set! new-instrs (cons instr new-instrs))]
+          [else ;(displayln "not matched in uncover-live") (displayln instr) (displayln "")
+                (set! sets (cons (car sets) sets))
                 (set! new-instrs (cons instr new-instrs))])))
   (values sets new-instrs))
 
@@ -729,9 +739,9 @@
     [`(define (,f) ,n ((,vars ,live-afters) ,m) ,instrs ...)
      `(define (,f) ,n ((,vars ,(graphify vars (make-graph (map car vars)) live-afters instrs)) ,m) ,@instrs)]
     [`(program (,vars ,live-afters) ,type (defines ,defs ...),instrs ...) `(program (,vars ,(graphify vars (make-graph (map car vars)) live-afters instrs))
-                                                            ,type
-                                                            (defines ,@(map build-interference defs))
-                                                            ,@instrs)]))
+                                                                                    ,type
+                                                                                    (defines ,@(map build-interference defs))
+                                                                                    ,@instrs)]))
 
 (define (graphify vars graph live-afters instrs)
   (define g graph)
@@ -757,12 +767,14 @@
                                                    (add-edge g var s)))]
       [`(,op (,type ,v)) (for ([var lafter-v])
                            (add-edge g var v))]
-      [`(callq ,collect) (for ([var lafter-v])
+      [`(callq collect) (for ([var lafter-v])
                            (if (equal? (look-up-type var vars) `Vector)
-                               (for ([callee (set-union callee-save (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
-                                 (add-edge g var callee))
+                               (for ([caller (set-union caller-save (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
+                                 (add-edge g var caller))
                                "pass"))]
-      [`(callq ,label) (for ([reg caller-save])
+      [`(callq ,label) ; add call-clobbered registers to interference
+                       (for ([reg caller-save])
+                         ; everything live after this interferes with the call-clobbered registers
                          (for ([var lafter-v])
                            (add-edge g (register->color reg) var)))]
       [`(if ,cnd ,thns ,thn-sets ,elss ,els-sets) (define thn-g (graphify vars g thn-sets thns))
@@ -773,7 +785,8 @@
                                                       (add-edge g thn-v adj-v))
                                                     (for ([adj-v (adjacent els-g els-v)])
                                                       (add-edge g els-v adj-v)))]
-      [else "pass"]
+      [else (displayln "not matched in build-interference") (displayln instr) (displayln lafter-v) (displayln "")
+            "pass"]
       ))
   g)
 
@@ -855,6 +868,7 @@
     [`(if ,cnd ,elss ,els-sets ,thns ,thn-sets) `(if ,(update-name new-names cnd)
                                                      ,(map (lambda (instr) (update-name new-names instr)) elss)
                                                      ,(map (lambda (instr) (update-name new-names instr)) thns))]
+    ;[else (displayln "not matched in update-name") (displayln instr) (displayln "")]))
     [else instr]))
 
 (define (color-graph graph mgraph vars)
@@ -863,13 +877,16 @@
   ; labels : (Var . Number)
   (define labels (make-hash))
   (define W vars)
+
+  ; Build initial set of constraints
   (define precount 0)
-  (while (< precount (set-count caller-save))
+  (while (<= precount (set-count caller-save))
     (if (hash-ref graph precount #f)
         (for ([adj-item (adjacent graph precount)])
           (hash-update! constraints adj-item (lambda (item) (set-union (set precount) item)) (set precount)))
         "pass")
     (set! precount (+ precount 1)))
+  
   (while (not (empty? W))
     ; Sort W by # constraints decreasing
     (set! W (sort W (lambda (x y) (> (set-count (hash-ref constraints x (set))) (set-count (hash-ref constraints y (set)))))))
@@ -943,12 +960,12 @@
       [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist rootlist) cnd) ,(map-me (assign-homes alist rootlist) thn) ,(map-me (assign-homes alist rootlist) els)))] 
       [`(callq ,fn) (list exp)]
       [`(define (,f) ,n ((,vars ,rootstack-vars) ,m) ,instrs ...)
-       `(define (,f) ,n ((,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,m) ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]
+       `(define (,f) ,n ((,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,m) ,@(values (map-me (assign-homes (make-homes vars -48) (make-homes rootstack-vars -8)) instrs)))]
       [`(program ((,vars ...) (,rootstack-vars ...)) ,type (defines ,defs ...) ,instrs ...)
        (define new-defs '())
        (for ([def defs])
          (set! new-defs (cons ((assign-homes alist rootlist) def) new-defs)))
-       `(program (,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,type (defines ,@(reverse new-defs)) ,@(values (map-me (assign-homes (make-homes vars -8) (make-homes rootstack-vars -8)) instrs)))]))) 
+       `(program (,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,type (defines ,@(reverse new-defs)) ,@(values (map-me (assign-homes (make-homes vars -48) (make-homes rootstack-vars -8)) instrs)))]))) 
 ;;; End Assign Homes ;;;
 
 ;;; === Lower Conditionals === ;;;
@@ -972,12 +989,12 @@
 ;;; === Patch Instructions === ;;;
 (define (patch-instructions exp)  
   (match exp  
-    [`(addq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg r9)) 
-                                                   `(addq (reg r9) (deref ,reg2 ,n2)))]
-    [`(movq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg r8)) `(movq (reg r8) (deref ,reg2 ,n2)))]
+    [`(addq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) 
+                                                   `(addq (reg rax) (deref ,reg2 ,n2)))]
+    [`(movq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) `(movq (reg rax) (deref ,reg2 ,n2)))]
     [`(cmpq (,type ,val) (int ,n)) (if (equal? type `int)
-                                       (list `(movq (int ,n) (reg r13))
-                                             `(cmpq (,type ,val) (reg r13)))
+                                       (list `(movq (int ,n) (reg rax))
+                                             `(cmpq (,type ,val) (reg rax)))
                                        (list `(cmpq (int ,n) (,type ,val))))]
     [`(leaq (function-ref ,label) (deref ,reg ,n)) (list `(movq (deref ,reg ,n) (reg rax))
                                                          `(leaq (function-ref ,label) (reg rax)))]
@@ -987,39 +1004,38 @@
 ;;; End Patch Instructions ;;;
 
 ;;; === Print x86 === ;;;
-(define store "\tpushq %r15\n\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
-(define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n\tpopq %r15\n")
+(define store "\tpushq %r14\n\tpushq %r13\n\tpushq %r12\n\tpushq %rbx\n")
+(define restore "\tpopq %rbx\n\tpopq %r12\n\tpopq %r13\n\tpopq %r14\n")
 
 (define root-store
   (lambda (m)
   (format
    (if (equal? (system-type) `windows)
-       "\tmovq $~a, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n"
-       "\tmovq $~a, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n\tmovq $0, ~a(%r15)\n\n")
-    (+ m 8) m (- m))))
+       (string-append "\tmovq $~a, %rcx \n\tmovq $16, %rdx \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n" (set-0s (- m)) "\n")
+       (string-append "\tmovq $~a, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n" (set-0s (- m)) "\n"))
+    16384 m)))
+
+(define (set-0s n)
+  (define result "")
+  (while (< n 0)
+         (set! result (string-append result (format "\tmovq $0, ~a(%r15)\n" n)))
+         (set! n (+ n 8)))
+  result)
 
 (define intro
-  (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") n)]
-                    [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store m)) n)])))
+  (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") (+ n 48))]
+                    [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store m)) (+ n 48))])))
 
 (define fn-intro
   (lambda (name n) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _~a\n_~a:\n\tpushq %rbp\n\tmovq%rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") name name n)])))
 
 (define (print-result type)
-  (define output-string "")
-  (match type
-    [`Integer (set! output-string "print_int\n")]
-    [`Boolean (set! output-string "print_bool\n")]
-    [`Vector (set! output-string "print_vector\n")])
-  (cond
-    [(equal? (system-type) `macosx) (set! output-string (string-append "\tcallq _" output-string))]
-    [else (set! output-string (string-append "\tcallq " output-string))])
-  output-string)
+  (print-by-type type))
 
 (define conclusion
-  (lambda (n m type) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
-                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)]
-                    [else (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m n)])))
+  (lambda (n m type) (cond [(equal? (system-type) `macosx) (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m (+ n 48))]
+                    [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m (+ n 48))]
+                    [else (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m (+ n 48))])))
 
 (define fn-conclusion
   (lambda (n) (format (string-append "\n\taddq $~a, %rsp" restore "\n\tretq") n)))
@@ -1181,33 +1197,6 @@
      ("allocate-registers" ,allocate-registers ,interp-x86)
      ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ("lower-conditionals" ,lower-conditionals ,interp-x86)
-     ("patch-instructions" ,patch-instructions ,interp-x86)
-     ("print-x86" ,print-x86 ,interp-x86)
-     ))
-
-(define r2-passes
-  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
-     ("expose-allocation" ,expose-allocation ,interp-scheme)
-     ("flatten" ,flatten ,interp-C)
-     ("select-instructions" ,select-instructions ,interp-x86)
-     ("uncover-live" ,uncover-live ,interp-x86)
-     ("build-interference" ,build-interference ,interp-x86)
-     ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
-     ("lower-conditionals" ,lower-conditionals ,interp-x86)
-     ("patch-instructions" ,patch-instructions ,interp-x86)
-     ("print-x86" ,print-x86 ,interp-x86)
-     ))
-
-(define r1-passes
-  `( ("uniquify" ,(uniquify '()) ,interp-scheme)
-     ("expose-allocation" ,expose-allocation ,interp-scheme)
-     ("flatten" ,flatten ,interp-C)
-     ("select-instructions" ,select-instructions ,interp-x86)
-     ("uncover-live" ,uncover-live ,interp-x86)
-     ("build-interference" ,build-interference ,interp-x86)
-     ("allocate-registers" ,allocate-registers ,interp-x86)
-     ("assign-homes" ,(assign-homes '() '()) ,interp-x86)
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
      ))
