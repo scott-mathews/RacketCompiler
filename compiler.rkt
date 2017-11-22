@@ -6,7 +6,7 @@
 
 ;; This exports passes, defined below, to users of this file.
 (provide uniquify-pass flatten-pass select-instructions-pass allocate-registers-pass patch-instructions-pass type-check lower-conditionals-pass
-         r3-passes expose-allocation-pass reveal-functions-pass)
+         r4-passes expose-allocation-pass reveal-functions-pass)
 
 (define cmp-syms '(< > <= >= eq?))
 (define bool-syms-biadic '(and))
@@ -577,24 +577,32 @@
   (define len-tagged (insert-length len pointer-mask))
   (bitwise-ior (arithmetic-shift len-tagged 1) 1))
 
+; Registers used to pass arguments (in order).
 (define def-reg-list `(rdi rsi rdx rcx r8 r9))
+
+; Given a list of vars (function arguments) tells you how many stack
+; locations will be required to pass all of the args. (We only use stack
+; if the number of arguments is greater than the length of def-reg-list.
+(define (maxstack vars) (if (< (length vars) (length def-reg-list))
+                            0
+                            (- (length vars) (length def-reg-list))))
 
 (define def-helper
   (lambda (args vars regs inst stack-loc)
     (cond
       [(empty? vars)  (if (empty? inst) `() (map-me select-instructions inst))]
       [(empty? regs) (cons `(movq (deref rbp ,stack-loc) (var ,(car (car vars)))) (def-helper args (cdr vars) regs inst (+ 8 stack-loc)))]
-      [else (cons `(movq ,(car regs) ,(if (pair? (car vars)) `(var ,(car (car vars))) `(var (car vars)))) (def-helper args (cdr vars) (cdr regs) inst stack-loc))])))
+      [else (cons `(movq (reg ,(car regs))
+                         ,(if (pair? (car vars)) (val->typedval (car (car vars))) (val->typedval (car vars))))
+                  (def-helper args (cdr vars) (cdr regs) inst stack-loc))])))
 
 (define (select-define-helper def)
   (match def
     [`(define (,fname ,args ...) ,vars ,inst ...)
      (let [(vars vars)]
-     `(define (,(second fname)) ,(length args) (,vars ,(if (< (length vars) (length def-reg-list))
-                                                           0
-                                                           (- (length vars) (length def-reg-list))))
+     `(define (,(second fname)) ,(length args) (,vars ,(maxstack vars))
         ,(def-helper args vars def-reg-list inst 0)))]
-    [else `(didn't_pick ,def)]))
+    [else (displayln (format "WARNING: didn't pick ~a in select-define-helper" def))]))
 
 ;;; Select Instructions Itself ;;;
 
@@ -661,7 +669,11 @@
                                                                ,(values (map-me select-instructions thn))
                                                                ,(values (map-me select-instructions els))))]
     [`(return ,v) (list `(movq ,(val->typedval v) (reg rax)))]
-    [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...) `(program ,vars ,type (defines ,@(map select-define-helper defs)) ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]
+    [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...)
+     `(program ,vars
+               ,type
+               (defines ,@(map select-define-helper defs))
+               ,@(remove-duplicate-movq (values (map-me select-instructions instrs))))]
     ))
 
 (define (remove-duplicate-movq list)
@@ -843,6 +855,7 @@
 
 (define (update-name new-names instr)
   (match instr
+    (display instr)
     [`(,op (,type1 ,v1) (,type2 ,v2)) `(,op ,(if (and (equal? 'var type1) (< (hash-ref new-names v1) (vector-length general-registers)))
                                                  `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
                                                  `(,type1 ,v1))
@@ -963,7 +976,7 @@
       [`(if ,cnd ,thn ,els) (list `(if ,@((assign-homes alist rootlist) cnd) ,(map-me (assign-homes alist rootlist) thn) ,(map-me (assign-homes alist rootlist) els)))] 
       [`(callq ,fn) (list exp)]
       [`(define (,f) ,n ((,vars ,rootstack-vars) ,m) ,instrs ...)
-       `(define (,f) ,n ((,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,m) ,@(values (map-me (assign-homes (make-homes vars -48) (make-homes rootstack-vars -8)) instrs)))]
+       `(define (,f) ,n ((,(alloc-size vars) ,(rootstack-alloc-size rootstack-vars)) ,m) ,@(values (map-me (assign-homes (make-homes vars (- -48 m)) (make-homes rootstack-vars -8)) instrs)))]
       [`(program ((,vars ...) (,rootstack-vars ...)) ,type (defines ,defs ...) ,instrs ...)
        (define new-defs '())
        (for ([def defs])
@@ -1019,6 +1032,10 @@
        (string-append "\tmovq $~a, %rdi \n\tmovq $16, %rsi \n\tcallq initialize \n\tmovq rootstack_begin(%rip), %r15\n\taddq $~a, %r15\n" (set-0s (- m)) "\n"))
     16384 m)))
 
+(define (fn-root-store rootstack-n)
+          (format
+           (string-append "\taddq $~a, %r15\n" (set-0s (- rootstack-n)) "\n") rootstack-n))
+
 (define (set-0s n)
   (define result "")
   (while (< n 0)
@@ -1030,8 +1047,12 @@
   (lambda (n m) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _main\n_main:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") (+ n 48))]
                     [else (format (string-append "\t.globl main\nmain:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n" store "\tsubq $~a, %rsp\n" (root-store m)) (+ n 48))])))
 
-(define fn-intro
-  (lambda (name n) (cond [(equal? (system-type) `macosx) (format (string-append "\t.globl _~a\n_~a:\n\tpushq %rbp\n\tmovq%rsp, %rbp\n" store "\tsubq $~a, %rsp\n\n") name name n)])))
+(define (fn-intro name stacksize rootstacksize argspills)
+  (format (string-append "\t.globl ~a\n~a:\n\tpushq %rbp\n\tmovq %rsp, %rbp\n"
+                         store
+                         "\tsubq $~a, %rsp\n"
+                         (fn-root-store rootstacksize))
+          name name (+ (+ stacksize argspills) 48)))
 
 (define (print-result type)
   (print-by-type type))
@@ -1041,8 +1062,8 @@
                     [(equal? (system-type) `windows) (format (string-append "\n\tmovq %rax, %rcx\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m (+ n 48))]
                     [else (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m (+ n 48))])))
 
-(define fn-conclusion
-  (lambda (n) (format (string-append "\n\taddq $~a, %rsp" restore "\n\tretq") n)))
+(define (fn-conclusion stacksize rootstacksize argspills)
+  (format (string-append "\n\taddq $~a, %rsp\n\tsubq $~a, %r15\n" restore "\tretq\n\n") (+ (+ stacksize argspills) 48) rootstacksize))
 
 (define (arg->string arg)
   (match arg
@@ -1052,6 +1073,14 @@
     [`(int ,n) (format "$~a" n)]
     [`(global-value ,ptr) (format "~a(%rip)" ptr)]
     [else (format "~a" arg)]))
+
+; handles writing up a function.
+(define (print-fn def)
+  (match def
+    [`(define (,name) ,n ((,regn ,rootn) ,n2) ,instrs ...)
+     (string-append (fn-intro regn rootn n)
+                    (foldr string-append "" (map print-x86 instrs))
+                    (fn-conclusion regn rootn))]))
 
 (define (print-x86 exp)
   (match exp
@@ -1063,8 +1092,16 @@
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
     [`(indirect-callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" fn) (format "callq *~a\n" fn))]
     [`(function-ref ,label) (format "~a(%rip)" label)]
-    [`(define (,f) ,n ((,regn ,rootn) ,m) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 instrs)) (fn-conclusion regn))]
-    [`(program (,regn ,rootn) (type ,t) (defines ,defs ...) ,instrs ...) (string-append (intro regn rootn) (foldr string-append "" (map print-x86 defs)) (foldr string-append "" (map print-x86 instrs)) (conclusion regn rootn t))]))
+    [`(define (,f) ,n ((,regn ,rootn) ,maxstack) ,instrs ...) (string-append
+                                                        (fn-intro f regn rootn maxstack)
+                                                        (foldr string-append "" (map print-x86 instrs))
+                                                        (fn-conclusion regn rootn maxstack))]
+    [`(program (,regn ,rootn) (type ,t) (defines ,defs ...) ,instrs ...)
+     (string-append 
+                    (foldr string-append "" (map print-x86 defs))
+                    (intro regn rootn)
+                    (foldr string-append "" (map print-x86 instrs))
+                    (conclusion regn rootn t))]))
 
 ;;; End Print x86 ;;;
 
@@ -1084,19 +1121,7 @@
               ((type-check `()) exp))))));))))))))
 
 (define (temp-test exp)
-  ;(print-x86
-   ;(patch-instructions
-    ;(lower-conditionals
-     ((assign-homes '() '())
-      (allocate-registers
-       (build-interference
-        (uncover-live
-         (select-instructions
-          (flatten
-           (expose-allocation
-            ((reveal-functions '())
-             ((uniquify `())
-              ((type-check `()) exp)))))))))));)))
+  (my-compiler-tests passes exp))
 
 
 (define book-v
@@ -1191,8 +1216,9 @@
      ("print-x86" ,print-x86 ,interp-x86)
      ))
 
-(define r3-passes
+(define r4-passes
   `( ("uniquify" ,(uniquify '()) ,interp-scheme)
+     ("reveal functions" ,(reveal-functions '()) ,interp-scheme)
      ("expose-allocation" ,expose-allocation ,interp-scheme)
      ("flatten" ,flatten ,interp-C)
      ("select-instructions" ,select-instructions ,interp-x86)
@@ -1204,3 +1230,6 @@
      ("patch-instructions" ,patch-instructions ,interp-x86)
      ("print-x86" ,print-x86 ,interp-x86)
      ))
+
+(define passes
+  (cons `("type-check" ,(type-check '()) ,interp-scheme) r4-passes))

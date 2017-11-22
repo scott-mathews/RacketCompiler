@@ -1,436 +1,66 @@
-#reader(lib"read.ss""wxme")WXME0108 ## 
-#|
-   This file uses the GRacket editor format.
-   Open this file in DrRacket version 6.9 or later to read it.
+#! /usr/bin/env racket
+#lang racket
 
-   Most likely, it was created by saving a program in DrRacket,
-   and it probably contains a program with non-text elements
-   (such as images or comment boxes).
+(require "utilities.rkt")
+(require "interp.rkt")
+(require "compiler.rkt")
 
-            http://racket-lang.org/
-|#
- 33 7 #"wxtext\0"
-3 1 6 #"wxtab\0"
-1 1 8 #"wximage\0"
-2 0 8 #"wxmedia\0"
-4 1 34 #"(lib \"syntax-browser.ss\" \"mrlib\")\0"
-1 0 36 #"(lib \"cache-image-snip.ss\" \"mrlib\")\0"
-1 0 68
-(
- #"((lib \"image-core.ss\" \"mrlib\") (lib \"image-core-wxme.rkt\" \"mr"
- #"lib\"))\0"
-) 1 0 16 #"drscheme:number\0"
-3 0 44 #"(lib \"number-snip.ss\" \"drscheme\" \"private\")\0"
-1 0 36 #"(lib \"comment-snip.ss\" \"framework\")\0"
-1 0 93
-(
- #"((lib \"collapsed-snipclass.ss\" \"framework\") (lib \"collapsed-sni"
- #"pclass-wxme.ss\" \"framework\"))\0"
-) 0 0 43 #"(lib \"collapsed-snipclass.ss\" \"framework\")\0"
-0 0 19 #"drscheme:sexp-snip\0"
-0 0 29 #"drscheme:bindings-snipclass%\0"
-1 0 101
-(
- #"((lib \"ellipsis-snip.rkt\" \"drracket\" \"private\") (lib \"ellipsi"
- #"s-snip-wxme.rkt\" \"drracket\" \"private\"))\0"
-) 2 0 88
-(
- #"((lib \"pict-snip.rkt\" \"drracket\" \"private\") (lib \"pict-snip.r"
- #"kt\" \"drracket\" \"private\"))\0"
-) 0 0 55
-#"((lib \"snip.rkt\" \"pict\") (lib \"snip-wxme.rkt\" \"pict\"))\0"
-1 0 34 #"(lib \"bullet-snip.rkt\" \"browser\")\0"
-0 0 25 #"(lib \"matrix.ss\" \"htdp\")\0"
-1 0 22 #"drscheme:lambda-snip%\0"
-1 0 29 #"drclickable-string-snipclass\0"
-0 0 26 #"drracket:spacer-snipclass\0"
-0 0 57
-#"(lib \"hrule-snip.rkt\" \"macro-debugger\" \"syntax-browser\")\0"
-1 0 26 #"drscheme:pict-value-snip%\0"
-0 0 45 #"(lib \"image-snipr.ss\" \"slideshow\" \"private\")\0"
-1 0 38 #"(lib \"pict-snipclass.ss\" \"slideshow\")\0"
-2 0 55 #"(lib \"vertical-separator-snip.ss\" \"stepper\" \"private\")\0"
-1 0 18 #"drscheme:xml-snip\0"
-1 0 31 #"(lib \"xml-snipclass.ss\" \"xml\")\0"
-1 0 21 #"drscheme:scheme-snip\0"
-2 0 34 #"(lib \"scheme-snipclass.ss\" \"xml\")\0"
-1 0 10 #"text-box%\0"
-1 0 32 #"(lib \"text-snipclass.ss\" \"xml\")\0"
-1 0 1 6 #"wxloc\0"
-          0 0 55 0 1 #"\0"
-0 75 1 #"\0"
-0 12 90 -1 90 -1 3 -1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 1 -1 0 9
-#"Standard\0"
-0 75 10 #"Monospace\0"
-0 12 90 -1 90 -1 3 -1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 -1 -1 2 24
-#"framework:default-color\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 150 0 150 0 0 0 -1 -1 2 15
-#"text:ports out\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 150 0 150 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 93 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 255 0 0 0 0 0 -1
--1 2 15 #"text:ports err\0"
-0 -1 1 #"\0"
-1 0 -1 -1 93 -1 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 175 0 0 0 -1 -1 2 17
-#"text:ports value\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 175 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1.0 0 92 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 34 139 34 0 0 0 -1
--1 2 27 #"Matching Parenthesis Style\0"
-0 -1 1 #"\0"
-1.0 0 92 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 34 139 34 0 0 0 -1
--1 2 1 #"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 37
-#"framework:syntax-color:scheme:symbol\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 38
-#"framework:syntax-color:scheme:keyword\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 38 38 128 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 194 116 31 0 0 0 -1 -1 2
-38 #"framework:syntax-color:scheme:comment\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 194 116 31 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 37
-#"framework:syntax-color:scheme:string\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 35
-#"framework:syntax-color:scheme:text\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 39
-#"framework:syntax-color:scheme:constant\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 41 128 38 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 49
-#"framework:syntax-color:scheme:hash-colon-keyword\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 42
-#"framework:syntax-color:scheme:parenthesis\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 132 60 36 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 36
-#"framework:syntax-color:scheme:error\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 36
-#"framework:syntax-color:scheme:other\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 16
-#"Misspelled Text\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 81 112 203 0 0 0 -1 -1 2
-38 #"drracket:check-syntax:lexically-bound\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 81 112 203 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 28
-#"drracket:check-syntax:set!d\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 37
-#"drracket:check-syntax:unused-require\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 36
-#"drracket:check-syntax:free-variable\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 255 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 68 0 203 0 0 0 -1 -1 2 31
-#"drracket:check-syntax:imported\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 68 0 203 0 0 0 -1 -1 2 47
-#"drracket:check-syntax:my-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 178 34 34 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 116 0 0 0 0 -1 -1 2 50
-#"drracket:check-syntax:their-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 116 0 0 0 0 -1 -1 2 48
-#"drracket:check-syntax:unk-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 139 142 28 0 0 0 -1 -1 2
-49 #"drracket:check-syntax:both-obligation-style-pref\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 139 142 28 0 0 0 -1 -1 2
-26 #"plt:htdp:test-coverage-on\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 1
-#"\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 2 27
-#"plt:htdp:test-coverage-off\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 4 1
-#"\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 4 #"XML\0"
-0 70 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 2 37 #"plt:module-language:test-coverage-on\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 -1 -1 2 38
-#"plt:module-language:test-coverage-off\0"
-0 -1 1 #"\0"
-1 0 -1 -1 -1 93 -1 -1 0 1 0 0 0 1 0 0 0 0 0 0 255 165 0 0 0 0 -1 -1 4 1
-#"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 1.0 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0
--1 -1 4 1 #"\0"
-0 -1 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 1 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 0 255 0 0 0 -1
--1 4 1 #"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 1 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 0 255 0 0 0 -1
--1 4 1 #"\0"
-0 71 1 #"\0"
-1.0 0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 0 0 0 1.0 1.0 1.0 0 100 0 0 0 0 -1
--1           0 136 0 17 3 22 #"#! /usr/bin/env racket"
-0 0 24 29 1 #"\n"
-0 0 28 3 12 #"#lang racket"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 7 #"require"
-0 0 24 3 1 #" "
-0 0 19 3 15 #"\"utilities.rkt\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 7 #"require"
-0 0 24 3 1 #" "
-0 0 19 3 12 #"\"interp.rkt\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 15 3 7 #"require"
-0 0 24 3 1 #" "
-0 0 19 3 14 #"\"compiler.rkt\""
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 16 #";(debug-level 2)"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;; Regression Tests ;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;; === R1 Tests === ;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 18 #";; Confirmed R3 ;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 98
-(
- #";(interp-tests \"partial evaluator\" (type-check '()) pe-arith-pass "
- #"interp-scheme \"r1\" (range 1 49))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 89
-(
- #";(interp-tests \"uniquify\" (type-check '()) uniquify-pass interp-sc"
- #"heme \"r1\" (range 1 49))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 105
-(
- #";(interp-tests \"reveal-functions\" (type-check '()) reveal-function"
- #"s-pass interp-scheme \"r1\" (range 1 49))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 107
-(
- #";(interp-tests \"expose-allocation\" (type-check '()) expose-allocat"
- #"ion-pass interp-scheme \"r1\" (range 1 49))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 88
-(
- #";(interp-tests \"flatten\" (typecheck-R3 '()) flatten-pass interp-sc"
- #"heme \"r1\" (range 2 3))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 113
-(
- #";(interp-tests \"select instructions\" (typecheck-R3 '()) select-ins"
- #"tructions-pass interp-scheme \"r1\" (range 1 49))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 109
-(
- #";(interp-tests \"allocate registers\" (type-check '()) allocate-regi"
- #"sters-pass interp-scheme \"r1\" (range 1 49))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 110
-(
- #";(interp-tests \"patch instructions\" (type-check '()) patch-instruc"
- #"tions-pass interp-scheme \"r1\" (range 36 37))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 76
-(
- #";(compiler-tests \"r1-compiler\" (type-check '()) r3-passes \"r1\" ("
- #"range 1 49))"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;; === R2 Tests === ;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 89
-(
- #";(interp-tests \"uniquify\" (type-check '()) uniquify-pass interp-sc"
- #"heme \"r2\" (range 1 53))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 107
-(
- #";(interp-tests \"expose-allocation\" (type-check '()) expose-allocat"
- #"ion-pass interp-scheme \"r2\" (range 1 23))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 89
-(
- #";(interp-tests \"flatten\" (typecheck-R3 '()) flatten-pass interp-sc"
- #"heme \"r2\" (range 1 23))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 113
-(
- #";(interp-tests \"select instructions\" (typecheck-R3 '()) select-ins"
- #"tructions-pass interp-scheme \"r2\" (range 1 23))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 111
-(
- #";(interp-tests \"allocate registers\" (typecheck-R3 '()) allocate-re"
- #"gisters-pass interp-scheme \"r2\" (range 1 23))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 111
-(
- #";(interp-tests \"lower conditionals\" (typecheck-R3 '()) lower-condi"
- #"tionals-pass interp-scheme \"r2\" (range 1 23))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 109
-(
- #";(interp-tests \"patch instructions\" (type-check '()) patch-instruc"
- #"tions-pass interp-scheme \"r2\" (range 1 23))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 76
-(
- #";(compiler-tests \"r2 compiler\" (type-check '()) r3-passes \"r2\" ("
- #"range 1 53))"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;; === R3 Tests === ;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 100
-(
- #";(interp-tests \"partial evaluator\" (typecheck-R3 '()) pe-arith-pas"
- #"s interp-scheme \"r3\" (range 1 36))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 89
-(
- #";(interp-tests \"uniquify\" (type-check '()) uniquify-pass interp-sc"
- #"heme \"r3\" (range 1 37))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 107
-(
- #";(interp-tests \"expose-allocation\" (type-check '()) expose-allocat"
- #"ion-pass interp-scheme \"r3\" (range 1 37))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 89
-(
- #";(interp-tests \"flatten\" (typecheck-R3 '()) flatten-pass interp-sc"
- #"heme \"r3\" (range 1 37))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 113
-(
- #";(interp-tests \"select instructions\" (typecheck-R3 '()) select-ins"
- #"tructions-pass interp-scheme \"r3\" (range 1 37))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 111
-(
- #";(interp-tests \"allocate-registers\" (typecheck-R3 '()) allocate-re"
- #"gisters-pass interp-scheme \"r3\" (range 1 37))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 109
-(
- #";(interp-tests \"lower conditionals\" (type-check '()) lower-conditi"
- #"onals-pass interp-scheme \"r3\" (range 1 37))"
-) 0 0 24 29 1 #"\n"
-0 0 17 3 110
-(
- #";(interp-tests \"patch instructions\" (type-check '()) patch-instruc"
- #"tions-pass interp-scheme \"r3\" (range 11 12))"
-) 0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 14 3 14 #"compiler-tests"
-0 0 24 3 1 #" "
-0 0 19 3 13 #"\"r3 compiler\""
-0 0 24 3 2 #" ("
-0 0 14 3 10 #"type-check"
-0 0 24 3 1 #" "
-0 0 21 3 1 #"'"
-0 0 24 3 4 #"()) "
-0 0 14 3 9 #"r3-passes"
-0 0 24 3 1 #" "
-0 0 19 3 4 #"\"r3\""
-0 0 24 3 2 #" ("
-0 0 14 3 5 #"range"
-0 0 24 3 1 #" "
-0 0 21 3 2 #"30"
-0 0 24 3 1 #" "
-0 0 21 3 2 #"37"
-0 0 24 3 2 #"))"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;;;;;; New Tests ;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;;;;;;;;;;;;;;;;;;;;;;;"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 17 3 24 #";;; === R4 Tests === ;;;"
-0 0 24 29 1 #"\n"
-0 0 17 3 85
-(
- #";(interp-tests \"uniquify\" (type-check '()) uniquify-pass interp-R4"
- #" \"r4\" (range 1 39))"
-) 0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 29 1 #"\n"
-0 0 24 3 1 #"("
-0 0 14 3 7 #"display"
-0 0 24 3 1 #" "
-0 0 19 3 15 #"\"tests passed!\""
-0 0 24 3 3 #") ("
-0 0 14 3 7 #"newline"
-0 0 24 3 1 #")"
-0 0 24 29 1 #"\n"
-0           0
+(debug-level 2)
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Regression Tests ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; === R1 Tests === ;;;
+;; Confirmed R3 ;;
+;(interp-tests "partial evaluator" (type-check '()) pe-arith-pass interp-scheme "r1" (range 1 49))
+;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r1" (range 1 49))
+;(interp-tests "reveal-functions" (type-check '()) reveal-functions-pass interp-scheme "r1" (range 1 49))
+;(interp-tests "expose-allocation" (type-check '()) expose-allocation-pass interp-scheme "r1" (range 1 49))
+;(interp-tests "flatten" (typecheck-R3 '()) flatten-pass interp-scheme "r1" (range 2 3))
+;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r1" (range 1 49))
+;(interp-tests "allocate registers" (type-check '()) allocate-registers-pass interp-scheme "r1" (range 1 49))
+;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r1" (range 36 37))
+;(compiler-tests "r1-compiler" (type-check '()) r3-passes "r1" (range 1 49))
+
+;;; === R2 Tests === ;;;
+;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r2" (range 1 53))
+;(interp-tests "expose-allocation" (type-check '()) expose-allocation-pass interp-scheme "r2" (range 1 23))
+;(interp-tests "flatten" (typecheck-R3 '()) flatten-pass interp-scheme "r2" (range 1 23))
+;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r2" (range 1 23))
+;(interp-tests "allocate registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r2" (range 1 23))
+;(interp-tests "lower conditionals" (typecheck-R3 '()) lower-conditionals-pass interp-scheme "r2" (range 1 23))
+;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r2" (range 1 23))
+;(compiler-tests "r2 compiler" (type-check '()) r3-passes "r2" (range 1 53))
+
+;;; === R3 Tests === ;;;
+;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
+;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "expose-allocation" (type-check '()) expose-allocation-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "flatten" (typecheck-R3 '()) flatten-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r3" (range 11 12))
+;(compiler-tests "r3 compiler" (type-check '()) r4-passes "r3" (range 30 31))
+
+;;; === R4 Tests === ;;;
+;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
+;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "expose-allocation" (type-check '()) expose-allocation-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "flatten" (typecheck-R3 '()) flatten-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
+;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r4" (range 1 39))
+(compiler-tests "r4 compiler" (type-check '()) r4-passes "r4" (range 1 39))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;; New Tests ;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; === R4 Tests === ;;;
+;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r4" (range 1 39))
+
+
+(display "tests passed!") (newline)

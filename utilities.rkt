@@ -12,7 +12,7 @@
 	 make-graph make-immutable-graph add-edge add-edge-immutable adjacent vertices print-dot
 	 general-registers registers-for-alloc caller-save callee-save
 	 arg-registers register->color registers align
-         byte-reg->full-reg print-by-type)
+         byte-reg->full-reg print-by-type my-compiler-tests)
 
 ;; debug state is a nonnegative integer.
 ;; The easiest way to increment it is passing the -d option
@@ -630,6 +630,14 @@
 	  (display msg)
 	  (newline))
 	(void))))
+
+(define (my-compiler-tests passes program)
+  (while (not (equal? passes '()))
+         (displayln (string-append "Running Pass: " (first (car passes)) " on:\n" (format "~a" program)))
+         (displayln "|\nv\n")
+         (set! program ((second (car passes)) program))
+         (set! passes (cdr passes)))
+  (displayln program))
 
 
 ;; System V Application Binary Interface
