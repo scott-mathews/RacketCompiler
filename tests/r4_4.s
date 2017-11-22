@@ -21,6 +21,29 @@ function0:
 	popq %rbp
 	retq
 
+	.globl function1
+function1:
+	pushq %rbp
+	movq %rsp, %rbp
+	pushq %r14
+	pushq %r13
+	pushq %r12
+	pushq %rbx
+	subq $0, %rsp
+	addq $0, %r15
+
+	movq %rdi, %rbx
+	movq %rbx, %rax
+
+	addq $0, %rsp
+	subq $0, %r15
+	popq %rbx
+	popq %r12
+	popq %r13
+	popq %r14
+	popq %rbp
+	retq
+
 	.globl main
 main:
 	pushq %rbp
@@ -36,9 +59,13 @@ main:
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	leaq function0(%rip), %rbx
+	leaq function0(%rip), %r12
+	leaq function1(%rip), %rbx
 	movq $42, %rdi
 	callq *%rbx
+	movq %rax, %rbx
+	movq %rbx, %rdi
+	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %rax
 

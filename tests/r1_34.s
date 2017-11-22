@@ -17,63 +17,48 @@ main:
 	addq $1, %rcx
 	movq $1, %rbx
 	addq $1, %rbx
-	movq %rcx, %rcx
 	addq %rbx, %rcx
 	movq $1, %rbx
 	addq $1, %rbx
 	movq $1, %rdx
 	addq $1, %rdx
-	movq %rbx, %rbx
 	addq %rdx, %rbx
-	movq %rcx, %rcx
 	addq %rbx, %rcx
 	movq $1, %rbx
 	addq $1, %rbx
 	movq $1, %rdx
 	addq $1, %rdx
-	movq %rbx, %rbx
 	addq %rdx, %rbx
 	movq $1, %rdx
 	addq $1, %rdx
 	movq $1, %rsi
 	addq $1, %rsi
-	movq %rdx, %rdx
 	addq %rsi, %rdx
-	movq %rbx, %rbx
 	addq %rdx, %rbx
-	movq %rcx, %rcx
 	addq %rbx, %rcx
 	movq $1, %rbx
 	addq $1, %rbx
 	movq $1, %rdx
 	addq $1, %rdx
-	movq %rbx, %rbx
 	addq %rdx, %rbx
 	movq $1, %rdx
 	addq $1, %rdx
 	movq $1, %rsi
 	addq $1, %rsi
-	movq %rdx, %rdx
 	addq %rsi, %rdx
-	movq %rbx, %rbx
 	addq %rdx, %rbx
 	movq $1, %rdx
 	addq $1, %rdx
 	movq $1, %rsi
 	addq $1, %rsi
-	movq %rdx, %rdx
 	addq %rsi, %rdx
 	movq $1, %rsi
 	addq $1, %rsi
 	movq $1, %rdi
 	addq $1, %rdi
-	movq %rsi, %rsi
 	addq %rdi, %rsi
-	movq %rdx, %rdx
 	addq %rsi, %rdx
-	movq %rbx, %rbx
 	addq %rdx, %rbx
-	movq %rcx, %rcx
 	addq %rbx, %rcx
 	movq $10, %rbx
 	addq %rcx, %rbx

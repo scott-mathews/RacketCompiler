@@ -15,7 +15,6 @@ main:
 
 	movq $7, %rcx
 	addq $3, %rcx
-	movq %rcx, %rcx
 	negq %rcx
 	movq $52, %rbx
 	addq %rcx, %rbx

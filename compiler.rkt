@@ -9,9 +9,13 @@
          r4-passes expose-allocation-pass reveal-functions-pass)
 
 (define cmp-syms '(< > <= >= eq?))
-(define bool-syms-biadic '(and))
+(define bool-syms-biadic '(and or))
+(define bool-syms-monadic '(not))
 (define arith-syms-biadic '(+))
 (define arith-syms-monadic '(-))
+(define vector-syms '(vector-set! vector-ref vector))
+(define other-syms '(read void))
+(define built-ins (list->set (append cmp-syms bool-syms-biadic arith-syms-biadic arith-syms-monadic bool-syms-monadic vector-syms other-syms)))
 
 ;;; === Type Checker === ;;;
 
@@ -19,6 +23,21 @@
   (match arg
     [`(,args* ... -> ,output-type) output-type]
     [else #f]))
+
+(define (functions-env defs)
+  (define env '()) 
+  (for ([def defs])
+    (match def
+      [`(define (,name ,args* ...) : ,type ,body)
+       (define input-types '())
+       (for ([arg args*]) ; add each argument's type to a list
+         (match arg
+           [`[,name : ,type] (set! input-types (cons type input-types))]))
+       (set! input-types (reverse input-types)) ; reverse input-types (because it's backwards from our traversal
+       (define function-type `(,@input-types -> ,type))
+       (set! env (cons (cons name function-type) env))] ;update env with that function's type
+      ))
+  env)
 
 (define (typecheck-R4 env)
   (lambda (e)
@@ -28,20 +47,17 @@
        (define body (last exps))
        (define defs (reverse (cdr (reverse exps))))
        (define new-defs '())
-       (define new-env env)
+       (define new-env (functions-env defs))
        (for ([def defs])
          (define-values (fexp output-env) ((typecheck-R4 new-env) def))
          (set! new-env (cons output-env new-env))
          (set! new-defs (cons fexp new-defs)))
        (define-values (new-body T) ((typecheck-R4 new-env) body))
        `(program (type ,T) ,@new-defs ,new-body)]
-      
-      
       [(? fixnum?) (values `(has-type ,e Integer) `Integer)]
       [(? boolean?) (values `(has-type ,e Boolean) `Boolean)]
       [(? symbol?) (values `(has-type ,e ,(lookup e env)) (lookup e env))]
       [`(void) (values `(has-type (void) Void) `Void)]
-
       [`(let ([,x ,(app recur e T)]) ,body)
        (define new-env (cons (cons x T) env))
        (define-values (eb tb) ((type-check new-env) body))
@@ -58,9 +74,14 @@
                              (set! new-args (cons `(has-type ,name ,type) new-args))]))
        (set! input-types (reverse input-types)) ; reverse input-types (because it's backwards from our traversal
        (define function-type `(,@input-types -> ,type)) ; eg. ((Vector Integer) Integer) -> Integer
-       (define output-env (append (cons var function-type) env))
+       (define output-env (cons (cons var function-type) env))
+       (set! new-env (cons (cons var function-type) new-env))
+       ;(set! output-env (cons (cons var function-type env)))
        (define-values (eb tb) ((typecheck-R4 new-env) body))
-       (values `(define ((has-type ,var ,function-type) ,@(reverse new-args)) ,eb) (cons var function-type))] ; return has-typed expression, type, and function name
+       (if (equal? tb type)
+           (values `(define ((has-type ,var ,function-type) ,@(reverse new-args)) ,eb) (cons var function-type)) ; return has-typed expression, type, and function name
+           (error `type-check "expected body to have type ~a but found type ~a" type tb))
+       ] 
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
          (values `(has-type (vector ,@e*) ,t) t))]
@@ -118,7 +139,7 @@
            (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
            (define vector-type (if (list? t1) (member 'Vector t1) #f))
            (if (and (or vector-type (member t1 accepted-types)) (or vector-type (member t2 accepted-types)) (equal? t1 t2))
-               (values `(has-type (,op ,e1 ,e2) `Boolean) `Boolean)
+               (values `(has-type (,op ,e1 ,e2) Boolean) `Boolean)
                (error `type-check "~a expects integer arguments (or of the same type if eq?)" op))]
       
       [`(,fname ,(app recur e* t*) ...) #:when (member fname (map car env))
@@ -143,22 +164,6 @@
       )))
 
 (define type-check typecheck-R4)
-
-; r4 tests should pass;
-(define tc-r4-1 `(program (define (add1 [x : Integer])
-                            : Integer
-                            (+ x 1))
-                          (define (map-vec [f : (Integer -> Integer)]
-                                            [v : (Vector Integer Integer)])
-                             : (Vector Integer Integer)
-                             (vector (f (vector-ref v 0)) (f (vector-ref v 1))))
-                          (vector-ref (map-vec add1 (vector 1 41)) 1)))
-
-; r4 tests should fail;
-(define tc-r4-f1 `(program (define (add [x : Integer] [y : Integer])
-                             : Integer
-                             (+ x y))
-                           (vector-ref (add (vector 3 4) 4) 3)))
 
 ;;; End Type Checker ;;;
 
@@ -203,33 +208,42 @@
 
 ;;; === Uniquify === ;;;
 
+(define (function-names defs)
+  (define function-counter 0)
+  (define new-env '())
+  (for ([def defs])
+    (match def
+      [`(define ((has-type ,var ,type) ,args* ...) ,body)
+       (define new-fn-name (string->symbol (string-append "function" (number->string function-counter))))
+       (set! function-counter (add1 function-counter))
+       (set! new-env (cons (cons var new-fn-name) new-env))
+       ]))
+  new-env)
+
 (define (uniquify alist)
   (lambda (exp)
     (match exp
+      [v #:when (and (symbol? v) (not (set-member? built-ins v))) (lookup v alist)]
       [`(has-type ,v ,t) #:when (symbol? v) `(has-type ,(lookup v alist) ,t)]
       [`(has-type ,n ,t) #:when (integer? n) `(has-type ,n ,t)]
       [`(has-type ,b ,t) #:when (boolean? b) `(has-type ,b ,t)]
       [`(program ,type ,exps ...)
        (define e (last exps))
        (define defs (reverse (cdr (reverse exps))))
-       
-       (define new-env alist)
+       (define new-env (function-names defs))
        (define new-defines '())
        (for ([def defs])
          (define-values (new-define name) ((uniquify new-env) def))
-         (set! new-defines (cons new-define new-defines))
-         (set! new-env (cons (cons name name) new-env)))
+         (set! new-defines (cons new-define new-defines)))
        `(program ,type ,@(reverse new-defines) ,((uniquify new-env) e))]
-      
-      [`(define ((has-type ,var ,type) ,args* ...) ,body)
+      [`(define ((has-type ,(app (uniquify alist) var) ,type) ,args* ...) ,body)
        (define new-env alist)
        (define new-args '())
        (for ([arg args*])
          (match arg [`(has-type ,v ,t) (define new-name (gensym v))
                                 (set! new-env (cons (cons v new-name) new-env))
                                 (set! new-args (cons `(has-type ,new-name ,t) new-args))]))
-       (values `(define ((has-type ,var ,type) ,@(reverse new-args)) ,((uniquify new-env) body)) var)
-       ]
+       (values `(define ((has-type ,var ,type) ,@(reverse new-args)) ,((uniquify new-env) body)) var)]
       [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname (map car alist))
                             `(has-type ((has-type ,(lookup fname alist) ,type) ,@(map (uniquify alist) args*)) ,t)]
       [`(has-type (let ([,x ,e]) ,body) ,tb)
@@ -237,11 +251,21 @@
          (let ([l (cons (cons x y) alist)])
            `(has-type (let ([,y ,((uniquify alist) e)]) ,((uniquify l) body)) ,tb)))]
       [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els)) ,t)]
-      
-      [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (uniquify alist) es)) ,t)])))
+      [`(has-type (,(app (uniquify alist) op) ,es ...) ,t) ;(displayln (format "this is new op: ~a" op))
+       `(has-type (,op ,@(map (uniquify alist) es)) ,t)]
+      [else exp]
+      )))
 
 ; tests ;
 ;;; End Uniquify ;;;
+
+(define (make-f-list defs)
+  (define fns '())
+  (for ([def defs])
+    (match def
+      [`(define ((has-type ,name ,type) ,args* ...) ,body)
+       (set! fns (cons name fns))]))
+  fns)
 
 ;;; === Reveal Functions === ;;;
 (define (reveal-functions f-list)
@@ -254,14 +278,11 @@
       [`(program ,type ,exps ...)
        (define e (last exps))
        (define defs (reverse (cdr (reverse exps))))
-       (define new-env f-list)
+       (define new-env (make-f-list defs))
        (define new-defines '())
        (for ([def defs])
          (define-values (new-define name) ((reveal-functions new-env) def))
-         
-         (set! new-env (cons name new-env))
-         (set! new-defines (cons new-define new-defines)))
-       
+         (set! new-defines (cons new-define new-defines)))       
        `(program ,type ,@(reverse new-defines) ,((reveal-functions new-env) e))]
       [`(define ((has-type ,var ,type) ,args* ...) ,body)
        (define inner-env (cons var f-list))
@@ -276,7 +297,9 @@
       [`(has-type (let ([,x ,e]) ,body) ,tb) `(has-type (let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body)) ,tb)]
       [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els)) ,t)]
       [`(has-type ((has-type ,op ,t-op) ,es ...) ,t) #:when (function-type t-op) `(has-type (app ,((reveal-functions f-list) `(has-type ,op ,t-op)) ,@(map (reveal-functions f-list) es)) ,t)]
-      [`(has-type (,op ,es ...) ,t) `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
+      [`(has-type (,(app (reveal-functions f-list) op) ,es ...) ,t)
+       ;(displayln (format "New op: ~a" op))
+       `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
       ))) ; might need to update x to function-ref here
 ;;; End Reveal Functions ;;;
 
@@ -391,7 +414,7 @@
 
 ; Check if an expression is a terminal one
 (define (terminal? e)
-  (or (fixnum? e) (boolean? e) (symbol? e) (equal? `(read) e) (equal? `(void) e)))
+  (or (fixnum? e) (boolean? e) (symbol? e) (set-member? built-ins e) (equal? '(void) e) (equal? '(read) e)))
 
 ;;; Flatten Itself ;;;
 
@@ -448,11 +471,15 @@
                                            (set! arg-exps (cons arg-exp arg-exps))
                                            (set! arg-assignments (append arg-ass arg-assignments))
                                            (set! arg-vars (append arg-var arg-vars)))
-                                         (values v `(,@(reverse arg-assignments) ,@fn-assignments (assign ,v (app, fn-exp ,@(reverse arg-exps)))) (cons (cons v t) (append arg-vars fn-vars)))]
+                                         (values v `(,@fn-assignments ,@arg-assignments (assign ,v (app, fn-exp ,@arg-exps))) (cons (cons v t) (append arg-vars fn-vars)))]
 
     [`(define (,fn ,args* ...) ,body)
      (define-values (flat-exp assignments vars) (flatten-helper body))
-     `(define (,fn ,@args*) ,vars ,@assignments (return ,flat-exp))]
+     ; fix type annotations for function name and args
+     (define new-fn (cadr fn))
+     (define new-args* (map cadr args*))
+     
+     `(define (,new-fn ,@new-args*) ,vars ,@assignments (return ,flat-exp))]
     
     [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)     
      (define-values (flat-exp1 assignments1 vars1)
@@ -510,25 +537,6 @@
     [(string=? str-exp "collect") `Void]
     [else (last exp)]))
 
-
-
-; tests ;
-(define tf-bk-1 `(program (if #f 0 42)))
-(define tf-bk-2 `(program (if (eq? (read) 0)
-                         777
-                         (+ 2 (if (eq? (read) 0)
-                                  40
-                                  444)))))
-(define tf-ps-1 `(program (let ([x 52]) (if (> x 42)
-                                            (let ([y (+ (- x) 42)])
-                                              (+ y x))
-                                            (let ([y (+ (- 42) x)])
-                                              (+ y x))))))
-(define tf-ps-2 `(program (if (not #f)
-                              (+ 3 39)
-                              (- (+ (- 3) (- 39))))))
-
-
 ;;; === Select Instructions === ;;;
 
 ;;; Helpers ;;;
@@ -548,7 +556,7 @@
     [(? boolean?) (if e
                       `(int 1)
                       `(int 0))]
-    [else e]))
+    [else (displayln (format "WARNING: in val->typedval didn't match ~a" e))]))
 
 (define (cmp->cc op)
   (match op
@@ -583,25 +591,29 @@
 ; Given a list of vars (function arguments) tells you how many stack
 ; locations will be required to pass all of the args. (We only use stack
 ; if the number of arguments is greater than the length of def-reg-list.
-(define (maxstack vars) (if (< (length vars) (length def-reg-list))
+(define (maxstack vars) (* 8 (if (< (length vars) (length def-reg-list))
                             0
-                            (- (length vars) (length def-reg-list))))
+                            (- (length vars) (length def-reg-list)))))
 
+; def-helper
+; traverses the arguments to a function and adds statements to add those arguments to their variable within the function
 (define def-helper
-  (lambda (args vars regs inst stack-loc)
+  (lambda (args regs inst stack-loc)
     (cond
-      [(empty? vars)  (if (empty? inst) `() (map-me select-instructions inst))]
-      [(empty? regs) (cons `(movq (deref rbp ,stack-loc) (var ,(car (car vars)))) (def-helper args (cdr vars) regs inst (+ 8 stack-loc)))]
+      [(empty? args)  (if (empty? inst) `() (map-me select-instructions inst))]
+      [(empty? regs) (cons `(movq (deref rbp ,stack-loc) (var ,(car args)))
+                           (def-helper (cdr args) regs inst (+ 8 stack-loc)))]
       [else (cons `(movq (reg ,(car regs))
-                         ,(if (pair? (car vars)) (val->typedval (car (car vars))) (val->typedval (car vars))))
-                  (def-helper args (cdr vars) (cdr regs) inst stack-loc))])))
+                         ,(if (pair? (car args)) (val->typedval (caar args)) (val->typedval (car args))))
+                  (def-helper (cdr args) (cdr regs) inst stack-loc))])))
 
+; select-define-helper
+; adds instructions to move arguments for a function into their variables within the function.
 (define (select-define-helper def)
   (match def
     [`(define (,fname ,args ...) ,vars ,inst ...)
-     (let [(vars vars)]
-     `(define (,(second fname)) ,(length args) (,vars ,(maxstack vars))
-        ,(def-helper args vars def-reg-list inst 0)))]
+     `(define (,fname) ,(length args) (,vars ,(maxstack vars))
+        ,(def-helper args def-reg-list inst 0))]
     [else (displayln (format "WARNING: didn't pick ~a in select-define-helper" def))]))
 
 ;;; Select Instructions Itself ;;;
@@ -655,9 +667,10 @@
                                 [(equal? v e2) (list `(addq ,(val->typedval e1) ,(val->typedval v)))]
                                 [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
                                             `(addq ,(val->typedval e2) ,(val->typedval v)))])]
-    [`(assign ,v (app ,fun ,args ...))  (append (map (lambda (x) (list (first x) (third x) (second x))) (def-helper `() args def-reg-list `() 0))
-                                             `((indirect-callq ,fun))
-                                             `((movq (reg rax) (var ,v))))]
+    [`(assign ,v (app ,fun ,args ...))  (append
+                                         (map (lambda (x) (list (first x) (third x) (second x))) (def-helper args def-reg-list `() 0))
+                                         `((indirect-callq (var ,fun)))
+                                         `((movq (reg rax) (var ,v))))]
     [`(assign ,v (function-ref ,fname)) `((leaq (function-ref ,fname) (var ,v)))]
     [`(assign ,v (,cmp ,e1 ,e2)) (list `(movq ,(val->typedval e2) (reg rax))
                                        `(cmpq (reg rax) ,(val->typedval e1))
@@ -718,6 +731,11 @@
                                           (set! new-instrs (cons instr new-instrs))]
           [`(,op (var ,read) (,type ,writ)) (set! sets (cons (live-after-set (set read) (set) (car sets)) sets))
                                             (set! new-instrs (cons instr new-instrs))]
+          [`(,op (function-ref ,read) (,type ,writ))
+           (set! sets (cons (live-after-set (set) (set writ) (car sets)) sets))
+           (set! new-instrs (cons instr new-instrs))]
+          [`(indirect-callq (,type ,read)) (set! sets (cons (live-after-set (set read) (set) (car sets)) sets))
+                                           (set! new-instrs (cons instr new-instrs))]
           [`(,op (,type ,read) (var ,writ)) (set! sets (cons (live-after-set (set) (set writ) (car sets)) sets))
                                             (set! new-instrs (cons instr new-instrs))]
           ; handling deref r11 arg
@@ -763,6 +781,30 @@
   (for ([lafter live-afters] [instr instrs])
     (define lafter-v (set->list lafter))
     (match instr
+      [`(indirect-callq (,type ,d))
+       (for ([reg caller-save])
+         (for ([var lafter-v])
+           (add-edge g (register->color reg) var)))
+       (if (equal? type 'var)
+           (for ([reg def-reg-list])
+             (add-edge g (register->color reg) d))
+           "pass")]
+      [`(callq collect) (for ([var lafter-v])
+                          (if (equal? (look-up-type var vars) `Vector)
+                              (for ([callee (set-union callee-save)]); (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
+                                (add-edge g var callee))
+                              "pass"))
+                        ; add call-clobbered registers to interference
+                        (for ([reg caller-save])
+                         ; everything live after this interferes with the call-clobbered registers
+                         (for ([var lafter-v])
+                           (add-edge g (register->color reg) var)))]
+      
+      [`(callq ,label) ; add call-clobbered registers to interference
+                       (for ([reg caller-save])
+                         ; everything live after this interferes with the call-clobbered registers
+                         (for ([var lafter-v])
+                           (add-edge g (register->color reg) var)))]
       [`(,op (,type1 ,s) (,type2 ,d)) #:when (or (equal? op `movq) (equal? op `movzbq))
                                       (for ([var lafter-v])
                                         (if (or (equal? s var) (equal? d var))
@@ -782,16 +824,7 @@
                                                    (add-edge g var s)))]
       [`(,op (,type ,v)) (for ([var lafter-v])
                            (add-edge g var v))]
-      [`(callq collect) (for ([var lafter-v])
-                           (if (equal? (look-up-type var vars) `Vector)
-                               (for ([callee (set-union callee-save)]); (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
-                                 (add-edge g var callee))
-                               "pass"))]
-      [`(callq ,label) ; add call-clobbered registers to interference
-                       (for ([reg caller-save])
-                         ; everything live after this interferes with the call-clobbered registers
-                         (for ([var lafter-v])
-                           (add-edge g (register->color reg) var)))]
+
       [`(if ,cnd ,thns ,thn-sets ,elss ,els-sets) (define thn-g (graphify vars g thn-sets thns))
                                                   (define els-g (graphify vars g els-sets elss))
                                                   ; combine thn-g and els-g with g
@@ -854,8 +887,7 @@
   (values regular-vars rootstack-vars))
 
 (define (update-name new-names instr)
-  (match instr
-    (display instr)
+  (match instr    
     [`(,op (,type1 ,v1) (,type2 ,v2)) `(,op ,(if (and (equal? 'var type1) (< (hash-ref new-names v1) (vector-length general-registers)))
                                                  `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
                                                  `(,type1 ,v1))
@@ -998,7 +1030,10 @@
                                             (label ,thnlabel)
                                             ,@(map-me lower-conditionals thns)
                                             (label ,endlabel))]
-    [`(program ,n ,type ,instrs ...) `(program ,n ,type ,@(values (map-me lower-conditionals instrs)))]
+    [`(define (,name) ,l ((,regn ,rootn) ,maxstack) ,instrs ...)
+     (list `(define (,name) ,l ((,regn ,rootn) ,maxstack) ,@(values (map-me lower-conditionals instrs))))]
+    [`(program (,regn ,rootn) ,type (defines ,defs ...) ,instrs ...)
+     `(program (,regn ,rootn) ,type (defines ,@(values (map-me lower-conditionals defs))) ,@(values (map-me lower-conditionals instrs)))]
     [else `(,exp)]))
 
 ;;; End Lower Conditionals ;;;
@@ -1015,8 +1050,11 @@
                                        (list `(cmpq (int ,n) (,type ,val))))]
     [`(leaq (function-ref ,label) (deref ,reg ,n)) (list `(movq (deref ,reg ,n) (reg rax))
                                                          `(leaq (function-ref ,label) (reg rax)))]
-    [`(program ,n ,instrs ...) `(program ,n ,@(values (map-me patch-instructions instrs)))]  
-    [else (list exp)] 
+    [`(define (,name) ,l ((,regn ,rootn) ,maxstack) ,instrs ...)
+     (list `(define (,name) ,l ((,regn ,rootn) ,maxstack) ,@(values (map-me patch-instructions instrs))))]
+    [`(program (,regn ,rootn) ,type (defines ,defs ...) ,instrs ...)
+     `(program (,regn ,rootn) ,type (defines ,@(values (map-me patch-instructions defs))) ,@(values (map-me patch-instructions instrs)))]  
+    [else `(,exp)] 
     )) 
 ;;; End Patch Instructions ;;;
 
@@ -1052,7 +1090,8 @@
                          store
                          "\tsubq $~a, %rsp\n"
                          (fn-root-store rootstacksize))
-          name name (+ (+ stacksize argspills) 48)))
+          name name (+ stacksize argspills)))
+          ;name name (+ (+ stacksize argspills) 48)))
 
 (define (print-result type)
   (print-by-type type))
@@ -1063,7 +1102,8 @@
                     [else (format (string-append "\n\tmovq %rax, %rdi\n" (print-result type) "\tsubq $~a, %r15\n\taddq $~a, %rsp\n\tmovq $0, %rax\n" restore "\tpopq %rbp\n\tretq") m (+ n 48))])))
 
 (define (fn-conclusion stacksize rootstacksize argspills)
-  (format (string-append "\n\taddq $~a, %rsp\n\tsubq $~a, %r15\n" restore "\tretq\n\n") (+ (+ stacksize argspills) 48) rootstacksize))
+  ;(format (string-append "\n\taddq $~a, %rsp\n\tsubq $~a, %r15\n" restore "\tpopq %rbp\n\tretq\n\n") (+ (+ stacksize argspills) 48) rootstacksize))
+  (format (string-append "\n\taddq $~a, %rsp\n\tsubq $~a, %r15\n" restore "\tpopq %rbp\n\tretq\n\n") (+ stacksize argspills) rootstacksize))
 
 (define (arg->string arg)
   (match arg
@@ -1072,6 +1112,7 @@
     [`(byte-reg ,r) (format "%~a" r)]
     [`(int ,n) (format "$~a" n)]
     [`(global-value ,ptr) (format "~a(%rip)" ptr)]
+    [`(function-ref ,label) (format "~a(%rip)" label)]
     [else (format "~a" arg)]))
 
 ; handles writing up a function.
@@ -1087,11 +1128,10 @@
     [`(jmp-if ,cc ,label) (format "\tj~a ~a\n" cc label)]
     [`(set ,e ,arg) (string-append "\tsete " (arg->string arg) "\n")]
     [`(,op ,arg1 ,arg2) (string-append "\t" (format "~a" op) " " (arg->string arg1) ", " (arg->string arg2) "\n")]
-    [`(label ,name) (format "~a:\n" name)] 
+    [`(label ,name) (format "~a:\n" name)]
+    [`(indirect-callq ,arg) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" (arg->string arg)) (format "\tcallq *~a\n" (arg->string arg)))]
     [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
-    [`(indirect-callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" fn) (format "callq *~a\n" fn))]
-    [`(function-ref ,label) (format "~a(%rip)" label)]
     [`(define (,f) ,n ((,regn ,rootn) ,maxstack) ,instrs ...) (string-append
                                                         (fn-intro f regn rootn maxstack)
                                                         (foldr string-append "" (map print-x86 instrs))
