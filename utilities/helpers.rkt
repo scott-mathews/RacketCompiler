@@ -4,11 +4,56 @@
 
 ; export utility functions
 (provide function-type terminal? map-me remove-duplicate-movq cmp->cc
-         look-up-type)
+         look-up-type get-function-type get-lambda-type get-lambda-env
+         update-arg-format)
 
 ;;;;;;;;;;;
 ; Helpers ;
 ;;;;;;;;;;;
+
+; get-function-type
+; TODO: Put this in define statement of typecheck instead of
+; the mess that's currently there
+(define (get-function-type fn)
+  (match fn
+    [`(define (,var ,args* ...) : ,type ,body)
+     (define arg-types (foldr cons '()
+                              (map (lambda (arg)
+                                     (match arg
+                                       [`[,name : ,t]
+                                        t]))
+                                   args*)))
+     `(,@arg-types -> ,type)]))
+
+; get-lambda-type
+(define (get-lambda-type lam)
+  (match lam
+    [`(lambda: (,args* ...) : ,type ,body)
+     (define arg-types (foldr cons '()
+                              (map (lambda (arg)
+                                     (match arg
+                                       [`[,name : ,t]
+                                        t]))
+                                   args*)))
+     `(,@arg-types -> ,type)]))
+
+; get-lambda-env
+(define (get-lambda-env lam env)
+  (match lam
+    [`(lambda: (,args* ...) : ,type ,body)
+     (foldr cons env
+            (map (lambda (arg)
+                   (match arg
+                     [`[,name : ,t]
+                      (cons name t)]))
+                 args*))]))
+
+; update-arg-format
+(define (update-arg-format args)
+  (map (lambda (arg)
+         (match arg
+           [`[,name : ,type] `(has-type ,name ,type)]))
+       args))
 
 ; Given the type of a function returns the output
 ; type of that function.

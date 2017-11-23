@@ -1,5 +1,7 @@
 #lang racket
 
+(require racket/trace)
+
 ; Import provided
 (require "../utilities.rkt")
 
@@ -53,7 +55,13 @@
        (define new-env (cons (cons x T) env))
        (define-values (eb tb) ((type-check new-env) body))
        (values `(has-type (let ([,x ,e]) ,eb) ,tb) tb)]     
-
+      [`(lambda: (,args* ...) : ,type ,body)
+       (define arg-env (get-lambda-env e env))
+       (define lam-type (get-lambda-type e))
+       (define new-args (update-arg-format args*))
+       (define-values (eb tb) ((type-check arg-env) body))
+       (values `(has-type (lambda (,@new-args) (has-type ,eb ,tb)) ,lam-type)
+               lam-type)]
       [`(define (,var ,args* ...) : ,type ,body)
        (define input-types '())
        (define new-env env)
@@ -133,7 +141,7 @@
                (values `(has-type (,op ,e1 ,e2) Boolean) `Boolean)
                (error `type-check "~a expects integer arguments (or of the same type if eq?)" op))]
       
-      [`(,fname ,(app recur e* t*) ...) #:when (member fname (map car env))
+      [`(,fname ,(app recur e* t*) ...) #:when (member fname (map car env)) 
                                         (define signature (lookup fname env))
                                         (define-values (arg-types output-type) (match signature [`(,args ... -> ,output) (values args output)]))
                                         (for ([t t*] [arg-t arg-types])
@@ -151,7 +159,9 @@
                (error `type-check "both branches of if must be same type"))
            (error `type-check "if expects a boolean in the conditional"))]
       
-      [`(,(app recur op op-t) ,(app recur args ts) ...) (define output-type (function-type op-t)) (values `(has-type (,op ,@args) ,output-type) output-type)]
+      [`(,(app recur op op-t) ,(app recur args ts) ...)
+       (define output-type (function-type op-t))
+       (values `(has-type (,op ,@args) ,output-type) output-type)]
       )))
 
 (define type-check typecheck-R4)

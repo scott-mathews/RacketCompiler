@@ -3,9 +3,11 @@
 
 (require "utilities.rkt")
 (require "interp.rkt")
-(require "passes/compiler.rkt")
 
-(debug-level 2)
+(require "compiler.rkt")
+(require "utilities/testing.rkt")
+
+;(debug-level 2)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Regression Tests ;;;
@@ -60,6 +62,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; === R5 Tests === ;;;
-;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r4" (range 1 39))
+;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r5" (range 1 23))
+;(compiler-tests "r5 compiler" (type-check '()) r4-passes "r5" (range 1 23))
+(my-run-tests passes "r4" (range 1 2) "" "typecheck")
 
 (display "tests passed!") (newline)

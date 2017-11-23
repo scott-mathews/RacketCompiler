@@ -5,24 +5,24 @@
 (require racket/trace)
 
 ; Import Provided Libraries
-(require "../interp.rkt")
-(require "../utilities.rkt")
-(require "../utilities/testing.rkt")
+(require "interp.rkt")
+(require "utilities.rkt")
+(require "utilities/testing.rkt")
 
 ; Import Passes
-(require "typecheck.rkt")
-(require "uniquify.rkt")
-(require "reveal-functions.rkt")
-(require "expose-allocation.rkt")
-(require "flatten.rkt")
-(require "select-instructions.rkt")
-(require "uncover-live.rkt")
-(require "build-interference.rkt")
-(require "allocate-registers.rkt")
-(require "assign-homes.rkt")
-(require "lower-conditionals.rkt")
-(require "patch-instructions.rkt")
-(require "print-x86.rkt")
+(require "passes/typecheck.rkt")
+(require "passes/uniquify.rkt")
+(require "passes/reveal-functions.rkt")
+(require "passes/expose-allocation.rkt")
+(require "passes/flatten.rkt")
+(require "passes/select-instructions.rkt")
+(require "passes/uncover-live.rkt")
+(require "passes/build-interference.rkt")
+(require "passes/allocate-registers.rkt")
+(require "passes/assign-homes.rkt")
+(require "passes/lower-conditionals.rkt")
+(require "passes/patch-instructions.rkt")
+(require "passes/print-x86.rkt")
 
 ; Provide Passes
 (provide uniquify-pass flatten-pass select-instructions-pass
