@@ -7,6 +7,7 @@
 ; Import Provided Libraries
 (require "../interp.rkt")
 (require "../utilities.rkt")
+(require "../utilities/testing.rkt")
 
 ; Import Passes
 (require "typecheck.rkt")

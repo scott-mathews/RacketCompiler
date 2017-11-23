@@ -1,0 +1,39 @@
+#lang racket
+
+(require racket/pretty)
+
+(require "../utilities.rkt")
+
+(provide my-compiler-tests my-run-tests)
+
+; given a test-family (e.g. r3) and list of test-nums (e.g. (range 1 39))
+; return a properly formatted program in our language from each identified
+; file. (e.g. r3_1.rkt -> '(program ...))
+(define (load-test-programs test-family test-nums)
+  (define tests '())
+  ; iterate through each test-num
+  (for ([test-number (in-list test-nums)])
+    (define test-name (format "~a_~a" test-family test-number))
+    (define test-program (read-program (string-append "../tests/" test-name ".rkt")))
+    (set! tests (cons test-program tests))
+    )
+  (reverse tests)
+  )
+
+; Given a list of passes and a program, runs the passes on the program
+; printing the input to each pass along the way.
+(define (my-compiler-tests passes program)
+  (while (not (equal? passes '()))
+         (displayln (string-append "Running Pass: " (first (car passes)) " on:\n" (format "~a" program)))
+         (displayln "|\nv\n")
+         (set! program ((second (car passes)) program))
+         (set! passes (cdr passes)))
+  (pretty-display program))
+
+; Given some passes, run those passes on the tests indicated by test-family
+; and test-nums
+(define (my-run-tests passes test-family test-nums)
+  (define programs (load-test-programs test-family test-nums))
+  (for ([program programs])
+    (my-compiler-tests passes program))
+  (displayln "Tests Passed!"))
