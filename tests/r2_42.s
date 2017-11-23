@@ -22,7 +22,7 @@ main:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then85145
+	je then95713
 	callq read_int
 	movq %rax, %rbx
 	movq $0, %rax
@@ -32,19 +32,19 @@ main:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then85147
+	je then95715
 	movq $444, %rcx
-	jmp end85148
-then85147:
+	jmp end95716
+then95715:
 	movq $40, %rcx
-end85148:
+end95716:
 	movq $2, %rbx
 	addq %rcx, %rbx
 	movq %rbx, %rbx
-	jmp end85146
-then85145:
+	jmp end95714
+then95713:
 	movq $777, %rbx
-end85146:
+end95714:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

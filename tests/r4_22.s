@@ -9,29 +9,29 @@ function0:
 	subq $72, %rsp
 	addq $0, %r15
 
-	movq %rdi, %rdx
-	movq %rsi, %r10
-	movq %rdx, %rsi
-	movq %rcx, %rdi
-	movq %r8, %rbx
-	movq %r9, %r9
-	movq 16(%rbp), %rcx
-	movq 24(%rbp), %r8
-	movq %rcx, %rcx
-	addq %r8, %rcx
-	movq %r9, %r9
-	addq %rcx, %r9
-	movq %rbx, %rbx
-	addq %r9, %rbx
-	movq %rdi, %rdi
-	addq %rbx, %rdi
-	movq %rsi, %rsi
-	addq %rdi, %rsi
-	movq %r10, %r10
-	addq %rsi, %r10
+	movq %rdi, %rbx
+	movq %rsi, %r8
 	movq %rdx, %rdx
-	addq %r10, %rdx
-	movq %rdx, %rax
+	movq %rcx, %rcx
+	movq %r8, %r9
+	movq %r9, %rsi
+	movq 16(%rbp), %r10
+	movq 24(%rbp), %rdi
+	movq %r10, %r10
+	addq %rdi, %r10
+	movq %rsi, %rsi
+	addq %r10, %rsi
+	movq %r9, %r9
+	addq %rsi, %r9
+	movq %rcx, %rcx
+	addq %r9, %rcx
+	movq %rdx, %rdx
+	addq %rcx, %rdx
+	movq %r8, %r8
+	addq %rdx, %r8
+	movq %rbx, %rbx
+	addq %r8, %rbx
+	movq %rbx, %rax
 
 	addq $72, %rsp
 	subq $0, %r15

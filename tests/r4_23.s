@@ -9,30 +9,30 @@ function0:
 	subq $16, %rsp
 	addq $0, %r15
 
-	movq %rdi, %r12
+	movq %rdi, %rbx
 	movq $1, %rax
-	cmpq %rax, %r12
+	cmpq %rax, %rbx
 	sete %al
 	movzbq %al, %rax
-	movq %rax, %rbx
-	movq %rbx, %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
 	cmpq $1, %rax
-	je then323089
-	leaq function0(%rip), %rbx
-	movq $1, %rdx
-	negq %rdx
-	movq %r12, %rcx
-	addq %rdx, %rcx
-	movq %rcx, %rdi
-	callq *%rbx
-	movq %rax, %rbx
-	movq %r12, %rcx
-	addq %rbx, %rcx
-	movq %rcx, %rbx
-	jmp end323090
-then323089:
+	je then91850
+	leaq function0(%rip), %r12
+	movq $1, %rcx
+	negq %rcx
+	movq %rbx, %rdx
+	addq %rcx, %rdx
+	movq %rdx, %rdi
+	callq *%r12
+	movq %rax, %rcx
+	movq %rbx, %rbx
+	addq %rcx, %rbx
+	movq %rbx, %rbx
+	jmp end91851
+then91850:
 	movq $1, %rbx
-end323090:
+end91851:
 	movq %rbx, %rax
 
 	addq $16, %rsp
@@ -70,12 +70,12 @@ main:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then323091
+	je then91852
 	movq $777, %rbx
-	jmp end323092
-then323091:
+	jmp end91853
+then91852:
 	movq $42, %rbx
-end323092:
+end91853:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

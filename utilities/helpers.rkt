@@ -1,0 +1,70 @@
+#lang racket
+
+(require "constants.rkt")
+
+; export utility functions
+(provide function-type terminal? map-me remove-duplicate-movq cmp->cc
+         look-up-type)
+
+;;;;;;;;;;;
+; Helpers ;
+;;;;;;;;;;;
+
+; Given the type of a function returns the output
+; type of that function.
+; e.g.
+; (Integer -> Boolean) => Boolean
+(define (function-type arg)
+  (match arg
+    [`(,args* ... -> ,output-type) output-type]
+    [else #f]))
+
+; Returns true if an expression is terminal
+; (i.e. doesn't need to be recurred on.)
+(define (terminal? e)
+  (or (fixnum? e) (boolean? e) (symbol? e)
+      (set-member? built-ins e) (equal? '(void) e)
+      (equal? '(read) e)))
+
+; Map a procedure which returns multiple values over a list,
+; and return the result in a non-nested list
+(define (map-me proc lst)
+  (cond [(empty? lst) lst]
+        [else (append (map-me-helper (proc (car lst))) (map-me proc (cdr lst)))]))
+
+(define (map-me-helper x . xs)
+  (append x xs))
+
+; Traverses through a list of x86 instructions
+; and remove adjacent identical movqs, or movqs
+; from one location to the same location
+(define (remove-duplicate-movq list)
+  (cond [(empty? list) '()]
+        [(empty? (cdr list)) `(,(car list))]
+        [else (match (car list)
+                [`(movq ,a ,b) (if (equal? (car list) (cadr list))
+                                   (remove-duplicate-movq (cdr list))
+                                   (if (equal? a b)
+                                       (remove-duplicate-movq (cdr list))
+                                       (cons (car list) (remove-duplicate-movq (cdr list)))))]
+                [`(if ,cnd ,thn ,els) (cons `(if ,cnd ,(remove-duplicate-movq thn) ,(remove-duplicate-movq els)) (remove-duplicate-movq (cdr list)))]
+                [else (cons (car list) (remove-duplicate-movq (cdr list)))])]))
+
+; Takes a racket comparison operator and returns the appropriate
+; x86 comparison operator
+(define (cmp->cc op)
+  (match op
+    [`> `g]
+    [`< `l]
+    [`>= `ge]
+    [`<= `le]
+    [`eq? `e]
+    [else (displayln (format "WARNING: in cmp->cc didn't match ~a" op))]))
+
+; Looks up type of a var amongst a list o vars
+(define (look-up-type var vars)
+  (cond
+    [(empty? vars) "ERROR var not found"]
+    [(and (eq? var (car (car vars))) (pair? (cdr (car vars)))) (car (cdr (car vars)))]
+    [(equal? var (car (car vars))) (cdr (car vars))]
+    [else (look-up-type var (cdr vars))]))

@@ -9,11 +9,11 @@ function0:
 	subq $0, %rsp
 	addq $0, %r15
 
-	movq %rdi, %rbx
-	movq %rsi, %rcx
-	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq %rbx, %rax
+	movq %rdi, %rcx
+	movq %rsi, %rbx
+	movq %rcx, %rcx
+	addq %rbx, %rcx
+	movq %rcx, %rax
 
 	addq $0, %rsp
 	subq $0, %r15

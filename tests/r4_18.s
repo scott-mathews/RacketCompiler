@@ -91,8 +91,8 @@ main:
 	movq $9, 16(%rsp)
 	movq $11, 24(%rsp)
 	callq *%rbx
-	movq %rax, %rbx
-	leaq function0(%rip), %r12
+	movq %rax, %r12
+	leaq function0(%rip), %rbx
 	movq $1, %rdi
 	movq $2, %rsi
 	movq $3, %rdx
@@ -101,10 +101,10 @@ main:
 	movq $6, %r9
 	movq $7, 0(%rsp)
 	movq $11, 8(%rsp)
-	callq *%r12
-	movq %rax, %rcx
-	addq %rcx, %rbx
-	movq %rbx, %rax
+	callq *%rbx
+	movq %rax, %rbx
+	addq %rbx, %r12
+	movq %r12, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi

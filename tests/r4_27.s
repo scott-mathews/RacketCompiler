@@ -17,7 +17,7 @@ function0:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then323159
+	je then91922
 	leaq function1(%rip), %rbx
 	movq $1, %rdx
 	negq %rdx
@@ -27,10 +27,10 @@ function0:
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end323160
-then323159:
+	jmp end91923
+then91922:
 	movq $0, %rbx
-end323160:
+end91923:
 	movq %rbx, %rax
 
 	addq $8, %rsp
@@ -61,7 +61,7 @@ function1:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then323161
+	je then91924
 	leaq function0(%rip), %rbx
 	movq $1, %rdx
 	negq %rdx
@@ -71,10 +71,10 @@ function1:
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end323162
-then323161:
+	jmp end91925
+then91924:
 	movq $1, %rbx
-end323162:
+end91925:
 	movq %rbx, %rax
 
 	addq $8, %rsp
@@ -107,12 +107,12 @@ main:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then323163
+	je then91926
 	movq $0, %rbx
-	jmp end323164
-then323163:
+	jmp end91927
+then91926:
 	movq $42, %rbx
-end323164:
+end91927:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

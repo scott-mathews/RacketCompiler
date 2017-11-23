@@ -9,28 +9,28 @@ function0:
 	subq $8, %rsp
 	addq $0, %r15
 
-	movq %rdi, %rdx
+	movq %rdi, %rcx
 	movq $0, %rax
-	cmpq %rax, %rdx
+	cmpq %rax, %rcx
 	sete %al
 	movzbq %al, %rax
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then322689
+	je then91444
 	leaq function1(%rip), %rbx
-	movq $1, %rcx
-	negq %rcx
-	movq %rcx, %rcx
-	addq %rdx, %rcx
-	movq %rcx, %rdi
+	movq $1, %rdx
+	negq %rdx
+	movq %rdx, %rdx
+	addq %rcx, %rdx
+	movq %rdx, %rdi
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end322690
-then322689:
+	jmp end91445
+then91444:
 	movq $0, %rbx
-end322690:
+end91445:
 	movq %rbx, %rax
 
 	addq $8, %rsp
@@ -61,7 +61,7 @@ function1:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then322691
+	je then91446
 	leaq function0(%rip), %rbx
 	movq $1, %rdx
 	negq %rdx
@@ -71,10 +71,10 @@ function1:
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end322692
-then322691:
+	jmp end91447
+then91446:
 	movq $1, %rbx
-end322692:
+end91447:
 	movq %rbx, %rax
 
 	addq $8, %rsp
@@ -109,12 +109,12 @@ main:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then322693
+	je then91448
 	movq $42, %rbx
-	jmp end322694
-then322693:
+	jmp end91449
+then91448:
 	movq $999, %rbx
-end322694:
+end91449:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

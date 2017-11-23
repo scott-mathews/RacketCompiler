@@ -18,7 +18,7 @@ function0:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then322663
+	je then91416
 	leaq function0(%rip), %rbx
 	movq $1, %rdx
 	negq %rdx
@@ -31,10 +31,10 @@ function0:
 	movq %r12, %rcx
 	addq %rbx, %rcx
 	movq %rcx, %rbx
-	jmp end322664
-then322663:
+	jmp end91417
+then91416:
 	movq $0, %rbx
-end322664:
+end91417:
 	movq %rbx, %rax
 
 	addq $24, %rsp
