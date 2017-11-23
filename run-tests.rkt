@@ -53,7 +53,7 @@
 ;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r4" (range 1 39))
-(compiler-tests "r4 compiler" (type-check '()) r4-passes "r4" (range 1 39))
+;(compiler-tests "r4 compiler" (type-check '()) r4-passes "r4" (range 37 39))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;; New Tests ;;;;;;

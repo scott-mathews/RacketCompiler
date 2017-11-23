@@ -6,38 +6,34 @@ function0:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $24, %rsp
+	subq $8, %rsp
 	addq $0, %r15
 
 	movq %rdi, %rcx
-	movq %rsi, %r12
-	movq %rcx, %rax
-	cmpq $0, %rax
+	movq $0, %rax
+	cmpq %rax, %rcx
 	sete %al
 	movzbq %al, %rax
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then322663
+	je then323110
 	leaq function0(%rip), %rbx
 	movq $1, %rdx
 	negq %rdx
-	movq %rdx, %rdx
-	addq %rcx, %rdx
-	movq %rdx, %rdi
-	movq %r12, %rsi
+	movq %rcx, %rcx
+	addq %rdx, %rcx
+	movq %rcx, %rdi
 	callq *%rbx
 	movq %rax, %rbx
-	movq %r12, %rcx
-	addq %rbx, %rcx
-	movq %rcx, %rbx
-	jmp end322664
-then322663:
+	movq %rbx, %rbx
+	jmp end323111
+then323110:
 	movq $0, %rbx
-end322664:
+end323111:
 	movq %rbx, %rax
 
-	addq $24, %rsp
+	addq $8, %rsp
 	subq $0, %r15
 	popq %rbx
 	popq %r12
@@ -62,10 +58,22 @@ main:
 	addq $0, %r15
 
 	leaq function0(%rip), %rbx
-	movq $6, %rdi
-	movq $7, %rsi
+	movq $99, %rdi
 	callq *%rbx
 	movq %rax, %rbx
+	movq %rbx, %rax
+	cmpq $0, %rax
+	sete %al
+	movzbq %al, %rax
+	movq %rax, %rbx
+	movq %rbx, %rax
+	cmpq $1, %rax
+	je then323112
+	movq $777, %rbx
+	jmp end323113
+then323112:
+	movq $42, %rbx
+end323113:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

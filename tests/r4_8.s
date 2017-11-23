@@ -6,34 +6,34 @@ function0:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $16, %rsp
+	subq $8, %rsp
 	addq $0, %r15
 
-	movq %rdi, %rcx
+	movq %rdi, %rdx
 	movq $0, %rax
-	cmpq %rax, %rcx
+	cmpq %rax, %rdx
 	sete %al
 	movzbq %al, %rax
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then88702
+	je then322732
 	leaq function1(%rip), %rbx
-	movq $1, %rdx
-	negq %rdx
-	movq %rdx, %rdx
-	addq %rcx, %rdx
-	movq %rdx, %rdi
+	movq $1, %rcx
+	negq %rcx
+	movq %rcx, %rcx
+	addq %rdx, %rcx
+	movq %rcx, %rdi
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end88703
-then88702:
+	jmp end322733
+then322732:
 	movq $0, %rbx
-end88703:
+end322733:
 	movq %rbx, %rax
 
-	addq $16, %rsp
+	addq $8, %rsp
 	subq $0, %r15
 	popq %rbx
 	popq %r12
@@ -50,7 +50,7 @@ function1:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $16, %rsp
+	subq $8, %rsp
 	addq $0, %r15
 
 	movq %rdi, %rcx
@@ -61,7 +61,7 @@ function1:
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then88704
+	je then322734
 	leaq function0(%rip), %rbx
 	movq $1, %rdx
 	negq %rdx
@@ -71,13 +71,13 @@ function1:
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end88705
-then88704:
+	jmp end322735
+then322734:
 	movq $1, %rbx
-end88705:
+end322735:
 	movq %rbx, %rax
 
-	addq $16, %rsp
+	addq $8, %rsp
 	subq $0, %r15
 	popq %rbx
 	popq %r12
@@ -99,10 +99,13 @@ main:
 	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
-	addq $8, %r15
+	addq $24, %r15
+	movq $0, -24(%r15)
+	movq $0, -16(%r15)
 	movq $0, -8(%r15)
 
-	leaq function0(%rip), %rbx
+	leaq function0(%rip), %rcx
+	movq %rcx, %rbx
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $16, %rcx
@@ -115,16 +118,16 @@ main:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then88706
+	je then322736
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end88707
-then88706:
+	jmp end322737
+then322736:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end88707:
+end322737:
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $16, free_ptr(%rip)
@@ -134,31 +137,30 @@ end88707:
 	movq %rbx, %rax
 	movq %rax, 8(%r11)
 	movq $0, %rbx
-	movq %rcx, %rbx
-	leaq function1(%rip), %rcx
-	movq %rbx, %r11
-	movq %rcx, %rax
+	leaq function1(%rip), %rbx
+	movq %rcx, %r11
+	movq %rbx, %rax
 	movq %rax, 8(%r11)
-	movq $0, %rcx
-	movq %rbx, %r11
+	movq $0, %rbx
+	movq %rcx, %r11
 	movq 8(%r11), %rbx
 	movq $21, %rdi
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rax
 	cmpq $1, %rax
-	je then88708
+	je then322738
 	movq $42, %rbx
-	jmp end88709
-then88708:
+	jmp end322739
+then322738:
 	movq $999, %rbx
-end88709:
+end322739:
 	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
 	callq	print_int
-	subq $8, %r15
+	subq $24, %r15
 	addq $48, %rsp
 	movq $0, %rax
 	popq %rbx

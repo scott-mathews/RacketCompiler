@@ -6,38 +6,38 @@ function0:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $24, %rsp
+	subq $0, %rsp
 	addq $0, %r15
 
-	movq %rdi, %rcx
-	movq %rsi, %r12
-	movq %rcx, %rax
-	cmpq $0, %rax
-	sete %al
-	movzbq %al, %rax
-	movq %rax, %rbx
-	movq %rbx, %rax
-	cmpq $1, %rax
-	je then322663
-	leaq function0(%rip), %rbx
-	movq $1, %rdx
-	negq %rdx
-	movq %rdx, %rdx
-	addq %rcx, %rdx
-	movq %rdx, %rdi
-	movq %r12, %rsi
-	callq *%rbx
-	movq %rax, %rbx
-	movq %r12, %rcx
-	addq %rbx, %rcx
-	movq %rcx, %rbx
-	jmp end322664
-then322663:
-	movq $0, %rbx
-end322664:
+	leaq function1(%rip), %rbx
 	movq %rbx, %rax
 
-	addq $24, %rsp
+	addq $0, %rsp
+	subq $0, %r15
+	popq %rbx
+	popq %r12
+	popq %r13
+	popq %r14
+	popq %rbp
+	retq
+
+	.globl function1
+function1:
+	pushq %rbp
+	movq %rsp, %rbp
+	pushq %r14
+	pushq %r13
+	pushq %r12
+	pushq %rbx
+	subq $0, %rsp
+	addq $0, %r15
+
+	movq %rdi, %rbx
+	movq %rbx, %rbx
+	addq $1, %rbx
+	movq %rbx, %rax
+
+	addq $0, %rsp
 	subq $0, %r15
 	popq %rbx
 	popq %r12
@@ -62,8 +62,9 @@ main:
 	addq $0, %r15
 
 	leaq function0(%rip), %rbx
-	movq $6, %rdi
-	movq $7, %rsi
+	callq *%rbx
+	movq %rax, %rbx
+	movq $41, %rdi
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rax

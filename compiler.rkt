@@ -285,15 +285,9 @@
          (set! new-defines (cons new-define new-defines)))       
        `(program ,type ,@(reverse new-defines) ,((reveal-functions new-env) e))]
       [`(define ((has-type ,var ,type) ,args* ...) ,body)
-       (define inner-env (cons var f-list))
-       (for ([arg args*])
-         (match arg [`(has-type ,v ,t) (match t [`(,inputs ... -> ,output)
-                                                 (set! inner-env (cons v inner-env))]
-                                         [else "pass"])]
-           [else "pass"]))
-       (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions inner-env) body)) var)]
-      [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname f-list)
-                                          `(has-type (app (has-type (function-ref ,fname) ,type) ,@(map (reveal-functions f-list) args*)) ,t)]
+       (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions f-list) body)) var)]
+      ;[`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname f-list)
+      ;                                    `(has-type (app (has-type (function-ref ,fname) ,type) ,@(map (reveal-functions f-list) args*)) ,t)]
       [`(has-type (let ([,x ,e]) ,body) ,tb) `(has-type (let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body)) ,tb)]
       [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els)) ,t)]
       [`(has-type ((has-type ,op ,t-op) ,es ...) ,t) #:when (function-type t-op) `(has-type (app ,((reveal-functions f-list) `(has-type ,op ,t-op)) ,@(map (reveal-functions f-list) es)) ,t)]
@@ -327,7 +321,7 @@
        (let ([x (gensym `vecinit)])
          (if (and (pair? (second (car elist))) (eq? `vector (car (second (car elist)))))
              (begin
-               (set! flipper (expose-allocation (car elist)))
+               ;(set! flipper (expose-allocation (car elist)))
                `(has-type (let ([,x ,(expose-allocation (car elist))])
                   ,(alloc-helper (cdr elist) elen (lambda (v)
                                                     (begin
@@ -335,7 +329,7 @@
                                                       (if (eq? v (car elist))
                                                           `(,x ,(last (car elist)))
                                                           (tiny-env v)))) v type e*)) ,type))
-             `(has-type (let ([,x ,(car elist)])
+             `(has-type (let ([,x ,(expose-allocation (car elist))])
                 ,(alloc-helper (cdr elist) elen (lambda (v)
                                                   (begin
                                                     ;(set! flipper elist)
@@ -364,14 +358,15 @@
        (alloc-helper e* (length e*) vec-assoc v type e*))]
     [`(has-type (let ([,x ,e]) ,b) ,tb) `(has-type (let ([,x ,(expose-allocation e)]) ,(expose-allocation b)) ,tb)]
     [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els)) ,t)]
+    [`(has-type (app ,fn ,args* ...) ,t)
+     `(has-type (app ,fn ,@(map expose-allocation args*)) ,t)]
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]
-    
+    [`(has-type (,op ,args* ...) ,t) `(has-type (,op ,@(map expose-allocation args*)) ,t)]
     [`(define (,var ,args* ...) ,body)
      `(define (,var ,@args*) ,(expose-allocation body))]
-    [`(app ,fn ,args* ...)
-     `(app ,fn ,@(map expose-allocation args*))]
+    
     [`(program ,type ,exps ...)
      (define body (last exps))
      (define defs (reverse (cdr (reverse exps))))
@@ -404,6 +399,13 @@
 
 ;;; Helpers ;;;
 
+; convert argument list (has-type ,v ,t) ... to (v . t)
+(define (args->vars args)
+  (map (lambda (arg)
+         (match arg
+           [`(has-type ,v ,t) (cons v t)]))
+       args))
+
 ;; Get variable from list, or generate a temporary one
 (define (genvar var)
   (if (empty? var) (gensym `tmp) (car var)))
@@ -432,8 +434,6 @@
 
 (define (flatten-helper exp . var)
   ;(display exp)
-  ;(display (genvar var))
-  ;(display "\n")
   (match exp
     [`(has-type (if ,cnd ,thn ,els) ,t) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
                           (define v (gensym `tmp))
@@ -478,8 +478,8 @@
      ; fix type annotations for function name and args
      (define new-fn (cadr fn))
      (define new-args* (map cadr args*))
-     
-     `(define (,new-fn ,@new-args*) ,vars ,@assignments (return ,flat-exp))]
+     ; make sure vars contains all arguments as well.
+     `(define (,new-fn ,@new-args*) ,(set->list (set-union (list->set vars) (list->set (args->vars args*)))) ,@assignments (return ,flat-exp))]
     
     [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)     
      (define-values (flat-exp1 assignments1 vars1)
@@ -508,6 +508,11 @@
     [`(has-type (- ,e) ,t) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
+    [`(has-type (,op ,args* ...) ,t) (define v (genvar var))
+                                     (define-values (flat-exps assignments vars) (map3 flatten-helper args*))
+                                     (displayln exp)
+                                     (values v `(,@(values assignments) (assign ,v (,op ,@flat-exps))) (cons (cons v t) (foldr append '() vars)))]
+    
     
     
     ;[`(app ,op ,args ...)
@@ -598,14 +603,18 @@
 ; def-helper
 ; traverses the arguments to a function and adds statements to add those arguments to their variable within the function
 (define def-helper
-  (lambda (args regs inst stack-loc)
+  (lambda (args regs inst stack-loc reg)
     (cond
       [(empty? args)  (if (empty? inst) `() (map-me select-instructions inst))]
-      [(empty? regs) (cons `(movq (deref rbp ,stack-loc) (var ,(car args)))
-                           (def-helper (cdr args) regs inst (+ 8 stack-loc)))]
+      [(empty? regs) (cons `(movq (deref ,reg ,stack-loc) ,(val->typedval (car args)))
+                           (def-helper (cdr args) regs inst (+ 8 stack-loc) reg))]
+      ; if reg = rsp then it is sender, start at 0
+      ; if reg = rbp then it is receiver, start at 16
       [else (cons `(movq (reg ,(car regs))
                          ,(if (pair? (car args)) (val->typedval (caar args)) (val->typedval (car args))))
-                  (def-helper (cdr args) (cdr regs) inst stack-loc))])))
+                  (def-helper (cdr args) (cdr regs) inst (if (equal? reg `rsp)
+                                                             0
+                                                             16) reg))])))
 
 ; select-define-helper
 ; adds instructions to move arguments for a function into their variables within the function.
@@ -613,7 +622,7 @@
   (match def
     [`(define (,fname ,args ...) ,vars ,inst ...)
      `(define (,fname) ,(length args) (,vars ,(maxstack vars))
-        ,(def-helper args def-reg-list inst 0))]
+        ,(def-helper args def-reg-list inst 0 `rbp))]
     [else (displayln (format "WARNING: didn't pick ~a in select-define-helper" def))]))
 
 ;;; Select Instructions Itself ;;;
@@ -668,7 +677,7 @@
                                 [else (list `(movq ,(val->typedval e1) ,(val->typedval v))
                                             `(addq ,(val->typedval e2) ,(val->typedval v)))])]
     [`(assign ,v (app ,fun ,args ...))  (append
-                                         (map (lambda (x) (list (first x) (third x) (second x))) (def-helper args def-reg-list `() 0))
+                                         (map (lambda (x) (list (first x) (third x) (second x))) (def-helper (reverse args) def-reg-list `() 0 `rsp))
                                          `((indirect-callq (var ,fun)))
                                          `((movq (reg rax) (var ,v))))]
     [`(assign ,v (function-ref ,fname)) `((leaq (function-ref ,fname) (var ,v)))]
@@ -887,13 +896,13 @@
   (values regular-vars rootstack-vars))
 
 (define (update-name new-names instr)
-  (match instr    
+  (match instr
     [`(,op (,type1 ,v1) (,type2 ,v2)) `(,op ,(if (and (equal? 'var type1) (< (hash-ref new-names v1) (vector-length general-registers)))
-                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
-                                                 `(,type1 ,v1))
-                                            ,(if (and (equal? 'var type2) (< (hash-ref new-names v2) (vector-length general-registers)))
-                                                 `(reg ,(vector-ref general-registers (hash-ref new-names v2)))
-                                                 `(,type2 ,v2)))]
+                                                     `(reg ,(vector-ref general-registers (hash-ref new-names v1)))
+                                                     `(,type1 ,v1))
+                                                ,(if (and (equal? 'var type2) (< (hash-ref new-names v2) (vector-length general-registers)))
+                                                     `(reg ,(vector-ref general-registers (hash-ref new-names v2)))
+                                                     `(,type2 ,v2)))]
 
     ; Matches deref reg int clauses
     [`(,op (,type1 ,v1) (,type2 ,v2 ,arg)) `(,op ,(if (and (equal? 'var type1) (< (hash-ref new-names v1) (vector-length general-registers)))
@@ -920,6 +929,7 @@
     [else instr]))
 
 (define (color-graph graph mgraph vars)
+  ;(displayln (format "VARS: ~a" vars))
   ; constraints : (Var . Set of Numbers)
   (define constraints (make-hash))
   ; labels : (Var . Number)
@@ -1048,12 +1058,14 @@
                                        (list `(movq (int ,n) (reg rax))
                                              `(cmpq (,type ,val) (reg rax)))
                                        (list `(cmpq (int ,n) (,type ,val))))]
-    [`(leaq (function-ref ,label) (deref ,reg ,n)) (list `(movq (deref ,reg ,n) (reg rax))
-                                                         `(leaq (function-ref ,label) (reg rax)))]
+    [`(leaq (function-ref ,label) (deref ,reg ,n)) (list `(leaq (function-ref ,label) (reg rax))
+                                                         `(movq (reg rax) (deref ,reg ,n)))]
     [`(define (,name) ,l ((,regn ,rootn) ,maxstack) ,instrs ...)
      (list `(define (,name) ,l ((,regn ,rootn) ,maxstack) ,@(values (map-me patch-instructions instrs))))]
     [`(program (,regn ,rootn) ,type (defines ,defs ...) ,instrs ...)
-     `(program (,regn ,rootn) ,type (defines ,@(values (map-me patch-instructions defs))) ,@(values (map-me patch-instructions instrs)))]  
+     `(program (,regn ,rootn) ,type (defines ,@(values (map-me patch-instructions defs))) ,@(values (map-me patch-instructions instrs)))]
+    ;[`(indirect-callq (deref ,reg ,n)) (list `(movq (deref ,reg ,n) (reg rax))
+    ;                                         `(indirect-callq (reg rax)))]
     [else `(,exp)] 
     )) 
 ;;; End Patch Instructions ;;;
