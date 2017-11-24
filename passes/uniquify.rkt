@@ -50,6 +50,14 @@
                                 (set! new-env (cons (cons v new-name) new-env))
                                 (set! new-args (cons `(has-type ,new-name ,t) new-args))]))
        (values `(define ((has-type ,var ,type) ,@(reverse new-args)) ,((uniquify new-env) body)) var)]
+      [`(has-type (lambda (,args* ...) ,body) ,type)
+       (define lam-env alist)
+       (define new-args '())
+       (for ([arg args*])
+         (match arg [`(has-type ,v ,t) (define new-name (gensym v))
+                                       (set! lam-env (cons (cons v new-name) lam-env))
+                                       (set! new-args (cons `(has-type ,new-name ,t) new-args))]))
+       `(has-type (lambda (,@(reverse new-args)) ,((uniquify lam-env) body)) ,type)]
       [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname (map car alist))
                             `(has-type ((has-type ,(lookup fname alist) ,type) ,@(map (uniquify alist) args*)) ,t)]
       [`(has-type (let ([,x ,e]) ,body) ,tb)

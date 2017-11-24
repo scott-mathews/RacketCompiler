@@ -71,7 +71,7 @@
     [`(has-type (let ([,x ,e]) ,b) ,tb) `(has-type (let ([,x ,(expose-allocation e)]) ,(expose-allocation b)) ,tb)]
     [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,(expose-allocation cnd) ,(expose-allocation thn) ,(expose-allocation els)) ,t)]
     [`(has-type (app ,fn ,args* ...) ,t)
-     `(has-type (app ,fn ,@(map expose-allocation args*)) ,t)]
+     `(has-type (app ,(expose-allocation fn) ,@(map expose-allocation args*)) ,t)]
     [`(has-type (,op ,e) ,t) `(has-type (,op ,(expose-allocation e)) ,t)]
     [`(has-type (,op ,e1 ,e2) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2)) ,t)]
     [`(has-type (,op ,e1 ,e2 ,e3) ,t) `(has-type (,op ,(expose-allocation e1) ,(expose-allocation e2) ,(expose-allocation e3)) ,t)]

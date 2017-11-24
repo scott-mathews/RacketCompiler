@@ -11,16 +11,6 @@
 
 ;;; === Reveal Functions === ;;;
 
-; Traverses through a list of defines, and returns a list containing
-; the name of each function.
-(define (make-f-list defs)
-  (define fns '())
-  (for ([def defs])
-    (match def
-      [`(define ((has-type ,name ,type) ,args* ...) ,body)
-       (set! fns (cons name fns))]))
-  fns)
-
 (define (reveal-functions f-list)
   ;(define recur (reveal-functions f-list))
   (lambda (exp)
@@ -39,6 +29,8 @@
        `(program ,type ,@(reverse new-defines) ,((reveal-functions new-env) e))]
       [`(define ((has-type ,var ,type) ,args* ...) ,body)
        (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions f-list) body)) var)]
+      [`(has-type (lambda (,args* ...) ,body) ,type)
+       `(has-type (lambda (,@args*) ,((reveal-functions f-list) body)) ,type)]
       ;[`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname f-list)
       ;                                    `(has-type (app (has-type (function-ref ,fname) ,type) ,@(map (reveal-functions f-list) args*)) ,t)]
       [`(has-type (let ([,x ,e]) ,body) ,tb) `(has-type (let ([,x ,((reveal-functions f-list) e)]) ,((reveal-functions f-list) body)) ,tb)]

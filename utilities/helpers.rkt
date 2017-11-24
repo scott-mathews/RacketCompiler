@@ -5,11 +5,29 @@
 ; export utility functions
 (provide function-type terminal? map-me remove-duplicate-movq cmp->cc
          look-up-type get-function-type get-lambda-type get-lambda-env
-         update-arg-format)
+         update-arg-format make-f-list make-typed-f-list)
 
 ;;;;;;;;;;;
 ; Helpers ;
 ;;;;;;;;;;;
+
+; Traverses through a list of defines, and returns a list containing
+; the name of each function.
+(define (make-f-list defs)
+  (define fns '())
+  (for ([def defs])
+    (match def
+      [`(define ((has-type ,name ,type) ,args* ...) ,body)
+       (set! fns (cons name fns))]))
+  fns)
+
+(define (make-typed-f-list defs)
+  (define fns '())
+  (for ([def defs])
+    (match def
+      [`(define ((has-type ,name ,type) ,args* ...) ,body)
+       (set! fns (cons `(has-type ,name ,type) fns))]))
+  fns)
 
 ; get-function-type
 ; TODO: Put this in define statement of typecheck instead of

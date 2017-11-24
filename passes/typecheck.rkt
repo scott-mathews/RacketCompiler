@@ -60,7 +60,7 @@
        (define lam-type (get-lambda-type e))
        (define new-args (update-arg-format args*))
        (define-values (eb tb) ((type-check arg-env) body))
-       (values `(has-type (lambda (,@new-args) (has-type ,eb ,tb)) ,lam-type)
+       (values `(has-type (lambda (,@new-args) ,eb) ,lam-type)
                lam-type)]
       [`(define (,var ,args* ...) : ,type ,body)
        (define input-types '())

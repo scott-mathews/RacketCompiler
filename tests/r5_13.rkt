@@ -1,3 +1,3 @@
 (let ([x 42])
-  (let ([f (lambda () x)])
+  (let ([f (lambda: () : Integer x)])
     (f)))
