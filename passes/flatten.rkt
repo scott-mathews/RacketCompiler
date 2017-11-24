@@ -40,7 +40,7 @@
      (for ([def defs])
        (set! new-defs (cons (flatten-helper def) new-defs)))
      (define-values (flat-exp assignments vars) (flatten-helper body))
-                   `(program ,vars ,type (defines ,@(reverse new-defs)) ,@assignments (return ,flat-exp))]
+                   `(program ,(remove-duplicate-vars vars) ,type (defines ,@(reverse new-defs)) ,@assignments (return ,flat-exp))]
     ))
 
 (define (flatten-helper exp . var)
@@ -124,6 +124,18 @@
                                      (displayln exp)
                                      (values v `(,@(values assignments) (assign ,v (,op ,@flat-exps))) (cons (cons v t) (foldr append '() vars)))]
     ))
+
+; Makes it so there is only one copy of each var
+(define (remove-duplicate-vars vars)
+  (define names (set-copy (list->set (map car vars))))
+  (define new-vars '())
+  (for ([var vars])
+    (if (set-member? names (car var))
+        (let ()
+          (set-remove! names (car var))
+          (set! new-vars (cons var new-vars)))
+        "pass"))
+  new-vars)
 
 (define (flat-type var exp)
   (define str-exp (substring (symbol->string var) 0 (if (< (string-length (symbol->string var)) 7) 1 7)))

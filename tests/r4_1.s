@@ -10,6 +10,7 @@ function0:
 	addq $0, %r15
 
 	movq %rdi, %rbx
+	movq %rsi, %rbx
 	movq %rbx, %rax
 
 	addq $0, %rsp
@@ -52,16 +53,16 @@ main:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then296807
+	je then78190
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end296808
-then296807:
+	jmp end78191
+then78190:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end296808:
+end78191:
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $16, free_ptr(%rip)

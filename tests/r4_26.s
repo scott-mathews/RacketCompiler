@@ -10,6 +10,7 @@ function0:
 	addq $0, %r15
 
 	movq %rdi, %rbx
+	movq %rsi, %rbx
 	movq %rbx, %rbx
 	addq $1, %rbx
 	movq %rbx, %rax
@@ -35,6 +36,7 @@ function1:
 	addq $0, %r15
 
 	movq %rdi, %rbx
+	movq %rsi, %rbx
 	movq %rbx, %rax
 
 	addq $0, %rsp
@@ -59,14 +61,88 @@ main:
 	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
-	addq $0, %r15
+	addq $40, %r15
+	movq $0, -40(%r15)
+	movq $0, -32(%r15)
+	movq $0, -24(%r15)
+	movq $0, -16(%r15)
+	movq $0, -8(%r15)
 
-	leaq function1(%rip), %rbx
-	leaq function0(%rip), %rcx
+	leaq function1(%rip), %rcx
+	movq %rcx, %rbx
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $16, %rcx
+	movq fromspace_end(%rip), %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq %rax, %rcx
+	sete %al
+	movzbq %al, %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq $1, %rax
+	je then79192
+	movq %r15, %rdi
+	movq $16, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end79193
+then79192:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end79193:
+	movq free_ptr(%rip), %rax
+	movq %rax, %r13
+	addq $16, free_ptr(%rip)
+	movq %r13, %r11
+	movq $131, 0(%r11)
+	movq %r13, %r11
+	movq %rbx, %rax
+	movq %rax, 8(%r11)
+	movq $0, %rbx
+	movq %r13, %r11
+	movq 8(%r11), %r12
+	leaq function0(%rip), %rbx
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $16, %rcx
+	movq fromspace_end(%rip), %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq %rax, %rcx
+	sete %al
+	movzbq %al, %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq $1, %rax
+	je then79194
+	movq %r15, %rdi
+	movq $16, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end79195
+then79194:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end79195:
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $16, free_ptr(%rip)
+	movq %rcx, %r11
+	movq $131, 0(%r11)
+	movq %rcx, %r11
+	movq %rbx, %rax
+	movq %rax, 8(%r11)
+	movq $0, %rbx
+	movq %r13, %rdi
+	movq %rcx, %rsi
+	callq *%r12
+	movq %rax, %rcx
+	movq %rcx, %r11
+	movq 8(%r11), %rbx
 	movq %rcx, %rdi
-	callq *%rbx
-	movq %rax, %rbx
-	movq $41, %rdi
+	movq $41, %rsi
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rax
@@ -74,7 +150,7 @@ main:
 	movq %rax, %rdi
 	movq	%rax, %rdi
 	callq	print_int
-	subq $0, %r15
+	subq $40, %r15
 	addq $48, %rsp
 	movq $0, %rax
 	popq %rbx

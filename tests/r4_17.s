@@ -6,7 +6,7 @@ function0:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $40, %rsp
+	subq $48, %rsp
 	addq $0, %r15
 
 	movq %rdi, %rbx
@@ -14,16 +14,17 @@ function0:
 	movq %rdx, %rbx
 	movq %rcx, %rbx
 	movq %r8, %rcx
-	movq %r9, %rcx
-	movq 16(%rbp), %rcx
-	movq 24(%rbp), %rcx
-	movq 32(%rbp), %rcx
-	movq 40(%rbp), %rcx
-	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq %rbx, %rax
+	movq %r9, %rbx
+	movq 16(%rbp), %rbx
+	movq 24(%rbp), %rbx
+	movq 32(%rbp), %rbx
+	movq 40(%rbp), %rbx
+	movq 48(%rbp), %rbx
+	movq %rcx, %rcx
+	addq %rbx, %rcx
+	movq %rcx, %rax
 
-	addq $40, %rsp
+	addq $48, %rsp
 	subq $0, %r15
 	popq %rbx
 	popq %r12
@@ -45,19 +46,56 @@ main:
 	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
-	addq $0, %r15
+	addq $16, %r15
+	movq $0, -16(%r15)
+	movq $0, -8(%r15)
 
-	leaq function0(%rip), %rbx
-	movq $1, %rdi
-	movq $2, %rsi
-	movq $3, %rdx
-	movq $20, %rcx
-	movq $5, %r8
-	movq $6, %r9
-	movq $7, 0(%rsp)
-	movq $8, 8(%rsp)
-	movq $9, 16(%rsp)
-	movq $22, 24(%rsp)
+	leaq function0(%rip), %rcx
+	movq %rcx, %rbx
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $16, %rcx
+	movq fromspace_end(%rip), %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq %rax, %rcx
+	sete %al
+	movzbq %al, %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq $1, %rax
+	je then78788
+	movq %r15, %rdi
+	movq $16, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end78789
+then78788:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end78789:
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $16, free_ptr(%rip)
+	movq %rcx, %r11
+	movq $131, 0(%r11)
+	movq %rcx, %r11
+	movq %rbx, %rax
+	movq %rax, 8(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq 8(%r11), %rbx
+	movq %rcx, %rdi
+	movq $1, %rsi
+	movq $2, %rdx
+	movq $3, %rcx
+	movq $20, %r8
+	movq $5, %r9
+	movq $6, 0(%rsp)
+	movq $7, 8(%rsp)
+	movq $8, 16(%rsp)
+	movq $9, 24(%rsp)
+	movq $22, 32(%rsp)
 	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rax
@@ -65,7 +103,7 @@ main:
 	movq %rax, %rdi
 	movq	%rax, %rdi
 	callq	print_int
-	subq $0, %r15
+	subq $16, %r15
 	addq $48, %rsp
 	movq $0, %rax
 	popq %rbx
