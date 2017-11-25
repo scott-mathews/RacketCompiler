@@ -6,7 +6,7 @@ main:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $1104, %rsp
+	subq $1152, %rsp
 	movq $16384, %rdi 
 	movq $16, %rsi 
 	callq initialize 
@@ -19,56 +19,56 @@ main:
 	movq $0, -16(%r15)
 	movq $0, -8(%r15)
 
-	movq $0, %rbx
+	movq $0, -88(%rbp)
 	movq $1, -136(%rbp)
-	movq $2, -344(%rbp)
-	movq $3, -840(%rbp)
-	movq $4, -1024(%rbp)
-	movq $5, -872(%rbp)
-	movq $6, -1008(%rbp)
-	movq $7, -808(%rbp)
-	movq $8, -968(%rbp)
-	movq $9, -848(%rbp)
-	movq $10, -1032(%rbp)
-	movq $11, -96(%rbp)
-	movq $12, -288(%rbp)
-	movq $13, -112(%rbp)
-	movq $14, -328(%rbp)
-	movq $15, -736(%rbp)
-	movq $16, -320(%rbp)
-	movq $17, -104(%rbp)
-	movq $18, -296(%rbp)
-	movq $19, -680(%rbp)
-	movq $20, -920(%rbp)
-	movq $21, -704(%rbp)
-	movq $22, -952(%rbp)
-	movq $23, -80(%rbp)
-	movq $24, -936(%rbp)
-	movq $25, -688(%rbp)
-	movq $26, -928(%rbp)
-	movq $27, -552(%rbp)
-	movq $28, -600(%rbp)
-	movq $29, -568(%rbp)
-	movq $30, -632(%rbp)
-	movq $31, -1064(%rbp)
-	movq $32, -616(%rbp)
-	movq $33, -560(%rbp)
-	movq $34, -608(%rbp)
-	movq $35, -1080(%rbp)
-	movq $36, %r13
-	movq $37, -1056(%rbp)
-	movq $38, %r14
-	movq $39, -576(%rbp)
-	movq $40, %r10
-	movq $41, -1088(%rbp)
-	movq $42, %r12
-	movq $43, -648(%rbp)
-	movq $44, -584(%rbp)
-	movq $45, %rdi
-	movq $46, %r9
-	movq $47, %rdx
-	movq $48, %r8
-	movq $49, %rsi
+	movq $2, -320(%rbp)
+	movq $3, %r13
+	movq $4, -336(%rbp)
+	movq $5, -568(%rbp)
+	movq $6, -328(%rbp)
+	movq $7, -552(%rbp)
+	movq $8, -928(%rbp)
+	movq $9, %rbx
+	movq $10, -880(%rbp)
+	movq $11, -528(%rbp)
+	movq $12, -920(%rbp)
+	movq $13, %r12
+	movq $14, -888(%rbp)
+	movq $15, %r14
+	movq $16, -256(%rbp)
+	movq $17, -464(%rbp)
+	movq $18, -168(%rbp)
+	movq $19, -384(%rbp)
+	movq $20, -160(%rbp)
+	movq $21, -376(%rbp)
+	movq $22, -264(%rbp)
+	movq $23, -472(%rbp)
+	movq $24, -808(%rbp)
+	movq $25, -1032(%rbp)
+	movq $26, -848(%rbp)
+	movq $27, -1080(%rbp)
+	movq $28, -840(%rbp)
+	movq $29, -1064(%rbp)
+	movq $30, -680(%rbp)
+	movq $31, -720(%rbp)
+	movq $32, -48(%rbp)
+	movq $33, -96(%rbp)
+	movq $34, -72(%rbp)
+	movq $35, -120(%rbp)
+	movq $36, -64(%rbp)
+	movq $37, -112(%rbp)
+	movq $38, -56(%rbp)
+	movq $39, -104(%rbp)
+	movq $40, -648(%rbp)
+	movq $41, -696(%rbp)
+	movq $42, -672(%rbp)
+	movq $43, -712(%rbp)
+	movq $44, -664(%rbp)
+	movq $45, -704(%rbp)
+	movq $46, -656(%rbp)
+	movq $47, -688(%rbp)
+	movq $48, -128(%rbp)
+	movq $49, -80(%rbp)
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $408, %rcx
@@ -81,783 +81,777 @@ main:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then34787
+	je then42170
 	movq %r15, %rdi
 	movq $408, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end34788
-then34787:
+	jmp end42171
+then42170:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end34788:
+end42171:
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $408, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $101, 0(%r11)
 	movq %rcx, %r11
-	movq %rbx, %rax
+	movq -88(%rbp), %rax
 	movq %rax, 8(%r11)
-	movq $0, %rbx
+	movq $0, %rdx
 	movq %rcx, %r11
 	movq -136(%rbp), %rax
 	movq %rax, 16(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -344(%rbp), %rax
-	movq %rax, 24(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -840(%rbp), %rax
-	movq %rax, 32(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -1024(%rbp), %rax
-	movq %rax, 40(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -872(%rbp), %rax
-	movq %rax, 48(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -1008(%rbp), %rax
-	movq %rax, 56(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -808(%rbp), %rax
-	movq %rax, 64(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -968(%rbp), %rax
-	movq %rax, 72(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -848(%rbp), %rax
-	movq %rax, 80(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -1032(%rbp), %rax
-	movq %rax, 88(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -96(%rbp), %rax
-	movq %rax, 96(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -288(%rbp), %rax
-	movq %rax, 104(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -112(%rbp), %rax
-	movq %rax, 112(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -328(%rbp), %rax
-	movq %rax, 120(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -736(%rbp), %rax
-	movq %rax, 128(%r11)
-	movq $0, %rbx
+	movq $0, %rdx
 	movq %rcx, %r11
 	movq -320(%rbp), %rax
-	movq %rax, 136(%r11)
-	movq $0, %rbx
+	movq %rax, 24(%r11)
+	movq $0, %rdx
 	movq %rcx, %r11
-	movq -104(%rbp), %rax
-	movq %rax, 144(%r11)
-	movq $0, %rbx
+	movq %r13, %rax
+	movq %rax, 32(%r11)
+	movq $0, %rdx
 	movq %rcx, %r11
-	movq -296(%rbp), %rax
-	movq %rax, 152(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -680(%rbp), %rax
-	movq %rax, 160(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -920(%rbp), %rax
-	movq %rax, 168(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -704(%rbp), %rax
-	movq %rax, 176(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -952(%rbp), %rax
-	movq %rax, 184(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -80(%rbp), %rax
-	movq %rax, 192(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -936(%rbp), %rax
-	movq %rax, 200(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -688(%rbp), %rax
-	movq %rax, 208(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -928(%rbp), %rax
-	movq %rax, 216(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -552(%rbp), %rax
-	movq %rax, 224(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -600(%rbp), %rax
-	movq %rax, 232(%r11)
-	movq $0, %rbx
+	movq -336(%rbp), %rax
+	movq %rax, 40(%r11)
+	movq $0, %rdx
 	movq %rcx, %r11
 	movq -568(%rbp), %rax
-	movq %rax, 240(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -632(%rbp), %rax
-	movq %rax, 248(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -1064(%rbp), %rax
-	movq %rax, 256(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -616(%rbp), %rax
-	movq %rax, 264(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -560(%rbp), %rax
-	movq %rax, 272(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -608(%rbp), %rax
-	movq %rax, 280(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -1080(%rbp), %rax
-	movq %rax, 288(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %r13, %rax
-	movq %rax, 296(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -1056(%rbp), %rax
-	movq %rax, 304(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %r14, %rax
-	movq %rax, 312(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -576(%rbp), %rax
-	movq %rax, 320(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %r10, %rax
-	movq %rax, 328(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -1088(%rbp), %rax
-	movq %rax, 336(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %r12, %rax
-	movq %rax, 344(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -648(%rbp), %rax
-	movq %rax, 352(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq -584(%rbp), %rax
-	movq %rax, 360(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %rdi, %rax
-	movq %rax, 368(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %r9, %rax
-	movq %rax, 376(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %rdx, %rax
-	movq %rax, 384(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %r8, %rax
-	movq %rax, 392(%r11)
-	movq $0, %rbx
-	movq %rcx, %r11
-	movq %rsi, %rax
-	movq %rax, 400(%r11)
-	movq $0, %rbx
-	movq $0, -240(%rbp)
-	movq $1, -664(%rbp)
-	movq $2, -248(%rbp)
-	movq $3, %rbx
-	movq $4, -984(%rbp)
-	movq $5, -816(%rbp)
-	movq $6, -992(%rbp)
-	movq $7, -824(%rbp)
-	movq $8, -1000(%rbp)
-	movq $9, -832(%rbp)
-	movq $10, -1040(%rbp)
-	movq $11, -224(%rbp)
-	movq $12, -368(%rbp)
-	movq $13, -168(%rbp)
-	movq $14, -376(%rbp)
-	movq $15, -184(%rbp)
-	movq $16, -392(%rbp)
-	movq $17, -192(%rbp)
-	movq $18, -400(%rbp)
-	movq $19, %r14
-	movq $20, %r8
-	movq $21, -776(%rbp)
-	movq $22, %rdi
-	movq $23, -784(%rbp)
-	movq $24, %rsi
-	movq $25, -792(%rbp)
-	movq $26, %rdx
-	movq $27, -160(%rbp)
-	movq $28, -416(%rbp)
-	movq $29, -216(%rbp)
-	movq $30, -424(%rbp)
-	movq $31, -200(%rbp)
-	movq $32, -432(%rbp)
-	movq $33, -208(%rbp)
-	movq $34, -360(%rbp)
-	movq $35, %r10
-	movq $36, -712(%rbp)
-	movq $37, %r13
-	movq $38, -720(%rbp)
-	movq $39, %r12
-	movq $40, -120(%rbp)
-	movq $41, %r9
-	movq $42, -752(%rbp)
-	movq $43, -312(%rbp)
-	movq $44, -56(%rbp)
-	movq $45, -256(%rbp)
-	movq $46, -64(%rbp)
-	movq $47, -264(%rbp)
-	movq $48, -728(%rbp)
-	movq $49, -304(%rbp)
-	movq free_ptr(%rip), %rax
-	movq %rax, -976(%rbp)
-	movq -976(%rbp), %rax
-	movq %rax, -232(%rbp)
-	addq $408, -232(%rbp)
-	movq fromspace_end(%rip), %rax
-	movq %rax, -48(%rbp)
-	movq -48(%rbp), %rax
-	cmpq %rax, -232(%rbp)
-	sete %al
-	movzbq %al, %rax
-	movq %rax, -1048(%rbp)
-	movq -1048(%rbp), %rax
-	cmpq $1, %rax
-	je then34789
-	movq %r15, %rdi
-	movq $408, %rsi
-	callq collect
-	movq $0, -640(%rbp)
-	jmp end34790
-then34789:
-	movq $0, -1072(%rbp)
-	movq -1072(%rbp), %rax
-	movq %rax, -640(%rbp)
-end34790:
-	movq -640(%rbp), %rax
-	movq %rax, -624(%rbp)
-	movq free_ptr(%rip), %rax
-	movq %rax, -8(%r15)
-	addq $408, free_ptr(%rip)
-	movq -8(%r15), %r11
-	movq $101, 0(%r11)
-	movq -8(%r15), %r11
-	movq -240(%rbp), %rax
-	movq %rax, 8(%r11)
-	movq $0, -536(%rbp)
-	movq -8(%r15), %r11
-	movq -664(%rbp), %rax
-	movq %rax, 16(%r11)
-	movq $0, -592(%rbp)
-	movq -8(%r15), %r11
-	movq -248(%rbp), %rax
-	movq %rax, 24(%r11)
-	movq $0, -544(%rbp)
-	movq -8(%r15), %r11
-	movq %rbx, %rax
-	movq %rax, 32(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -984(%rbp), %rax
-	movq %rax, 40(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -816(%rbp), %rax
 	movq %rax, 48(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -992(%rbp), %rax
-	movq %rax, 56(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -824(%rbp), %rax
-	movq %rax, 64(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -1000(%rbp), %rax
-	movq %rax, 72(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -832(%rbp), %rax
-	movq %rax, 80(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -1040(%rbp), %rax
-	movq %rax, 88(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -224(%rbp), %rax
-	movq %rax, 96(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -368(%rbp), %rax
-	movq %rax, 104(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -168(%rbp), %rax
-	movq %rax, 112(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -376(%rbp), %rax
-	movq %rax, 120(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -184(%rbp), %rax
-	movq %rax, 128(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -392(%rbp), %rax
-	movq %rax, 136(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -192(%rbp), %rax
-	movq %rax, 144(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -400(%rbp), %rax
-	movq %rax, 152(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %r14, %rax
-	movq %rax, 160(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %r8, %rax
-	movq %rax, 168(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -776(%rbp), %rax
-	movq %rax, 176(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %rdi, %rax
-	movq %rax, 184(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -784(%rbp), %rax
-	movq %rax, 192(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %rsi, %rax
-	movq %rax, 200(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -792(%rbp), %rax
-	movq %rax, 208(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %rdx, %rax
-	movq %rax, 216(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -160(%rbp), %rax
-	movq %rax, 224(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -416(%rbp), %rax
-	movq %rax, 232(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -216(%rbp), %rax
-	movq %rax, 240(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -424(%rbp), %rax
-	movq %rax, 248(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -200(%rbp), %rax
-	movq %rax, 256(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -432(%rbp), %rax
-	movq %rax, 264(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -208(%rbp), %rax
-	movq %rax, 272(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -360(%rbp), %rax
-	movq %rax, 280(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %r10, %rax
-	movq %rax, 288(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -712(%rbp), %rax
-	movq %rax, 296(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %r13, %rax
-	movq %rax, 304(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -720(%rbp), %rax
-	movq %rax, 312(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %r12, %rax
-	movq %rax, 320(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -120(%rbp), %rax
-	movq %rax, 328(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq %r9, %rax
-	movq %rax, 336(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -752(%rbp), %rax
-	movq %rax, 344(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -312(%rbp), %rax
-	movq %rax, 352(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -56(%rbp), %rax
-	movq %rax, 360(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -256(%rbp), %rax
-	movq %rax, 368(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -64(%rbp), %rax
-	movq %rax, 376(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -264(%rbp), %rax
-	movq %rax, 384(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -728(%rbp), %rax
-	movq %rax, 392(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %r11
-	movq -304(%rbp), %rax
-	movq %rax, 400(%r11)
-	movq $0, %rbx
-	movq -8(%r15), %rax
-	movq %rax, -16(%r15)
-	movq $0, %r13
-	movq $1, -504(%rbp)
-	movq $2, -456(%rbp)
-	movq $3, -512(%rbp)
-	movq $4, -480(%rbp)
-	movq $5, -528(%rbp)
-	movq $6, -464(%rbp)
-	movq $7, -520(%rbp)
-	movq $8, -472(%rbp)
-	movq $9, %rbx
-	movq $10, -880(%rbp)
-	movq $11, -1016(%rbp)
-	movq $12, -800(%rbp)
-	movq $13, -960(%rbp)
-	movq $14, -856(%rbp)
-	movq $15, %r14
-	movq $16, -864(%rbp)
-	movq $17, -408(%rbp)
-	movq $18, -128(%rbp)
-	movq $19, -336(%rbp)
-	movq $20, -176(%rbp)
-	movq $21, -384(%rbp)
-	movq $22, -144(%rbp)
-	movq $23, -352(%rbp)
-	movq $24, -152(%rbp)
-	movq $25, -672(%rbp)
-	movq $26, -944(%rbp)
-	movq $27, -760(%rbp)
-	movq $28, -896(%rbp)
-	movq $29, -696(%rbp)
-	movq $30, -904(%rbp)
-	movq $31, -72(%rbp)
-	movq $32, -912(%rbp)
-	movq $33, -88(%rbp)
-	movq $34, -496(%rbp)
-	movq $35, -448(%rbp)
-	movq $36, -488(%rbp)
-	movq $37, -440(%rbp)
-	movq $38, -272(%rbp)
-	movq $39, -768(%rbp)
-	movq $40, -280(%rbp)
-	movq $41, -744(%rbp)
-	movq $42, -888(%rbp)
-	movq $43, -656(%rbp)
-	movq $44, %r10
-	movq $45, %r12
-	movq $46, %r8
-	movq $47, %r9
-	movq $48, %rsi
-	movq $49, %rdi
-	movq free_ptr(%rip), %rax
-	movq %rax, %rdx
-	addq $408, %rdx
-	movq fromspace_end(%rip), %rax
-	movq %rax, %rdx
-	movq %rdx, %rax
-	cmpq %rax, %rdx
-	sete %al
-	movzbq %al, %rax
-	movq %rax, %rdx
-	movq %rdx, %rax
-	cmpq $1, %rax
-	je then34791
-	movq %r15, %rdi
-	movq $408, %rsi
-	callq collect
 	movq $0, %rdx
-	jmp end34792
-then34791:
-	movq $0, %rdx
-	movq %rdx, %rdx
-end34792:
-	movq free_ptr(%rip), %rax
-	movq %rax, %rdx
-	addq $408, free_ptr(%rip)
-	movq %rdx, %r11
-	movq $101, 0(%r11)
-	movq %rdx, %r11
-	movq %r13, %rax
-	movq %rax, 8(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -504(%rbp), %rax
-	movq %rax, 16(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -456(%rbp), %rax
-	movq %rax, 24(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -512(%rbp), %rax
-	movq %rax, 32(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -480(%rbp), %rax
-	movq %rax, 40(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -528(%rbp), %rax
-	movq %rax, 48(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -464(%rbp), %rax
+	movq %rcx, %r11
+	movq -328(%rbp), %rax
 	movq %rax, 56(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -520(%rbp), %rax
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -552(%rbp), %rax
 	movq %rax, 64(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
-	movq -472(%rbp), %rax
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -928(%rbp), %rax
 	movq %rax, 72(%r11)
-	movq $0, %r13
-	movq %rdx, %r11
+	movq $0, %rdx
+	movq %rcx, %r11
 	movq %rbx, %rax
 	movq %rax, 80(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
+	movq %rcx, %r11
 	movq -880(%rbp), %rax
 	movq %rax, 88(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -1016(%rbp), %rax
+	movq %rcx, %r11
+	movq -528(%rbp), %rax
 	movq %rax, 96(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -800(%rbp), %rax
+	movq %rcx, %r11
+	movq -920(%rbp), %rax
 	movq %rax, 104(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -960(%rbp), %rax
+	movq %rcx, %r11
+	movq %r12, %rax
 	movq %rax, 112(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -856(%rbp), %rax
+	movq %rcx, %r11
+	movq -888(%rbp), %rax
 	movq %rax, 120(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
+	movq %rcx, %r11
 	movq %r14, %rax
 	movq %rax, 128(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -864(%rbp), %rax
+	movq %rcx, %r11
+	movq -256(%rbp), %rax
 	movq %rax, 136(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -408(%rbp), %rax
+	movq %rcx, %r11
+	movq -464(%rbp), %rax
 	movq %rax, 144(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -128(%rbp), %rax
+	movq %rcx, %r11
+	movq -168(%rbp), %rax
 	movq %rax, 152(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -336(%rbp), %rax
+	movq %rcx, %r11
+	movq -384(%rbp), %rax
 	movq %rax, 160(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -176(%rbp), %rax
+	movq %rcx, %r11
+	movq -160(%rbp), %rax
 	movq %rax, 168(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -384(%rbp), %rax
+	movq %rcx, %r11
+	movq -376(%rbp), %rax
 	movq %rax, 176(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -144(%rbp), %rax
+	movq %rcx, %r11
+	movq -264(%rbp), %rax
 	movq %rax, 184(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -352(%rbp), %rax
+	movq %rcx, %r11
+	movq -472(%rbp), %rax
 	movq %rax, 192(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -152(%rbp), %rax
+	movq %rcx, %r11
+	movq -808(%rbp), %rax
 	movq %rax, 200(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -672(%rbp), %rax
+	movq %rcx, %r11
+	movq -1032(%rbp), %rax
 	movq %rax, 208(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -944(%rbp), %rax
+	movq %rcx, %r11
+	movq -848(%rbp), %rax
 	movq %rax, 216(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -760(%rbp), %rax
+	movq %rcx, %r11
+	movq -1080(%rbp), %rax
 	movq %rax, 224(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -896(%rbp), %rax
+	movq %rcx, %r11
+	movq -840(%rbp), %rax
 	movq %rax, 232(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -696(%rbp), %rax
+	movq %rcx, %r11
+	movq -1064(%rbp), %rax
 	movq %rax, 240(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -904(%rbp), %rax
+	movq %rcx, %r11
+	movq -680(%rbp), %rax
 	movq %rax, 248(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -72(%rbp), %rax
+	movq %rcx, %r11
+	movq -720(%rbp), %rax
 	movq %rax, 256(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -912(%rbp), %rax
+	movq %rcx, %r11
+	movq -48(%rbp), %rax
 	movq %rax, 264(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -88(%rbp), %rax
+	movq %rcx, %r11
+	movq -96(%rbp), %rax
 	movq %rax, 272(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -496(%rbp), %rax
+	movq %rcx, %r11
+	movq -72(%rbp), %rax
 	movq %rax, 280(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -448(%rbp), %rax
+	movq %rcx, %r11
+	movq -120(%rbp), %rax
 	movq %rax, 288(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -488(%rbp), %rax
+	movq %rcx, %r11
+	movq -64(%rbp), %rax
 	movq %rax, 296(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -440(%rbp), %rax
+	movq %rcx, %r11
+	movq -112(%rbp), %rax
 	movq %rax, 304(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -272(%rbp), %rax
+	movq %rcx, %r11
+	movq -56(%rbp), %rax
 	movq %rax, 312(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -768(%rbp), %rax
+	movq %rcx, %r11
+	movq -104(%rbp), %rax
 	movq %rax, 320(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -280(%rbp), %rax
+	movq %rcx, %r11
+	movq -648(%rbp), %rax
 	movq %rax, 328(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -744(%rbp), %rax
+	movq %rcx, %r11
+	movq -696(%rbp), %rax
 	movq %rax, 336(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -888(%rbp), %rax
+	movq %rcx, %r11
+	movq -672(%rbp), %rax
 	movq %rax, 344(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq -656(%rbp), %rax
+	movq %rcx, %r11
+	movq -712(%rbp), %rax
 	movq %rax, 352(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq %r10, %rax
+	movq %rcx, %r11
+	movq -664(%rbp), %rax
 	movq %rax, 360(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq %r12, %rax
+	movq %rcx, %r11
+	movq -704(%rbp), %rax
 	movq %rax, 368(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq %r8, %rax
+	movq %rcx, %r11
+	movq -656(%rbp), %rax
 	movq %rax, 376(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq %r9, %rax
+	movq %rcx, %r11
+	movq -688(%rbp), %rax
 	movq %rax, 384(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq %rsi, %rax
+	movq %rcx, %r11
+	movq -128(%rbp), %rax
 	movq %rax, 392(%r11)
 	movq $0, %rbx
-	movq %rdx, %r11
-	movq %rdi, %rax
+	movq %rcx, %r11
+	movq -80(%rbp), %rax
 	movq %rax, 400(%r11)
 	movq $0, %rbx
+	movq %rcx, -24(%r15)
+	movq $0, %r14
+	movq $1, -904(%rbp)
+	movq $2, -512(%rbp)
+	movq $3, -896(%rbp)
+	movq $4, %r13
+	movq $5, -912(%rbp)
+	movq $6, -400(%rbp)
+	movq $7, -152(%rbp)
+	movq $8, -392(%rbp)
+	movq $9, -144(%rbp)
+	movq $10, -480(%rbp)
+	movq $11, -240(%rbp)
+	movq $12, -496(%rbp)
+	movq $13, -248(%rbp)
+	movq $14, -1104(%rbp)
+	movq $15, -824(%rbp)
+	movq $16, -1096(%rbp)
+	movq $17, -816(%rbp)
+	movq $18, -1040(%rbp)
+	movq $19, -792(%rbp)
+	movq $20, -1056(%rbp)
+	movq $21, -800(%rbp)
+	movq $22, -432(%rbp)
+	movq $23, -232(%rbp)
+	movq $24, -424(%rbp)
+	movq $25, -224(%rbp)
+	movq $26, -408(%rbp)
+	movq $27, -176(%rbp)
+	movq $28, -416(%rbp)
+	movq $29, -184(%rbp)
+	movq $30, -1000(%rbp)
+	movq $31, -784(%rbp)
+	movq $32, -992(%rbp)
+	movq $33, -776(%rbp)
+	movq $34, -984(%rbp)
+	movq $35, -728(%rbp)
+	movq $36, -976(%rbp)
+	movq $37, -736(%rbp)
+	movq $38, -304(%rbp)
+	movq $39, -520(%rbp)
+	movq $40, -360(%rbp)
+	movq $41, %rbx
+	movq $42, -296(%rbp)
+	movq $43, -504(%rbp)
+	movq $44, -368(%rbp)
+	movq $45, -584(%rbp)
+	movq $46, -968(%rbp)
+	movq $47, %r12
+	movq $48, -936(%rbp)
+	movq $49, -560(%rbp)
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $408, %rcx
+	movq fromspace_end(%rip), %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq %rax, %rcx
+	sete %al
+	movzbq %al, %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq $1, %rax
+	je then42172
+	movq %r15, %rdi
+	movq $408, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end42173
+then42172:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end42173:
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $408, free_ptr(%rip)
 	movq %rcx, %r11
+	movq $101, 0(%r11)
+	movq %rcx, %r11
+	movq %r14, %rax
+	movq %rax, 8(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -904(%rbp), %rax
+	movq %rax, 16(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -512(%rbp), %rax
+	movq %rax, 24(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -896(%rbp), %rax
+	movq %rax, 32(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq %r13, %rax
+	movq %rax, 40(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -912(%rbp), %rax
+	movq %rax, 48(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -400(%rbp), %rax
+	movq %rax, 56(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -152(%rbp), %rax
+	movq %rax, 64(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -392(%rbp), %rax
+	movq %rax, 72(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -144(%rbp), %rax
+	movq %rax, 80(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -480(%rbp), %rax
+	movq %rax, 88(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -240(%rbp), %rax
+	movq %rax, 96(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -496(%rbp), %rax
+	movq %rax, 104(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -248(%rbp), %rax
+	movq %rax, 112(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -1104(%rbp), %rax
+	movq %rax, 120(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -824(%rbp), %rax
+	movq %rax, 128(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -1096(%rbp), %rax
+	movq %rax, 136(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -816(%rbp), %rax
+	movq %rax, 144(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -1040(%rbp), %rax
+	movq %rax, 152(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -792(%rbp), %rax
+	movq %rax, 160(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -1056(%rbp), %rax
+	movq %rax, 168(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -800(%rbp), %rax
+	movq %rax, 176(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -432(%rbp), %rax
+	movq %rax, 184(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -232(%rbp), %rax
+	movq %rax, 192(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -424(%rbp), %rax
+	movq %rax, 200(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -224(%rbp), %rax
+	movq %rax, 208(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -408(%rbp), %rax
+	movq %rax, 216(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -176(%rbp), %rax
+	movq %rax, 224(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -416(%rbp), %rax
+	movq %rax, 232(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -184(%rbp), %rax
+	movq %rax, 240(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -1000(%rbp), %rax
+	movq %rax, 248(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -784(%rbp), %rax
+	movq %rax, 256(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -992(%rbp), %rax
+	movq %rax, 264(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -776(%rbp), %rax
+	movq %rax, 272(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -984(%rbp), %rax
+	movq %rax, 280(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -728(%rbp), %rax
+	movq %rax, 288(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -976(%rbp), %rax
+	movq %rax, 296(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -736(%rbp), %rax
+	movq %rax, 304(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -304(%rbp), %rax
+	movq %rax, 312(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -520(%rbp), %rax
+	movq %rax, 320(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -360(%rbp), %rax
+	movq %rax, 328(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq %rbx, %rax
+	movq %rax, 336(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -296(%rbp), %rax
+	movq %rax, 344(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -504(%rbp), %rax
+	movq %rax, 352(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -368(%rbp), %rax
+	movq %rax, 360(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -584(%rbp), %rax
+	movq %rax, 368(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -968(%rbp), %rax
+	movq %rax, 376(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq %r12, %rax
+	movq %rax, 384(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -936(%rbp), %rax
+	movq %rax, 392(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -560(%rbp), %rax
+	movq %rax, 400(%r11)
+	movq $0, %rbx
+	movq $0, %r14
+	movq $1, -632(%rbp)
+	movq $2, %r13
+	movq $3, %r12
+	movq $4, -1144(%rbp)
+	movq $5, -624(%rbp)
+	movq $6, -608(%rbp)
+	movq $7, -640(%rbp)
+	movq $8, -616(%rbp)
+	movq $9, %rbx
+	movq $10, -352(%rbp)
+	movq $11, -576(%rbp)
+	movq $12, -344(%rbp)
+	movq $13, -1128(%rbp)
+	movq $14, -952(%rbp)
+	movq $15, -1136(%rbp)
+	movq $16, -960(%rbp)
+	movq $17, -600(%rbp)
+	movq $18, -872(%rbp)
+	movq $19, -1120(%rbp)
+	movq $20, -944(%rbp)
+	movq $21, -592(%rbp)
+	movq $22, -280(%rbp)
+	movq $23, -536(%rbp)
+	movq $24, -288(%rbp)
+	movq $25, -1112(%rbp)
+	movq $26, -312(%rbp)
+	movq $27, -544(%rbp)
+	movq $28, -272(%rbp)
+	movq $29, -752(%rbp)
+	movq $30, -1016(%rbp)
+	movq $31, -760(%rbp)
+	movq $32, -1024(%rbp)
+	movq $33, -768(%rbp)
+	movq $34, -1008(%rbp)
+	movq $35, -744(%rbp)
+	movq $36, -1048(%rbp)
+	movq $37, -192(%rbp)
+	movq $38, -440(%rbp)
+	movq $39, -200(%rbp)
+	movq $40, -456(%rbp)
+	movq $41, -208(%rbp)
+	movq $42, -448(%rbp)
+	movq $43, -216(%rbp)
+	movq $44, -488(%rbp)
+	movq $45, -864(%rbp)
+	movq $46, -1088(%rbp)
+	movq $47, -856(%rbp)
+	movq $48, -1072(%rbp)
+	movq $49, -832(%rbp)
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $408, %rcx
+	movq fromspace_end(%rip), %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq %rax, %rcx
+	sete %al
+	movzbq %al, %rax
+	movq %rax, %rcx
+	movq %rcx, %rax
+	cmpq $1, %rax
+	je then42174
+	movq %r15, %rdi
+	movq $408, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end42175
+then42174:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end42175:
+	movq free_ptr(%rip), %rax
+	movq %rax, %rcx
+	addq $408, free_ptr(%rip)
+	movq %rcx, %r11
+	movq $101, 0(%r11)
+	movq %rcx, %r11
+	movq %r14, %rax
+	movq %rax, 8(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -632(%rbp), %rax
+	movq %rax, 16(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq %r13, %rax
+	movq %rax, 24(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq %r12, %rax
+	movq %rax, 32(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -1144(%rbp), %rax
+	movq %rax, 40(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -624(%rbp), %rax
+	movq %rax, 48(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -608(%rbp), %rax
+	movq %rax, 56(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -640(%rbp), %rax
+	movq %rax, 64(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq -616(%rbp), %rax
+	movq %rax, 72(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq %rbx, %rax
+	movq %rax, 80(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -352(%rbp), %rax
+	movq %rax, 88(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -576(%rbp), %rax
+	movq %rax, 96(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -344(%rbp), %rax
+	movq %rax, 104(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1128(%rbp), %rax
+	movq %rax, 112(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -952(%rbp), %rax
+	movq %rax, 120(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1136(%rbp), %rax
+	movq %rax, 128(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -960(%rbp), %rax
+	movq %rax, 136(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -600(%rbp), %rax
+	movq %rax, 144(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -872(%rbp), %rax
+	movq %rax, 152(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1120(%rbp), %rax
+	movq %rax, 160(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -944(%rbp), %rax
+	movq %rax, 168(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -592(%rbp), %rax
+	movq %rax, 176(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -280(%rbp), %rax
+	movq %rax, 184(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -536(%rbp), %rax
+	movq %rax, 192(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -288(%rbp), %rax
+	movq %rax, 200(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1112(%rbp), %rax
+	movq %rax, 208(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -312(%rbp), %rax
+	movq %rax, 216(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -544(%rbp), %rax
+	movq %rax, 224(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -272(%rbp), %rax
+	movq %rax, 232(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -752(%rbp), %rax
+	movq %rax, 240(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1016(%rbp), %rax
+	movq %rax, 248(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -760(%rbp), %rax
+	movq %rax, 256(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1024(%rbp), %rax
+	movq %rax, 264(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -768(%rbp), %rax
+	movq %rax, 272(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1008(%rbp), %rax
+	movq %rax, 280(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -744(%rbp), %rax
+	movq %rax, 288(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1048(%rbp), %rax
+	movq %rax, 296(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -192(%rbp), %rax
+	movq %rax, 304(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -440(%rbp), %rax
+	movq %rax, 312(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -200(%rbp), %rax
+	movq %rax, 320(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -456(%rbp), %rax
+	movq %rax, 328(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -208(%rbp), %rax
+	movq %rax, 336(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -448(%rbp), %rax
+	movq %rax, 344(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -216(%rbp), %rax
+	movq %rax, 352(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -488(%rbp), %rax
+	movq %rax, 360(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -864(%rbp), %rax
+	movq %rax, 368(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1088(%rbp), %rax
+	movq %rax, 376(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -856(%rbp), %rax
+	movq %rax, 384(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -1072(%rbp), %rax
+	movq %rax, 392(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq -832(%rbp), %rax
+	movq %rax, 400(%r11)
+	movq $0, %rbx
+	movq -24(%r15), %r11
 	movq 344(%r11), %rbx
 	movq %rbx, %rax
 
@@ -865,7 +859,7 @@ end34792:
 	movq	%rax, %rdi
 	callq	print_int
 	subq $48, %r15
-	addq $1104, %rsp
+	addq $1152, %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12

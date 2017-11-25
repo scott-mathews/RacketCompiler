@@ -12,9 +12,9 @@ function0:
 
 	movq %rdi, %rbx
 	movq %rsi, %rbx
-	movq %rbx, %r12
 	movq %rbx, %r13
 	movq %rbx, %rbx
+	movq %rbx, %r12
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	movq %rcx, %rcx
@@ -28,16 +28,16 @@ function0:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then78693
+	je then43016
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end78694
-then78693:
+	jmp end43017
+then43016:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end78694:
+end43017:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
@@ -45,15 +45,15 @@ end78694:
 	movq %rcx, %r11
 	movq $7, 0(%r11)
 	movq %rcx, %r11
-	movq %r12, %rax
+	movq %r13, %rax
 	movq %rax, 8(%r11)
 	movq $0, %rdx
 	movq %rcx, %r11
-	movq %r13, %rax
-	movq %rax, 16(%r11)
-	movq $0, %rdx
-	movq %rcx, %r11
 	movq %rbx, %rax
+	movq %rax, 16(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq %r12, %rax
 	movq %rax, 24(%r11)
 	movq $0, %rbx
 	movq %rcx, %rax
@@ -80,15 +80,14 @@ main:
 	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
-	addq $48, %r15
-	movq $0, -48(%r15)
-	movq $0, -40(%r15)
+	addq $32, %r15
 	movq $0, -32(%r15)
 	movq $0, -24(%r15)
 	movq $0, -16(%r15)
 	movq $0, -8(%r15)
 
-	leaq function0(%rip), %rbx
+	leaq function0(%rip), %rcx
+	movq %rcx, %rbx
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $16, %rcx
@@ -101,16 +100,16 @@ main:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then78695
+	je then43018
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end78696
-then78695:
+	jmp end43019
+then43018:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end78696:
+end43019:
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $16, free_ptr(%rip)
@@ -125,22 +124,22 @@ end78696:
 	movq %rcx, %rdi
 	movq $13, %rsi
 	callq *%rbx
-	movq %rax, %rbx
-	movq %rbx, %r11
-	movq 8(%r11), %rcx
-	movq %rbx, %r11
+	movq %rax, %rcx
+	movq %rcx, %r11
+	movq 8(%r11), %rbx
+	movq %rcx, %r11
 	movq 16(%r11), %rdx
-	movq %rbx, %r11
-	movq 24(%r11), %rbx
-	addq $3, %rbx
-	addq %rbx, %rdx
-	addq %rdx, %rcx
-	movq %rcx, %rax
+	movq %rcx, %r11
+	movq 24(%r11), %rcx
+	addq $3, %rcx
+	addq %rcx, %rdx
+	addq %rdx, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
 	callq	print_int
-	subq $48, %r15
+	subq $32, %r15
 	addq $48, %rsp
 	movq $0, %rax
 	popq %rbx

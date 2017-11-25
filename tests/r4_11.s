@@ -7,9 +7,7 @@ function0:
 	pushq %r12
 	pushq %rbx
 	subq $72, %rsp
-	addq $32, %r15
-	movq $0, -32(%r15)
-	movq $0, -24(%r15)
+	addq $16, %r15
 	movq $0, -16(%r15)
 	movq $0, -8(%r15)
 
@@ -29,16 +27,16 @@ function0:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then78648
+	je then42970
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end78649
-then78648:
+	jmp end42971
+then42970:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end78649:
+end42971:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
@@ -58,7 +56,7 @@ end78649:
 	movq %rbx, %rax
 
 	addq $72, %rsp
-	subq $32, %r15
+	subq $16, %r15
 	popq %rbx
 	popq %r12
 	popq %r13

@@ -23,7 +23,7 @@
 ;(interp-tests "select instructions" (typecheck-R3 '()) select-instructions-pass interp-scheme "r1" (range 1 49))
 ;(interp-tests "allocate registers" (type-check '()) allocate-registers-pass interp-scheme "r1" (range 1 49))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r1" (range 36 37))
-;(compiler-tests "r1-compiler" (type-check '()) r4-passes "r1" (range 1 49))
+;(compiler-tests "r1-compiler" (type-check '()) r5-passes "r1" (range 1 49))
 
 ;;; === R2 Tests === ;;;
 ;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r2" (range 1 53))
@@ -33,7 +33,7 @@
 ;(interp-tests "allocate registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r2" (range 1 23))
 ;(interp-tests "lower conditionals" (typecheck-R3 '()) lower-conditionals-pass interp-scheme "r2" (range 1 23))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r2" (range 1 23))
-;(compiler-tests "r2 compiler" (type-check '()) r4-passes "r2" (range 1 53))
+;(compiler-tests "r2 compiler" (type-check '()) r5-passes "r2" (range 1 53))
 
 ;;; === R3 Tests === ;;;
 ;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
@@ -44,7 +44,7 @@
 ;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r3" (range 11 12))
-;(compiler-tests "r3 compiler" (type-check '()) r4-passes "r3" (range 1 37))
+(compiler-tests "r3 compiler" (type-check '()) r5-passes "r3" (range 1 37))
 
 ;;; === R4 Tests === ;;;
 ;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
@@ -64,7 +64,7 @@
 
 ;;; === R5 Tests === ;;;
 ;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r5" (range 1 23))
-(compiler-tests "r5 compiler" (type-check '()) r5-passes "r5" (range 1 14))
-;(my-run-tests passes "r5" (range 5 6) "")
+;(compiler-tests "r5 compiler" (type-check '()) r5-passes "r5" (range 1 14))
+;(my-run-tests passes "r5" (range 1 14) "")
 
 (display "tests passed!") (newline)

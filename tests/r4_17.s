@@ -46,7 +46,8 @@ main:
 	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
-	addq $16, %r15
+	addq $24, %r15
+	movq $0, -24(%r15)
 	movq $0, -16(%r15)
 	movq $0, -8(%r15)
 
@@ -64,16 +65,16 @@ main:
 	movq %rax, %rcx
 	movq %rcx, %rax
 	cmpq $1, %rax
-	je then78788
+	je then43106
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end78789
-then78788:
+	jmp end43107
+then43106:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end78789:
+end43107:
 	movq free_ptr(%rip), %rax
 	movq %rax, %rcx
 	addq $16, free_ptr(%rip)
@@ -103,7 +104,7 @@ end78789:
 	movq %rax, %rdi
 	movq	%rax, %rdi
 	callq	print_int
-	subq $16, %r15
+	subq $24, %r15
 	addq $48, %rsp
 	movq $0, %rax
 	popq %rbx

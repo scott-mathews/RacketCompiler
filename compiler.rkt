@@ -14,7 +14,7 @@
 (require "passes/uniquify.rkt")
 (require "passes/reveal-functions.rkt")
 (require "passes/convert-closures.rkt")
-(require "passes/expose-allocation.rkt")
+(require "passes/expose-allocation-new.rkt")
 (require "passes/flatten.rkt")
 (require "passes/select-instructions.rkt")
 (require "passes/uncover-live.rkt")

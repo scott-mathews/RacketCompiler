@@ -161,6 +161,9 @@
       
       [`(,(app recur op op-t) ,(app recur args ts) ...)
        (define output-type (function-type op-t))
+       (if (equal? (length args) (length (match op-t [`(,inputs ... -> ,output) inputs])))
+           "pass"
+           (error `type-check "argument arity exception"))
        (values `(has-type (,op ,@args) ,output-type) output-type)]
       )))
 
