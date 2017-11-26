@@ -639,13 +639,15 @@
 (define arg-registers (vector 'rdi 'rsi 'rdx 'rcx 'r8 'r9))
 
 (define caller-save (set 'rdx 'rcx 'rsi 'rdi 'r8 'r9 'r10))
-(define callee-save (set 'rbx 'r12 'r13 'r14 'r15))
+(define callee-save
+  (set 'rbx 'r12 'r13 'r14))
+  ;(set 'rbx 'r12 'r13 'r14 'r15))
 
 ;; there are 13 general registers:
 ; removed r11; r15
-(define general-registers (vector 'rbx 'rcx 'rdx 'rsi 'rdi
-    				  'r8 'r9 'r10 'r12 
-				  'r13 'r14))
+(define general-registers
+  ;(vector))
+  (vector 'rbx 'rcx 'rdx 'rsi 'rdi 'r8 'r9 'r10 'r12 'r13 'r14))
 
 ;; registers-for-alloc should always inlcude the arg-registers. -Jeremy 
 (define registers-for-alloc general-registers)

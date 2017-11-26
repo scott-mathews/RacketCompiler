@@ -40,7 +40,7 @@
 
 ; Given a list of vars (function arguments) tells you how many stack
 ; locations will be required to pass all of the args. (We only use stack
-; if the number of arguments is greater than the length of arg-reg-list.
+; if the number of arguments is greater than the length of arg-reg-list.)
 (define (maxstack vars) (* 8 (if (< (length vars) (length arg-reg-list))
                             0
                             (- (length vars) (length arg-reg-list)))))

@@ -27,15 +27,15 @@
        (for ([reg caller-save])
          (for ([var lafter-v])
            (add-edge g (register->color reg) var)))
-       (if (equal? type 'var)
+       ;(if (equal? type 'var)
            (for ([reg arg-reg-list])
              (add-edge g (register->color reg) d))
-           "pass")]
+           ;"pass")
+           ]
       [`(callq collect) (for ([var lafter-v])
-                          (if (equal? (look-up-type var vars) `Vector)
-                              (for ([callee (set-union callee-save)]); (if (equal? (system-type) `windows) (set 'rcx 'rdx) (set 'rdi 'rsi)))])
-                                (add-edge g var callee))
-                              "pass"))
+                          (for ([callee (set-union callee-save)])
+                            (add-edge g var callee))
+                              "pass")
                         ; add call-clobbered registers to interference
                         (for ([reg caller-save])
                          ; everything live after this interferes with the call-clobbered registers

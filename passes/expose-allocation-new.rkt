@@ -80,7 +80,7 @@
        (foldr cons '() (map
                         (lambda (pair)
                           `(has-type
-                            (let ((_ (has-type (vector-set! ,return-variable (has-type ,(car pair) Integer) ,(cdr pair)) Void)))
+                            (let ((,(gensym '_) (has-type (vector-set! ,return-variable (has-type ,(car pair) Integer) ,(cdr pair)) Void)))
                               placeholder)
                             ,type))
                         (zip (range 0 vec-length) init-vars))))
@@ -114,7 +114,7 @@
 ; an allocation of space
 (define (make-center return-variable vector-type bytes vec-length)
   `(has-type
-    (let ([_ (has-type
+    (let ([,(gensym '_) (has-type
               (if (has-type (< (has-type (+ (global-value free_ptr) (has-type ,bytes Integer)) Integer)
                                (global-value free_ptr)) Boolean)
                   (has-type (void) Void)
@@ -122,7 +122,7 @@
               Void)])
       (has-type
        ; vvv vector-type will be turned into tag later.
-       (let ([,(second return-variable) (has-type (allocate ,vec-length ,vector-type) Void)])
+       (let ([,(second return-variable) (has-type (allocate ,vec-length ,vector-type) ,vector-type)])
          placeholder
          )
        ,vector-type))

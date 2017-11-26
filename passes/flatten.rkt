@@ -40,7 +40,7 @@
      (for ([def defs])
        (set! new-defs (cons (flatten-helper def) new-defs)))
      (define-values (flat-exp assignments vars) (flatten-helper body))
-                   `(program ,(remove-duplicate-vars vars) ,type (defines ,@(reverse new-defs)) ,@assignments (return ,flat-exp))]
+                   `(program ,(check-duplicate-vars (cleanup vars)) ,type (defines ,@(reverse new-defs)) ,@assignments (return ,flat-exp))]
     ))
 
 (define (flatten-helper exp . var)
@@ -90,20 +90,35 @@
      (define new-fn (cadr fn))
      (define new-args* (map cadr args*))
      ; make sure vars contains all arguments as well.
-     `(define (,new-fn ,@new-args*) ,(set->list (set-union (list->set vars) (list->set (args->vars args*)))) ,@assignments (return ,flat-exp))]
-    
-    [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)     
-     (define-values (flat-exp1 assignments1 vars1)
-       (if (equal? '() var)
-           (flatten-helper `(has-type ,e ,te) v)
-           (flatten-helper `(has-type ,e ,te) (car var))))
+     `(define (,new-fn ,@new-args*) ,(check-duplicate-vars (cleanup (append vars (args->vars args*)))) ,@assignments (return ,flat-exp))]
+    [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)
+     (define-values (flat-exp1 assignments1 vars1) (flatten-helper `(has-type ,e ,te)))
      (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
-     (values flat-exp2
-             (if (equal? v flat-exp1)
-                 `(,@assignments1 ,@assignments2)
-                 `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
-             ;(set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
-             (set->list (list->set (cons (cons v te) (append vars1 vars2)))))]
+     (define v-type (cons v te))
+     ;(cond
+     ;  [(empty? assignments1) (set! vars1 (cons v-type vars1))
+     ;                         (set! assignments1 (cons `(assign ,v ,flat-exp1) assignments1))]
+     ;  [(equal? (caar assignments1) 'if) "pass"]
+       ;[(equal? (car (third (car assignments1))) 'Vector) "pass"]
+     ;  [else (set! assignments1 (append (reverse (cdr (reverse assignments1)))
+     ;                                   (match (last assignments1)
+     ;                                     [`(assign ,y ,stuff) `((assign ,v ,stuff))]
+     ;                                     [else (last assignments1)])))
+     ;        (set! vars1 (cons v-type (cdr vars1)))])
+     (values flat-exp2 `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2) (append `(,v-type) vars1 vars2))
+     ]
+    ;[`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)     
+    ; (define-values (flat-exp1 assignments1 vars1)
+    ;   (if (equal? '() var)
+    ;       (flatten-helper `(has-type ,e ,te) v)
+   ;        (flatten-helper `(has-type ,e ,te) (car var))))
+     ;(define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
+     ;(values flat-exp2
+     ;        (if (equal? v flat-exp1)
+     ;            `(,@assignments1 ,@assignments2)
+     ;            `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
+     ;        ;(set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
+     ;        (set->list (list->set (cons (cons v te) (append vars1 vars2)))))]
     [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(has-type (if ,e1 ,e2 (has-type #f Boolean)) Boolean))]
     [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
                     (define v (genvar var))
@@ -125,27 +140,15 @@
                                      (values v `(,@(values assignments) (assign ,v (,op ,@flat-exps))) (cons (cons v t) (foldr append '() vars)))]
     ))
 
+(define (cleanup vars)
+  (set->list (list->set vars)))
+
 ; Makes it so there is only one copy of each var
-(define (remove-duplicate-vars vars)
+(define (check-duplicate-vars vars)
   (define names (set-copy (list->set (map car vars))))
-  (define new-vars '())
   (for ([var vars])
     (if (set-member? names (car var))
         (let ()
-          (set-remove! names (car var))
-          (set! new-vars (cons var new-vars)))
-        "pass"))
-  new-vars)
-
-(define (flat-type var exp)
-  (define str-exp (substring (symbol->string var) 0 (if (< (string-length (symbol->string var)) 7) 1 7)))
-  (cond
-    [(string=? str-exp "vecinit")
-     (define let-smasher
-       (lambda (x)
-         (match x
-           [`(has-type ,v ,type) type]
-           [`(let [(,v ,e)] ,b) (let-smasher b)])))
-     (let-smasher exp)]
-    [(string=? str-exp "collect") `Void]
-    [else (last exp)]))
+          (set-remove! names (car var)))
+        (error `flatten "found a duplicate var: ~a amongst ~a" var vars)))
+  vars)

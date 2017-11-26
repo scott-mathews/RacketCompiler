@@ -34,6 +34,7 @@
 ;(interp-tests "lower conditionals" (typecheck-R3 '()) lower-conditionals-pass interp-scheme "r2" (range 1 23))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r2" (range 1 23))
 ;(compiler-tests "r2 compiler" (type-check '()) r5-passes "r2" (range 1 53))
+;(my-run-tests passes "r2" (range 13 14) "")
 
 ;;; === R3 Tests === ;;;
 ;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
@@ -44,7 +45,8 @@
 ;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r3" (range 11 12))
-(compiler-tests "r3 compiler" (type-check '()) r5-passes "r3" (range 1 37))
+(compiler-tests "r3 compiler" (type-check '()) r5-passes "r3" (range 11 14))
+;(my-run-tests passes "r3" (range 11 12) "" "select-instructions")
 
 ;;; === R4 Tests === ;;;
 ;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
@@ -56,7 +58,7 @@
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r4" (range 1 39))
 ;(compiler-tests "r4 compiler" (type-check '()) r5-passes "r4" (range 1 39))
-;(my-run-tests passes "r4" (range 35 36) "" "flatten")
+;(my-run-tests passes "r4" (range 5 39) "" "flatten")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;; New Tests ;;;;;;
@@ -65,6 +67,6 @@
 ;;; === R5 Tests === ;;;
 ;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r5" (range 1 23))
 ;(compiler-tests "r5 compiler" (type-check '()) r5-passes "r5" (range 1 14))
-;(my-run-tests passes "r5" (range 1 14) "")
+;(my-run-tests passes "r5" (range 1 14) "" "flatten")
 
 (display "tests passed!") (newline)
