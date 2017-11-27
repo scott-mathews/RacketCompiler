@@ -21,12 +21,12 @@ main:
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then238766
+	je then119389
 	movq $777, %rbx
-	jmp end238767
-then238766:
+	jmp end119390
+then119389:
 	movq $42, %rbx
-end238767:
+end119390:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

@@ -15,10 +15,11 @@ main:
 
 	movq $7, %rbx
 	addq $3, %rbx
-	negq %rbx
-	movq $52, %rcx
-	addq %rbx, %rcx
-	movq %rcx, %rax
+	movq %rbx, %rcx
+	negq %rcx
+	movq $52, %rbx
+	addq %rcx, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi

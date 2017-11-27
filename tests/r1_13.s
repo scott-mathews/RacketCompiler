@@ -16,9 +16,8 @@ main:
 	callq read_int
 	movq %rax, %rbx
 	movq %rbx, %rcx
-	movq %rcx, %rbx
-	addq %rcx, %rbx
-	movq %rbx, %rax
+	addq %rbx, %rcx
+	movq %rcx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi

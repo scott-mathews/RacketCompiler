@@ -34,7 +34,7 @@
 ;(interp-tests "lower conditionals" (typecheck-R3 '()) lower-conditionals-pass interp-scheme "r2" (range 1 23))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r2" (range 1 23))
 ;(compiler-tests "r2 compiler" (type-check '()) r5-passes "r2" (range 1 53))
-;(my-run-tests passes "r2" (range 29 30) "")
+;(my-run-tests passes "r2" (range 3 4) "")
 
 ;;; === R3 Tests === ;;;
 ;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))
@@ -46,7 +46,7 @@
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r3" (range 1 37))
 ;(compiler-tests "r3 compiler" (type-check '()) r5-passes "r3" (range 1 37))
-;(my-run-tests passes "r3" (range 13 14) "")
+(my-run-tests passes "r3" (range 2 3) "")
 
 ;;; === R4 Tests === ;;;
 ;(interp-tests "partial evaluator" (typecheck-R3 '()) pe-arith-pass interp-scheme "r3" (range 1 36))

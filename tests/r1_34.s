@@ -13,29 +13,6 @@ main:
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $1, %rdi
-	addq $1, %rdi
-	movq $1, %rbx
-	addq $1, %rbx
-	addq %rbx, %rdi
-	movq $1, %rbx
-	addq $1, %rbx
-	movq $1, %rcx
-	addq $1, %rcx
-	addq %rcx, %rbx
-	addq %rbx, %rdi
-	movq $1, %rbx
-	addq $1, %rbx
-	movq $1, %rcx
-	addq $1, %rcx
-	addq %rcx, %rbx
-	movq $1, %rcx
-	addq $1, %rcx
-	movq $1, %rdx
-	addq $1, %rdx
-	addq %rdx, %rcx
-	addq %rcx, %rbx
-	addq %rbx, %rdi
 	movq $1, %rdx
 	addq $1, %rdx
 	movq $1, %rbx
@@ -47,22 +24,48 @@ main:
 	addq $1, %rcx
 	addq %rcx, %rbx
 	addq %rbx, %rdx
-	movq $1, %rcx
-	addq $1, %rcx
-	movq $1, %rbx
-	addq $1, %rbx
-	addq %rbx, %rcx
 	movq $1, %rsi
 	addq $1, %rsi
 	movq $1, %rbx
 	addq $1, %rbx
 	addq %rbx, %rsi
-	addq %rsi, %rcx
+	movq $1, %rbx
+	addq $1, %rbx
+	movq $1, %rcx
+	addq $1, %rcx
+	addq %rcx, %rbx
+	movq %rsi, %rcx
+	addq %rbx, %rcx
+	movq %rdx, %rbx
+	addq %rcx, %rbx
+	movq $1, %rsi
+	addq $1, %rsi
+	movq $1, %rcx
+	addq $1, %rcx
+	addq %rcx, %rsi
+	movq $1, %rcx
+	addq $1, %rcx
+	movq $1, %rdx
+	addq $1, %rdx
+	addq %rdx, %rcx
+	addq %rcx, %rsi
+	movq $1, %rdi
+	addq $1, %rdi
+	movq $1, %rcx
+	addq $1, %rcx
+	addq %rcx, %rdi
+	movq $1, %rcx
+	addq $1, %rcx
+	movq $1, %rdx
+	addq $1, %rdx
+	addq %rdx, %rcx
+	movq %rdi, %rdx
 	addq %rcx, %rdx
-	addq %rdx, %rdi
-	movq $10, %rbx
-	addq %rdi, %rbx
-	movq %rbx, %rax
+	addq %rdx, %rsi
+	addq %rsi, %rbx
+	movq $10, %rcx
+	addq %rbx, %rcx
+	movq %rcx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi

@@ -77,7 +77,7 @@
     [`(app ,arg ,args ...) `(,@(move-arguments args)
                              (indirect-callq ,(convert-arg arg)))]
 
-    ;; Operations With Vectors ;;
+    ;; Vector Operations ;;
     [`(vector-ref ,vec ,n) `((movq ,(convert-arg vec) (reg r11))
                              (movq (deref r11 ,(deref-vector n)) lhs))]
     [`(vector-set! ,vec ,n ,arg) `((movq ,(convert-arg vec) (reg r11))
@@ -97,6 +97,8 @@
     ;; Boolean Operations ;;
     [`(not ,arg) `((movq ,(convert-arg arg) lhs)
                    (xorq (int 1) lhs))]
+
+    ;; Comparison Operations ;;
     [`(,cmp ,arg1 ,arg2) #:when (cmp? cmp)
                          `((cmpq ,(convert-arg arg1) ,(convert-arg arg2))
                            (set ,(cmp->cc cmp) (byte-reg al))
