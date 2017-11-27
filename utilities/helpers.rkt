@@ -5,7 +5,7 @@
 ; export utility functions
 (provide function-type terminal? map-me remove-duplicate-movq cmp->cc
          look-up-type get-function-type get-lambda-type get-lambda-env
-         update-arg-format make-f-list make-typed-f-list)
+         update-arg-format make-f-list make-typed-f-list cmp?)
 
 ;;;;;;;;;;;
 ; Helpers ;
@@ -122,7 +122,11 @@
     [`>= `ge]
     [`<= `le]
     [`eq? `e]
-    [else (displayln (format "WARNING: in cmp->cc didn't match ~a" op))]))
+    [else (error "WARNING: in cmp->cc didn't match ~a" op)]))
+
+; Checks if symbol is a comparison operator
+(define (cmp? op)
+   (member op cmp-syms))
 
 ; Looks up type of a var amongst a list o vars
 (define (look-up-type var vars)

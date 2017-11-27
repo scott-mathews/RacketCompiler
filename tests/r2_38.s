@@ -6,7 +6,7 @@ main:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $64, %rsp
+	subq $48, %rsp
 	movq $16384, %rdi 
 	movq $16, %rsi 
 	callq initialize 
@@ -16,23 +16,21 @@ main:
 	movq $0, %rax
 	cmpq $0, %rax
 	sete %al
-	movzbq %al, %rax
-	movq %rax, -48(%rbp)
-	movq -48(%rbp), %rax
-	cmpq $1, %rax
-	je then54307
-	movq $777, -56(%rbp)
-	jmp end54308
-then54307:
-	movq $42, -56(%rbp)
-end54308:
-	movq -56(%rbp), %rax
+	movzbq %al, %rbx
+	cmpq $1, %rbx
+	je then238849
+	movq $777, %rbx
+	jmp end238850
+then238849:
+	movq $42, %rbx
+end238850:
+	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
 	callq	print_int
 	subq $0, %r15
-	addq $64, %rsp
+	addq $48, %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12
