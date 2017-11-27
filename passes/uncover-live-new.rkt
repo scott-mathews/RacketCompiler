@@ -10,14 +10,14 @@
 (define (uncover-live prog)
   (match prog
     [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...)
-     (define-values (new-instrs live-afters) (uncover-instrs instrs))
+     (define-values (new-instrs live-afters) (uncover-instrs instrs (set)))
      `(program (,vars ,live-afters) ,type (defines ,@defs) ,@new-instrs)]))
 
 ; Iterates through a list of instructions, building up the live-after sets and the new instructions
 ; for that list of instructions
-(define (uncover-instrs instrs)
+(define (uncover-instrs instrs initial-set)
   (define new-instrs '())
-  (define live-afters `(,(set)))
+  (define live-afters `(,initial-set))
   ; iterate through the instructions bottom up
   (for ([instr (reverse instrs)])
     ; Get a new instruction and a live-after set based on an old instruction and the last live-after set
@@ -30,8 +30,8 @@
 (define (uncover-instr instr last-live-after)
   (match instr
     [`(if ,cnd (,thns ...) (,elss ...))
-     (define-values (instrs-thns live-after-thns) (uncover-instrs thns))
-     (define-values (instrs-elss live-after-elss) (uncover-instrs elss))
+     (define-values (instrs-thns live-after-thns) (uncover-instrs thns last-live-after))
+     (define-values (instrs-elss live-after-elss) (uncover-instrs elss last-live-after))
      (define-values (instr-cnd live-after-cnd) (uncover-instr cnd (set-union (car live-after-elss) (car live-after-thns))))
      (values `(if ,instr-cnd ,instrs-thns ,live-after-thns ,instrs-elss ,live-after-elss)
              (set-union (car live-after-thns) (car live-after-elss) live-after-cnd))]
