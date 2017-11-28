@@ -17,7 +17,7 @@
 
 (define (fn-root-store rootstack-n)
           (format
-           (string-append "\taddq $~a, %r15\n" (set-0s (- rootstack-n)) "\n") rootstack-n))
+           (string-append "\taddq $~a, %r15\n" (set-0s rootstack-n) "\n") (- rootstack-n)))
 
 (define (set-0s n)
   (define result "")

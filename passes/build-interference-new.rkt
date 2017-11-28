@@ -37,8 +37,18 @@
                 (add-edge graph var (get-name (third cnd)))
                 (void)))
        
-       `(if ,cnd ,instrs-thns ,(build-graph vars live-after-thns instrs-thns graph)
-                              ,(build-graph vars live-after-elss instrs-elss graph))]
+       ; Build graphs for each branch of the if
+       (define thn-graph (build-graph vars live-after-thns instrs-thns graph))
+       (define els-graph (build-graph vars live-after-elss instrs-elss graph))
+
+       ; Combine the graphs from the if branches with the main graph
+       (for ([vertex (vertices thn-graph)])
+         (for ([neighbor (adjacent thn-graph vertex)])
+           (add-edge graph vertex neighbor)))
+       (for ([vertex (vertices els-graph)])
+         (for ([neighbor (adjacent els-graph vertex)])
+           (add-edge graph vertex neighbor)))
+       ]
 
       [`(,op ,args ...)
        (match op

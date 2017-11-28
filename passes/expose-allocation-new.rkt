@@ -77,13 +77,13 @@
      (define center (make-center return-variable type bytes vec-length))
 
      (define assign-lets
-       (foldr cons '() (map
-                        (lambda (pair)
-                          `(has-type
-                            (let ((,(gensym '_) (has-type (vector-set! ,return-variable (has-type ,(car pair) Integer) ,(cdr pair)) Void)))
-                              placeholder)
-                            ,type))
-                        (zip (range 0 vec-length) init-vars))))
+       (reverse (foldr cons '() (map
+                                 (lambda (pair)
+                                   `(has-type
+                                     (let ((,(gensym '_) (has-type (vector-set! ,return-variable (has-type ,(car pair) Integer) ,(cdr pair)) Void)))
+                                       placeholder)
+                                     ,type))
+                                 (zip (range 0 vec-length) init-vars)))))
      
      (insert-expressions (append init-lets `(,center) assign-lets `(,return-variable)) `placeholder)
      ]))
@@ -116,7 +116,7 @@
   `(has-type
     (let ([,(gensym '_) (has-type
               (if (has-type (< (has-type (+ (global-value free_ptr) (has-type ,bytes Integer)) Integer)
-                               (global-value free_ptr)) Boolean)
+                               (global-value fromspace_end)) Boolean)
                   (has-type (void) Void)
                   (has-type (collect ,bytes) Void))
               Void)])

@@ -1,0 +1,2812 @@
+Testing r3_31
+Running Pass: type-check on:
+
+(program
+ (let ((dummy (vector 0)))
+   (let ((f (vector (vector 1 2 (vector #t)) (vector dummy)))) f)))
+|
+v
+
+Running Pass: uniquify on:
+
+(program
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (has-type
+  (let ((dummy (has-type (vector (has-type 0 Integer)) (Vector Integer))))
+    (has-type
+     (let ((f
+            (has-type
+             (vector
+              (has-type
+               (vector
+                (has-type 1 Integer)
+                (has-type 2 Integer)
+                (has-type (vector (has-type #t Boolean)) (Vector Boolean)))
+               (Vector Integer Integer (Vector Boolean)))
+              (has-type
+               (vector (has-type dummy (Vector Integer)))
+               (Vector (Vector Integer))))
+             (Vector
+              (Vector Integer Integer (Vector Boolean))
+              (Vector (Vector Integer))))))
+       (has-type
+        f
+        (Vector
+         (Vector Integer Integer (Vector Boolean))
+         (Vector (Vector Integer)))))
+     (Vector
+      (Vector Integer Integer (Vector Boolean))
+      (Vector (Vector Integer)))))
+  (Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))))
+|
+v
+
+Running Pass: reveal functions on:
+
+(program
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (has-type
+  (let ((dummy15125 (has-type (vector (has-type 0 Integer)) (Vector Integer))))
+    (has-type
+     (let ((f15126
+            (has-type
+             (vector
+              (has-type
+               (vector
+                (has-type 1 Integer)
+                (has-type 2 Integer)
+                (has-type (vector (has-type #t Boolean)) (Vector Boolean)))
+               (Vector Integer Integer (Vector Boolean)))
+              (has-type
+               (vector (has-type dummy15125 (Vector Integer)))
+               (Vector (Vector Integer))))
+             (Vector
+              (Vector Integer Integer (Vector Boolean))
+              (Vector (Vector Integer))))))
+       (has-type
+        f15126
+        (Vector
+         (Vector Integer Integer (Vector Boolean))
+         (Vector (Vector Integer)))))
+     (Vector
+      (Vector Integer Integer (Vector Boolean))
+      (Vector (Vector Integer)))))
+  (Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))))
+|
+v
+
+Running Pass: convert-closures on:
+
+(program
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (has-type
+  (let ((dummy15125 (has-type (vector (has-type 0 Integer)) (Vector Integer))))
+    (has-type
+     (let ((f15126
+            (has-type
+             (vector
+              (has-type
+               (vector
+                (has-type 1 Integer)
+                (has-type 2 Integer)
+                (has-type (vector (has-type #t Boolean)) (Vector Boolean)))
+               (Vector Integer Integer (Vector Boolean)))
+              (has-type
+               (vector (has-type dummy15125 (Vector Integer)))
+               (Vector (Vector Integer))))
+             (Vector
+              (Vector Integer Integer (Vector Boolean))
+              (Vector (Vector Integer))))))
+       (has-type
+        f15126
+        (Vector
+         (Vector Integer Integer (Vector Boolean))
+         (Vector (Vector Integer)))))
+     (Vector
+      (Vector Integer Integer (Vector Boolean))
+      (Vector (Vector Integer)))))
+  (Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))))
+|
+v
+
+Running Pass: expose-allocation on:
+
+(program
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (has-type
+  (let ((dummy15125 (has-type (vector (has-type 0 Integer)) (Vector Integer))))
+    (has-type
+     (let ((f15126
+            (has-type
+             (vector
+              (has-type
+               (vector
+                (has-type 1 Integer)
+                (has-type 2 Integer)
+                (has-type (vector (has-type #t Boolean)) (Vector Boolean)))
+               (Vector Integer Integer (Vector Boolean)))
+              (has-type
+               (vector (has-type dummy15125 (Vector Integer)))
+               (Vector (Vector Integer))))
+             (Vector
+              (Vector Integer Integer (Vector Boolean))
+              (Vector (Vector Integer))))))
+       (has-type
+        f15126
+        (Vector
+         (Vector Integer Integer (Vector Boolean))
+         (Vector (Vector Integer)))))
+     (Vector
+      (Vector Integer Integer (Vector Boolean))
+      (Vector (Vector Integer)))))
+  (Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))))
+|
+v
+
+Running Pass: flatten on:
+
+(program
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (has-type
+  (let ((dummy15125
+         (has-type
+          (let ((initvar15127 (has-type 0 Integer)))
+            (has-type
+             (let ((_15129
+                    (has-type
+                     (if (has-type
+                          (<
+                           (has-type
+                            (+ (global-value free_ptr) (has-type 16 Integer))
+                            Integer)
+                           (global-value fromspace_end))
+                          Boolean)
+                       (has-type (void) Void)
+                       (has-type (collect 16) Void))
+                     Void)))
+               (has-type
+                (let ((vector15128
+                       (has-type
+                        (allocate 1 (Vector Integer))
+                        (Vector Integer))))
+                  (has-type
+                   (let ((_15130
+                          (has-type
+                           (vector-set!
+                            (has-type vector15128 (Vector Integer))
+                            (has-type 0 Integer)
+                            (has-type initvar15127 Integer))
+                           Void)))
+                     (has-type vector15128 (Vector Integer)))
+                   (Vector Integer)))
+                (Vector Integer)))
+             (Vector Integer)))
+          (Vector Integer))))
+    (has-type
+     (let ((f15126
+            (has-type
+             (let ((initvar15147
+                    (has-type
+                     (let ((initvar15135 (has-type 1 Integer)))
+                       (has-type
+                        (let ((initvar15136 (has-type 2 Integer)))
+                          (has-type
+                           (let ((initvar15137
+                                  (has-type
+                                   (let ((initvar15131 (has-type #t Boolean)))
+                                     (has-type
+                                      (let ((_15133
+                                             (has-type
+                                              (if (has-type
+                                                   (<
+                                                    (has-type
+                                                     (+
+                                                      (global-value free_ptr)
+                                                      (has-type 16 Integer))
+                                                     Integer)
+                                                    (global-value
+                                                     fromspace_end))
+                                                   Boolean)
+                                                (has-type (void) Void)
+                                                (has-type (collect 16) Void))
+                                              Void)))
+                                        (has-type
+                                         (let ((vector15132
+                                                (has-type
+                                                 (allocate 1 (Vector Boolean))
+                                                 (Vector Boolean))))
+                                           (has-type
+                                            (let ((_15134
+                                                   (has-type
+                                                    (vector-set!
+                                                     (has-type
+                                                      vector15132
+                                                      (Vector Boolean))
+                                                     (has-type 0 Integer)
+                                                     (has-type
+                                                      initvar15131
+                                                      Boolean))
+                                                    Void)))
+                                              (has-type
+                                               vector15132
+                                               (Vector Boolean)))
+                                            (Vector Boolean)))
+                                         (Vector Boolean)))
+                                      (Vector Boolean)))
+                                   (Vector Boolean))))
+                             (has-type
+                              (let ((_15139
+                                     (has-type
+                                      (if (has-type
+                                           (<
+                                            (has-type
+                                             (+
+                                              (global-value free_ptr)
+                                              (has-type 32 Integer))
+                                             Integer)
+                                            (global-value fromspace_end))
+                                           Boolean)
+                                        (has-type (void) Void)
+                                        (has-type (collect 32) Void))
+                                      Void)))
+                                (has-type
+                                 (let ((vector15138
+                                        (has-type
+                                         (allocate
+                                          3
+                                          (Vector
+                                           Integer
+                                           Integer
+                                           (Vector Boolean)))
+                                         (Vector
+                                          Integer
+                                          Integer
+                                          (Vector Boolean)))))
+                                   (has-type
+                                    (let ((_15142
+                                           (has-type
+                                            (vector-set!
+                                             (has-type
+                                              vector15138
+                                              (Vector
+                                               Integer
+                                               Integer
+                                               (Vector Boolean)))
+                                             (has-type 2 Integer)
+                                             (has-type
+                                              initvar15137
+                                              (Vector Boolean)))
+                                            Void)))
+                                      (has-type
+                                       (let ((_15141
+                                              (has-type
+                                               (vector-set!
+                                                (has-type
+                                                 vector15138
+                                                 (Vector
+                                                  Integer
+                                                  Integer
+                                                  (Vector Boolean)))
+                                                (has-type 1 Integer)
+                                                (has-type
+                                                 initvar15136
+                                                 Integer))
+                                               Void)))
+                                         (has-type
+                                          (let ((_15140
+                                                 (has-type
+                                                  (vector-set!
+                                                   (has-type
+                                                    vector15138
+                                                    (Vector
+                                                     Integer
+                                                     Integer
+                                                     (Vector Boolean)))
+                                                   (has-type 0 Integer)
+                                                   (has-type
+                                                    initvar15135
+                                                    Integer))
+                                                  Void)))
+                                            (has-type
+                                             vector15138
+                                             (Vector
+                                              Integer
+                                              Integer
+                                              (Vector Boolean))))
+                                          (Vector
+                                           Integer
+                                           Integer
+                                           (Vector Boolean))))
+                                       (Vector
+                                        Integer
+                                        Integer
+                                        (Vector Boolean))))
+                                    (Vector Integer Integer (Vector Boolean))))
+                                 (Vector Integer Integer (Vector Boolean))))
+                              (Vector Integer Integer (Vector Boolean))))
+                           (Vector Integer Integer (Vector Boolean))))
+                        (Vector Integer Integer (Vector Boolean))))
+                     (Vector Integer Integer (Vector Boolean)))))
+               (has-type
+                (let ((initvar15148
+                       (has-type
+                        (let ((initvar15143
+                               (has-type dummy15125 (Vector Integer))))
+                          (has-type
+                           (let ((_15145
+                                  (has-type
+                                   (if (has-type
+                                        (<
+                                         (has-type
+                                          (+
+                                           (global-value free_ptr)
+                                           (has-type 16 Integer))
+                                          Integer)
+                                         (global-value fromspace_end))
+                                        Boolean)
+                                     (has-type (void) Void)
+                                     (has-type (collect 16) Void))
+                                   Void)))
+                             (has-type
+                              (let ((vector15144
+                                     (has-type
+                                      (allocate 1 (Vector (Vector Integer)))
+                                      (Vector (Vector Integer)))))
+                                (has-type
+                                 (let ((_15146
+                                        (has-type
+                                         (vector-set!
+                                          (has-type
+                                           vector15144
+                                           (Vector (Vector Integer)))
+                                          (has-type 0 Integer)
+                                          (has-type
+                                           initvar15143
+                                           (Vector Integer)))
+                                         Void)))
+                                   (has-type
+                                    vector15144
+                                    (Vector (Vector Integer))))
+                                 (Vector (Vector Integer))))
+                              (Vector (Vector Integer))))
+                           (Vector (Vector Integer))))
+                        (Vector (Vector Integer)))))
+                  (has-type
+                   (let ((_15150
+                          (has-type
+                           (if (has-type
+                                (<
+                                 (has-type
+                                  (+
+                                   (global-value free_ptr)
+                                   (has-type 24 Integer))
+                                  Integer)
+                                 (global-value fromspace_end))
+                                Boolean)
+                             (has-type (void) Void)
+                             (has-type (collect 24) Void))
+                           Void)))
+                     (has-type
+                      (let ((vector15149
+                             (has-type
+                              (allocate
+                               2
+                               (Vector
+                                (Vector Integer Integer (Vector Boolean))
+                                (Vector (Vector Integer))))
+                              (Vector
+                               (Vector Integer Integer (Vector Boolean))
+                               (Vector (Vector Integer))))))
+                        (has-type
+                         (let ((_15152
+                                (has-type
+                                 (vector-set!
+                                  (has-type
+                                   vector15149
+                                   (Vector
+                                    (Vector Integer Integer (Vector Boolean))
+                                    (Vector (Vector Integer))))
+                                  (has-type 1 Integer)
+                                  (has-type
+                                   initvar15148
+                                   (Vector (Vector Integer))))
+                                 Void)))
+                           (has-type
+                            (let ((_15151
+                                   (has-type
+                                    (vector-set!
+                                     (has-type
+                                      vector15149
+                                      (Vector
+                                       (Vector
+                                        Integer
+                                        Integer
+                                        (Vector Boolean))
+                                       (Vector (Vector Integer))))
+                                     (has-type 0 Integer)
+                                     (has-type
+                                      initvar15147
+                                      (Vector
+                                       Integer
+                                       Integer
+                                       (Vector Boolean))))
+                                    Void)))
+                              (has-type
+                               vector15149
+                               (Vector
+                                (Vector Integer Integer (Vector Boolean))
+                                (Vector (Vector Integer)))))
+                            (Vector
+                             (Vector Integer Integer (Vector Boolean))
+                             (Vector (Vector Integer)))))
+                         (Vector
+                          (Vector Integer Integer (Vector Boolean))
+                          (Vector (Vector Integer)))))
+                      (Vector
+                       (Vector Integer Integer (Vector Boolean))
+                       (Vector (Vector Integer)))))
+                   (Vector
+                    (Vector Integer Integer (Vector Boolean))
+                    (Vector (Vector Integer)))))
+                (Vector
+                 (Vector Integer Integer (Vector Boolean))
+                 (Vector (Vector Integer)))))
+             (Vector
+              (Vector Integer Integer (Vector Boolean))
+              (Vector (Vector Integer))))))
+       (has-type
+        f15126
+        (Vector
+         (Vector Integer Integer (Vector Boolean))
+         (Vector (Vector Integer)))))
+     (Vector
+      (Vector Integer Integer (Vector Boolean))
+      (Vector (Vector Integer)))))
+  (Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))))
+|
+v
+
+Running Pass: select-instructions on:
+
+(program
+ ((tmp15163 . Integer)
+  (initvar15136 . Integer)
+  (dummy15125 Vector Integer)
+  (tmp15194 . Integer)
+  (tmp15196 . Void)
+  (tmp15170 . Void)
+  (_15152 . Void)
+  (_15140 . Void)
+  (tmp15167 . Void)
+  (_15134 . Void)
+  (tmp15190 . Void)
+  (tmp15199 . Void)
+  (_15129 . Void)
+  (tmp15183 . Integer)
+  (initvar15137 Vector Boolean)
+  (tmp15164 . Integer)
+  (_15142 . Void)
+  (_15150 . Void)
+  (_15133 . Void)
+  (tmp15173 . Integer)
+  (tmp15180 . Void)
+  (vector15149
+   Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))
+  (tmp15153 . Boolean)
+  (tmp15186 . Boolean)
+  (tmp15195 . Boolean)
+  (tmp15171 . Boolean)
+  (tmp15189 Vector (Vector Integer))
+  (tmp15162 . Boolean)
+  (tmp15178 Vector Integer Integer (Vector Boolean))
+  (f15126
+   Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))
+  (tmp15198
+   Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))
+  (tmp15185 . Integer)
+  (initvar15127 . Integer)
+  (tmp15155 . Integer)
+  (tmp15192 . Integer)
+  (initvar15143 Vector Integer)
+  (tmp15169 Vector Boolean)
+  (vector15144 Vector (Vector Integer))
+  (vector15128 Vector Integer)
+  (_15151 . Void)
+  (_15146 . Void)
+  (tmp15187 . Void)
+  (_15130 . Void)
+  (tmp15172 . Integer)
+  (tmp15179 . Void)
+  (tmp15158 . Void)
+  (_15139 . Void)
+  (tmp15200 . Void)
+  (tmp15184 . Integer)
+  (tmp15165 . Integer)
+  (_15141 . Void)
+  (_15145 . Void)
+  (tmp15181 . Void)
+  (tmp15176 . Void)
+  (tmp15174 . Integer)
+  (vector15138 Vector Integer Integer (Vector Boolean))
+  (tmp15161 . Void)
+  (initvar15131 . Boolean)
+  (tmp15182 . Boolean)
+  (tmp15191 . Boolean)
+  (initvar15147 Vector Integer Integer (Vector Boolean))
+  (tmp15157 . Boolean)
+  (tmp15175 . Boolean)
+  (tmp15166 . Boolean)
+  (initvar15148 Vector (Vector Integer))
+  (vector15132 Vector Boolean)
+  (tmp15160 Vector Integer)
+  (initvar15135 . Integer)
+  (tmp15156 . Integer)
+  (tmp15193 . Integer)
+  (tmp15154 . Integer))
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (assign initvar15127 0)
+ (assign tmp15155 (global-value free_ptr))
+ (assign tmp15154 (+ tmp15155 16))
+ (assign tmp15156 (global-value fromspace_end))
+ (assign tmp15153 (< tmp15154 tmp15156))
+ (if (eq? #t tmp15153)
+   ((assign tmp15158 (void)) (assign tmp15157 tmp15158))
+   ((collect 16) (assign tmp15157 (void))))
+ (assign _15129 tmp15157)
+ (assign tmp15160 (allocate 1 (Vector Integer)))
+ (assign vector15128 tmp15160)
+ (assign tmp15161 (vector-set! vector15128 0 initvar15127))
+ (assign _15130 tmp15161)
+ (assign dummy15125 vector15128)
+ (assign initvar15135 1)
+ (assign initvar15136 2)
+ (assign initvar15131 #t)
+ (assign tmp15164 (global-value free_ptr))
+ (assign tmp15163 (+ tmp15164 16))
+ (assign tmp15165 (global-value fromspace_end))
+ (assign tmp15162 (< tmp15163 tmp15165))
+ (if (eq? #t tmp15162)
+   ((assign tmp15167 (void)) (assign tmp15166 tmp15167))
+   ((collect 16) (assign tmp15166 (void))))
+ (assign _15133 tmp15166)
+ (assign tmp15169 (allocate 1 (Vector Boolean)))
+ (assign vector15132 tmp15169)
+ (assign tmp15170 (vector-set! vector15132 0 initvar15131))
+ (assign _15134 tmp15170)
+ (assign initvar15137 vector15132)
+ (assign tmp15173 (global-value free_ptr))
+ (assign tmp15172 (+ tmp15173 32))
+ (assign tmp15174 (global-value fromspace_end))
+ (assign tmp15171 (< tmp15172 tmp15174))
+ (if (eq? #t tmp15171)
+   ((assign tmp15176 (void)) (assign tmp15175 tmp15176))
+   ((collect 32) (assign tmp15175 (void))))
+ (assign _15139 tmp15175)
+ (assign tmp15178 (allocate 3 (Vector Integer Integer (Vector Boolean))))
+ (assign vector15138 tmp15178)
+ (assign tmp15179 (vector-set! vector15138 2 initvar15137))
+ (assign _15142 tmp15179)
+ (assign tmp15180 (vector-set! vector15138 1 initvar15136))
+ (assign _15141 tmp15180)
+ (assign tmp15181 (vector-set! vector15138 0 initvar15135))
+ (assign _15140 tmp15181)
+ (assign initvar15147 vector15138)
+ (assign initvar15143 dummy15125)
+ (assign tmp15184 (global-value free_ptr))
+ (assign tmp15183 (+ tmp15184 16))
+ (assign tmp15185 (global-value fromspace_end))
+ (assign tmp15182 (< tmp15183 tmp15185))
+ (if (eq? #t tmp15182)
+   ((assign tmp15187 (void)) (assign tmp15186 tmp15187))
+   ((collect 16) (assign tmp15186 (void))))
+ (assign _15145 tmp15186)
+ (assign tmp15189 (allocate 1 (Vector (Vector Integer))))
+ (assign vector15144 tmp15189)
+ (assign tmp15190 (vector-set! vector15144 0 initvar15143))
+ (assign _15146 tmp15190)
+ (assign initvar15148 vector15144)
+ (assign tmp15193 (global-value free_ptr))
+ (assign tmp15192 (+ tmp15193 24))
+ (assign tmp15194 (global-value fromspace_end))
+ (assign tmp15191 (< tmp15192 tmp15194))
+ (if (eq? #t tmp15191)
+   ((assign tmp15196 (void)) (assign tmp15195 tmp15196))
+   ((collect 24) (assign tmp15195 (void))))
+ (assign _15150 tmp15195)
+ (assign
+  tmp15198
+  (allocate
+   2
+   (Vector
+    (Vector Integer Integer (Vector Boolean))
+    (Vector (Vector Integer)))))
+ (assign vector15149 tmp15198)
+ (assign tmp15199 (vector-set! vector15149 1 initvar15148))
+ (assign _15152 tmp15199)
+ (assign tmp15200 (vector-set! vector15149 0 initvar15147))
+ (assign _15151 tmp15200)
+ (assign f15126 vector15149)
+ (return f15126))
+|
+v
+
+Running Pass: uncover-live on:
+
+(program
+ ((tmp15163 . Integer)
+  (initvar15136 . Integer)
+  (dummy15125 Vector Integer)
+  (tmp15194 . Integer)
+  (tmp15196 . Void)
+  (tmp15170 . Void)
+  (_15152 . Void)
+  (_15140 . Void)
+  (tmp15167 . Void)
+  (_15134 . Void)
+  (tmp15190 . Void)
+  (tmp15199 . Void)
+  (_15129 . Void)
+  (tmp15183 . Integer)
+  (initvar15137 Vector Boolean)
+  (tmp15164 . Integer)
+  (_15142 . Void)
+  (_15150 . Void)
+  (_15133 . Void)
+  (tmp15173 . Integer)
+  (tmp15180 . Void)
+  (vector15149
+   Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))
+  (tmp15153 . Boolean)
+  (tmp15186 . Boolean)
+  (tmp15195 . Boolean)
+  (tmp15171 . Boolean)
+  (tmp15189 Vector (Vector Integer))
+  (tmp15162 . Boolean)
+  (tmp15178 Vector Integer Integer (Vector Boolean))
+  (f15126
+   Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))
+  (tmp15198
+   Vector
+   (Vector Integer Integer (Vector Boolean))
+   (Vector (Vector Integer)))
+  (tmp15185 . Integer)
+  (initvar15127 . Integer)
+  (tmp15155 . Integer)
+  (tmp15192 . Integer)
+  (initvar15143 Vector Integer)
+  (tmp15169 Vector Boolean)
+  (vector15144 Vector (Vector Integer))
+  (vector15128 Vector Integer)
+  (_15151 . Void)
+  (_15146 . Void)
+  (tmp15187 . Void)
+  (_15130 . Void)
+  (tmp15172 . Integer)
+  (tmp15179 . Void)
+  (tmp15158 . Void)
+  (_15139 . Void)
+  (tmp15200 . Void)
+  (tmp15184 . Integer)
+  (tmp15165 . Integer)
+  (_15141 . Void)
+  (_15145 . Void)
+  (tmp15181 . Void)
+  (tmp15176 . Void)
+  (tmp15174 . Integer)
+  (vector15138 Vector Integer Integer (Vector Boolean))
+  (tmp15161 . Void)
+  (initvar15131 . Boolean)
+  (tmp15182 . Boolean)
+  (tmp15191 . Boolean)
+  (initvar15147 Vector Integer Integer (Vector Boolean))
+  (tmp15157 . Boolean)
+  (tmp15175 . Boolean)
+  (tmp15166 . Boolean)
+  (initvar15148 Vector (Vector Integer))
+  (vector15132 Vector Boolean)
+  (tmp15160 Vector Integer)
+  (initvar15135 . Integer)
+  (tmp15156 . Integer)
+  (tmp15193 . Integer)
+  (tmp15154 . Integer))
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (movq (int 0) (var initvar15127))
+ (movq (global-value free_ptr) (var tmp15155))
+ (movq (var tmp15155) (var tmp15154))
+ (addq (int 16) (var tmp15154))
+ (movq (global-value fromspace_end) (var tmp15156))
+ (cmpq (var tmp15154) (var tmp15156))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15153))
+ (if (eq? (int 1) (var tmp15153))
+   ((movq (int 0) (var tmp15158)) (movq (var tmp15158) (var tmp15157)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15157))))
+ (movq (var tmp15157) (var _15129))
+ (movq (global-value free_ptr) (var tmp15160))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15160) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (var tmp15160) (var vector15128))
+ (movq (var vector15128) (reg r11))
+ (movq (var initvar15127) (deref r11 8))
+ (movq (int 0) (var tmp15161))
+ (movq (var tmp15161) (var _15130))
+ (movq (var vector15128) (var dummy15125))
+ (movq (int 1) (var initvar15135))
+ (movq (int 2) (var initvar15136))
+ (movq (int 1) (var initvar15131))
+ (movq (global-value free_ptr) (var tmp15164))
+ (movq (var tmp15164) (var tmp15163))
+ (addq (int 16) (var tmp15163))
+ (movq (global-value fromspace_end) (var tmp15165))
+ (cmpq (var tmp15163) (var tmp15165))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15162))
+ (if (eq? (int 1) (var tmp15162))
+   ((movq (int 0) (var tmp15167)) (movq (var tmp15167) (var tmp15166)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15166))))
+ (movq (var tmp15166) (var _15133))
+ (movq (global-value free_ptr) (var tmp15169))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15169) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (var tmp15169) (var vector15132))
+ (movq (var vector15132) (reg r11))
+ (movq (var initvar15131) (deref r11 8))
+ (movq (int 0) (var tmp15170))
+ (movq (var tmp15170) (var _15134))
+ (movq (var vector15132) (var initvar15137))
+ (movq (global-value free_ptr) (var tmp15173))
+ (movq (var tmp15173) (var tmp15172))
+ (addq (int 32) (var tmp15172))
+ (movq (global-value fromspace_end) (var tmp15174))
+ (cmpq (var tmp15172) (var tmp15174))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15171))
+ (if (eq? (int 1) (var tmp15171))
+   ((movq (int 0) (var tmp15176)) (movq (var tmp15176) (var tmp15175)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 32) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15175))))
+ (movq (var tmp15175) (var _15139))
+ (movq (global-value free_ptr) (var tmp15178))
+ (addq (int 32) (global-value free_ptr))
+ (movq (var tmp15178) (reg r11))
+ (movq (int 135) (deref r11 0))
+ (movq (var tmp15178) (var vector15138))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15137) (deref r11 24))
+ (movq (int 0) (var tmp15179))
+ (movq (var tmp15179) (var _15142))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15136) (deref r11 16))
+ (movq (int 0) (var tmp15180))
+ (movq (var tmp15180) (var _15141))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15135) (deref r11 8))
+ (movq (int 0) (var tmp15181))
+ (movq (var tmp15181) (var _15140))
+ (movq (var vector15138) (var initvar15147))
+ (movq (var dummy15125) (var initvar15143))
+ (movq (global-value free_ptr) (var tmp15184))
+ (movq (var tmp15184) (var tmp15183))
+ (addq (int 16) (var tmp15183))
+ (movq (global-value fromspace_end) (var tmp15185))
+ (cmpq (var tmp15183) (var tmp15185))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15182))
+ (if (eq? (int 1) (var tmp15182))
+   ((movq (int 0) (var tmp15187)) (movq (var tmp15187) (var tmp15186)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15186))))
+ (movq (var tmp15186) (var _15145))
+ (movq (global-value free_ptr) (var tmp15189))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15189) (reg r11))
+ (movq (int 131) (deref r11 0))
+ (movq (var tmp15189) (var vector15144))
+ (movq (var vector15144) (reg r11))
+ (movq (var initvar15143) (deref r11 8))
+ (movq (int 0) (var tmp15190))
+ (movq (var tmp15190) (var _15146))
+ (movq (var vector15144) (var initvar15148))
+ (movq (global-value free_ptr) (var tmp15193))
+ (movq (var tmp15193) (var tmp15192))
+ (addq (int 24) (var tmp15192))
+ (movq (global-value fromspace_end) (var tmp15194))
+ (cmpq (var tmp15192) (var tmp15194))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15191))
+ (if (eq? (int 1) (var tmp15191))
+   ((movq (int 0) (var tmp15196)) (movq (var tmp15196) (var tmp15195)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 24) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15195))))
+ (movq (var tmp15195) (var _15150))
+ (movq (global-value free_ptr) (var tmp15198))
+ (addq (int 24) (global-value free_ptr))
+ (movq (var tmp15198) (reg r11))
+ (movq (int 389) (deref r11 0))
+ (movq (var tmp15198) (var vector15149))
+ (movq (var vector15149) (reg r11))
+ (movq (var initvar15148) (deref r11 16))
+ (movq (int 0) (var tmp15199))
+ (movq (var tmp15199) (var _15152))
+ (movq (var vector15149) (reg r11))
+ (movq (var initvar15147) (deref r11 8))
+ (movq (int 0) (var tmp15200))
+ (movq (var tmp15200) (var _15151))
+ (movq (var vector15149) (var f15126))
+ (movq (var f15126) (reg rax)))
+|
+v
+
+Running Pass: build-interference on:
+
+(program
+ (((tmp15163 . Integer)
+   (initvar15136 . Integer)
+   (dummy15125 Vector Integer)
+   (tmp15194 . Integer)
+   (tmp15196 . Void)
+   (tmp15170 . Void)
+   (_15152 . Void)
+   (_15140 . Void)
+   (tmp15167 . Void)
+   (_15134 . Void)
+   (tmp15190 . Void)
+   (tmp15199 . Void)
+   (_15129 . Void)
+   (tmp15183 . Integer)
+   (initvar15137 Vector Boolean)
+   (tmp15164 . Integer)
+   (_15142 . Void)
+   (_15150 . Void)
+   (_15133 . Void)
+   (tmp15173 . Integer)
+   (tmp15180 . Void)
+   (vector15149
+    Vector
+    (Vector Integer Integer (Vector Boolean))
+    (Vector (Vector Integer)))
+   (tmp15153 . Boolean)
+   (tmp15186 . Boolean)
+   (tmp15195 . Boolean)
+   (tmp15171 . Boolean)
+   (tmp15189 Vector (Vector Integer))
+   (tmp15162 . Boolean)
+   (tmp15178 Vector Integer Integer (Vector Boolean))
+   (f15126
+    Vector
+    (Vector Integer Integer (Vector Boolean))
+    (Vector (Vector Integer)))
+   (tmp15198
+    Vector
+    (Vector Integer Integer (Vector Boolean))
+    (Vector (Vector Integer)))
+   (tmp15185 . Integer)
+   (initvar15127 . Integer)
+   (tmp15155 . Integer)
+   (tmp15192 . Integer)
+   (initvar15143 Vector Integer)
+   (tmp15169 Vector Boolean)
+   (vector15144 Vector (Vector Integer))
+   (vector15128 Vector Integer)
+   (_15151 . Void)
+   (_15146 . Void)
+   (tmp15187 . Void)
+   (_15130 . Void)
+   (tmp15172 . Integer)
+   (tmp15179 . Void)
+   (tmp15158 . Void)
+   (_15139 . Void)
+   (tmp15200 . Void)
+   (tmp15184 . Integer)
+   (tmp15165 . Integer)
+   (_15141 . Void)
+   (_15145 . Void)
+   (tmp15181 . Void)
+   (tmp15176 . Void)
+   (tmp15174 . Integer)
+   (vector15138 Vector Integer Integer (Vector Boolean))
+   (tmp15161 . Void)
+   (initvar15131 . Boolean)
+   (tmp15182 . Boolean)
+   (tmp15191 . Boolean)
+   (initvar15147 Vector Integer Integer (Vector Boolean))
+   (tmp15157 . Boolean)
+   (tmp15175 . Boolean)
+   (tmp15166 . Boolean)
+   (initvar15148 Vector (Vector Integer))
+   (vector15132 Vector Boolean)
+   (tmp15160 Vector Integer)
+   (initvar15135 . Integer)
+   (tmp15156 . Integer)
+   (tmp15193 . Integer)
+   (tmp15154 . Integer))
+  (#<set:>
+   #<set: initvar15127>
+   #<set: tmp15155 initvar15127>
+   #<set: tmp15154 initvar15127>
+   #<set: tmp15154 initvar15127>
+   #<set: tmp15154 tmp15156 initvar15127>
+   #<set: initvar15127>
+   #<set: initvar15127>
+   #<set: tmp15153 initvar15127>
+   #<set: initvar15127 tmp15157>
+   #<set: initvar15127>
+   #<set: tmp15160 initvar15127>
+   #<set: tmp15160 initvar15127>
+   #<set: tmp15160 initvar15127>
+   #<set: tmp15160 initvar15127>
+   #<set: vector15128 initvar15127>
+   #<set: vector15128 initvar15127>
+   #<set: vector15128>
+   #<set: vector15128 tmp15161>
+   #<set: vector15128>
+   #<set: dummy15125>
+   #<set: dummy15125 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 tmp15164 initvar15135>
+   #<set: initvar15136 tmp15163 dummy15125 initvar15131 initvar15135>
+   #<set: initvar15136 tmp15163 dummy15125 initvar15131 initvar15135>
+   #<set: initvar15136 tmp15163 dummy15125 initvar15131 tmp15165 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135 tmp15162>
+   #<set: initvar15136 dummy15125 initvar15131 tmp15166 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135 tmp15169>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135 tmp15169>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135 tmp15169>
+   #<set: initvar15136 dummy15125 initvar15131 initvar15135 tmp15169>
+   #<set: initvar15136 dummy15125 initvar15131 vector15132 initvar15135>
+   #<set: initvar15136 dummy15125 initvar15131 vector15132 initvar15135>
+   #<set: initvar15136 dummy15125 vector15132 initvar15135>
+   #<set: initvar15136 dummy15125 vector15132 initvar15135 tmp15170>
+   #<set: initvar15136 dummy15125 vector15132 initvar15135>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15173>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15172>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15172>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15172 tmp15174>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15171>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15175>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15178>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15178>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15178>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15178>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 vector15138>
+   #<set: initvar15136 initvar15137 dummy15125 initvar15135 vector15138>
+   #<set: initvar15136 dummy15125 initvar15135 vector15138>
+   #<set: initvar15136 dummy15125 initvar15135 tmp15179 vector15138>
+   #<set: initvar15136 dummy15125 initvar15135 vector15138>
+   #<set: initvar15136 dummy15125 initvar15135 vector15138>
+   #<set: dummy15125 initvar15135 vector15138>
+   #<set: dummy15125 initvar15135 vector15138 tmp15180>
+   #<set: dummy15125 initvar15135 vector15138>
+   #<set: dummy15125 initvar15135 vector15138>
+   #<set: dummy15125 vector15138>
+   #<set: dummy15125 vector15138 tmp15181>
+   #<set: dummy15125 vector15138>
+   #<set: dummy15125 initvar15147>
+   #<set: initvar15147 initvar15143>
+   #<set: initvar15147 initvar15143 tmp15184>
+   #<set: initvar15147 tmp15183 initvar15143>
+   #<set: initvar15147 tmp15183 initvar15143>
+   #<set: tmp15185 initvar15147 tmp15183 initvar15143>
+   #<set: initvar15147 initvar15143>
+   #<set: initvar15147 initvar15143>
+   #<set: initvar15147 tmp15182 initvar15143>
+   #<set: initvar15147 tmp15186 initvar15143>
+   #<set: initvar15147 initvar15143>
+   #<set: tmp15189 initvar15147 initvar15143>
+   #<set: tmp15189 initvar15147 initvar15143>
+   #<set: tmp15189 initvar15147 initvar15143>
+   #<set: tmp15189 initvar15147 initvar15143>
+   #<set: initvar15147 vector15144 initvar15143>
+   #<set: initvar15147 vector15144 initvar15143>
+   #<set: initvar15147 vector15144>
+   #<set: tmp15190 initvar15147 vector15144>
+   #<set: initvar15147 vector15144>
+   #<set: initvar15147 initvar15148>
+   #<set: tmp15193 initvar15147 initvar15148>
+   #<set: tmp15192 initvar15147 initvar15148>
+   #<set: tmp15192 initvar15147 initvar15148>
+   #<set: tmp15194 tmp15192 initvar15147 initvar15148>
+   #<set: initvar15147 initvar15148>
+   #<set: initvar15147 initvar15148>
+   #<set: tmp15191 initvar15147 initvar15148>
+   #<set: tmp15195 initvar15147 initvar15148>
+   #<set: initvar15147 initvar15148>
+   #<set: tmp15198 initvar15147 initvar15148>
+   #<set: tmp15198 initvar15147 initvar15148>
+   #<set: tmp15198 initvar15147 initvar15148>
+   #<set: tmp15198 initvar15147 initvar15148>
+   #<set: initvar15147 initvar15148 vector15149>
+   #<set: initvar15147 initvar15148 vector15149>
+   #<set: initvar15147 vector15149>
+   #<set: initvar15147 tmp15199 vector15149>
+   #<set: initvar15147 vector15149>
+   #<set: initvar15147 vector15149>
+   #<set: vector15149>
+   #<set: tmp15200 vector15149>
+   #<set: vector15149>
+   #<set: f15126>
+   #<set:>))
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (movq (int 0) (var initvar15127))
+ (movq (global-value free_ptr) (var tmp15155))
+ (movq (var tmp15155) (var tmp15154))
+ (addq (int 16) (var tmp15154))
+ (movq (global-value fromspace_end) (var tmp15156))
+ (cmpq (var tmp15154) (var tmp15156))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15153))
+ (if (eq? (int 1) (var tmp15153))
+   ((movq (int 0) (var tmp15158)) (movq (var tmp15158) (var tmp15157)))
+   (#<set: initvar15127>
+    #<set: tmp15158 initvar15127>
+    #<set: initvar15127 tmp15157>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15157)))
+   (#<set: initvar15127>
+    #<set: initvar15127>
+    #<set: initvar15127>
+    #<set: initvar15127>
+    #<set: initvar15127 tmp15157>))
+ (movq (var tmp15157) (var _15129))
+ (movq (global-value free_ptr) (var tmp15160))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15160) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (var tmp15160) (var vector15128))
+ (movq (var vector15128) (reg r11))
+ (movq (var initvar15127) (deref r11 8))
+ (movq (int 0) (var tmp15161))
+ (movq (var tmp15161) (var _15130))
+ (movq (var vector15128) (var dummy15125))
+ (movq (int 1) (var initvar15135))
+ (movq (int 2) (var initvar15136))
+ (movq (int 1) (var initvar15131))
+ (movq (global-value free_ptr) (var tmp15164))
+ (movq (var tmp15164) (var tmp15163))
+ (addq (int 16) (var tmp15163))
+ (movq (global-value fromspace_end) (var tmp15165))
+ (cmpq (var tmp15163) (var tmp15165))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15162))
+ (if (eq? (int 1) (var tmp15162))
+   ((movq (int 0) (var tmp15167)) (movq (var tmp15167) (var tmp15166)))
+   (#<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135 tmp15167>
+    #<set: initvar15136 dummy15125 initvar15131 tmp15166 initvar15135>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15166)))
+   (#<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 tmp15166 initvar15135>))
+ (movq (var tmp15166) (var _15133))
+ (movq (global-value free_ptr) (var tmp15169))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15169) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (var tmp15169) (var vector15132))
+ (movq (var vector15132) (reg r11))
+ (movq (var initvar15131) (deref r11 8))
+ (movq (int 0) (var tmp15170))
+ (movq (var tmp15170) (var _15134))
+ (movq (var vector15132) (var initvar15137))
+ (movq (global-value free_ptr) (var tmp15173))
+ (movq (var tmp15173) (var tmp15172))
+ (addq (int 32) (var tmp15172))
+ (movq (global-value fromspace_end) (var tmp15174))
+ (cmpq (var tmp15172) (var tmp15174))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15171))
+ (if (eq? (int 1) (var tmp15171))
+   ((movq (int 0) (var tmp15176)) (movq (var tmp15176) (var tmp15175)))
+   (#<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15176>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15175>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 32) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15175)))
+   (#<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15175>))
+ (movq (var tmp15175) (var _15139))
+ (movq (global-value free_ptr) (var tmp15178))
+ (addq (int 32) (global-value free_ptr))
+ (movq (var tmp15178) (reg r11))
+ (movq (int 135) (deref r11 0))
+ (movq (var tmp15178) (var vector15138))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15137) (deref r11 24))
+ (movq (int 0) (var tmp15179))
+ (movq (var tmp15179) (var _15142))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15136) (deref r11 16))
+ (movq (int 0) (var tmp15180))
+ (movq (var tmp15180) (var _15141))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15135) (deref r11 8))
+ (movq (int 0) (var tmp15181))
+ (movq (var tmp15181) (var _15140))
+ (movq (var vector15138) (var initvar15147))
+ (movq (var dummy15125) (var initvar15143))
+ (movq (global-value free_ptr) (var tmp15184))
+ (movq (var tmp15184) (var tmp15183))
+ (addq (int 16) (var tmp15183))
+ (movq (global-value fromspace_end) (var tmp15185))
+ (cmpq (var tmp15183) (var tmp15185))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15182))
+ (if (eq? (int 1) (var tmp15182))
+   ((movq (int 0) (var tmp15187)) (movq (var tmp15187) (var tmp15186)))
+   (#<set: initvar15147 initvar15143>
+    #<set: tmp15187 initvar15147 initvar15143>
+    #<set: initvar15147 tmp15186 initvar15143>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15186)))
+   (#<set: initvar15147 initvar15143>
+    #<set: initvar15147 initvar15143>
+    #<set: initvar15147 initvar15143>
+    #<set: initvar15147 initvar15143>
+    #<set: initvar15147 tmp15186 initvar15143>))
+ (movq (var tmp15186) (var _15145))
+ (movq (global-value free_ptr) (var tmp15189))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15189) (reg r11))
+ (movq (int 131) (deref r11 0))
+ (movq (var tmp15189) (var vector15144))
+ (movq (var vector15144) (reg r11))
+ (movq (var initvar15143) (deref r11 8))
+ (movq (int 0) (var tmp15190))
+ (movq (var tmp15190) (var _15146))
+ (movq (var vector15144) (var initvar15148))
+ (movq (global-value free_ptr) (var tmp15193))
+ (movq (var tmp15193) (var tmp15192))
+ (addq (int 24) (var tmp15192))
+ (movq (global-value fromspace_end) (var tmp15194))
+ (cmpq (var tmp15192) (var tmp15194))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15191))
+ (if (eq? (int 1) (var tmp15191))
+   ((movq (int 0) (var tmp15196)) (movq (var tmp15196) (var tmp15195)))
+   (#<set: initvar15147 initvar15148>
+    #<set: tmp15196 initvar15147 initvar15148>
+    #<set: tmp15195 initvar15147 initvar15148>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 24) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15195)))
+   (#<set: initvar15147 initvar15148>
+    #<set: initvar15147 initvar15148>
+    #<set: initvar15147 initvar15148>
+    #<set: initvar15147 initvar15148>
+    #<set: tmp15195 initvar15147 initvar15148>))
+ (movq (var tmp15195) (var _15150))
+ (movq (global-value free_ptr) (var tmp15198))
+ (addq (int 24) (global-value free_ptr))
+ (movq (var tmp15198) (reg r11))
+ (movq (int 389) (deref r11 0))
+ (movq (var tmp15198) (var vector15149))
+ (movq (var vector15149) (reg r11))
+ (movq (var initvar15148) (deref r11 16))
+ (movq (int 0) (var tmp15199))
+ (movq (var tmp15199) (var _15152))
+ (movq (var vector15149) (reg r11))
+ (movq (var initvar15147) (deref r11 8))
+ (movq (int 0) (var tmp15200))
+ (movq (var tmp15200) (var _15151))
+ (movq (var vector15149) (var f15126))
+ (movq (var f15126) (reg rax)))
+|
+v
+
+Running Pass: allocate-registers on:
+
+(program
+ (((tmp15163 . Integer)
+   (initvar15136 . Integer)
+   (dummy15125 Vector Integer)
+   (tmp15194 . Integer)
+   (tmp15196 . Void)
+   (tmp15170 . Void)
+   (_15152 . Void)
+   (_15140 . Void)
+   (tmp15167 . Void)
+   (_15134 . Void)
+   (tmp15190 . Void)
+   (tmp15199 . Void)
+   (_15129 . Void)
+   (tmp15183 . Integer)
+   (initvar15137 Vector Boolean)
+   (tmp15164 . Integer)
+   (_15142 . Void)
+   (_15150 . Void)
+   (_15133 . Void)
+   (tmp15173 . Integer)
+   (tmp15180 . Void)
+   (vector15149
+    Vector
+    (Vector Integer Integer (Vector Boolean))
+    (Vector (Vector Integer)))
+   (tmp15153 . Boolean)
+   (tmp15186 . Boolean)
+   (tmp15195 . Boolean)
+   (tmp15171 . Boolean)
+   (tmp15189 Vector (Vector Integer))
+   (tmp15162 . Boolean)
+   (tmp15178 Vector Integer Integer (Vector Boolean))
+   (f15126
+    Vector
+    (Vector Integer Integer (Vector Boolean))
+    (Vector (Vector Integer)))
+   (tmp15198
+    Vector
+    (Vector Integer Integer (Vector Boolean))
+    (Vector (Vector Integer)))
+   (tmp15185 . Integer)
+   (initvar15127 . Integer)
+   (tmp15155 . Integer)
+   (tmp15192 . Integer)
+   (initvar15143 Vector Integer)
+   (tmp15169 Vector Boolean)
+   (vector15144 Vector (Vector Integer))
+   (vector15128 Vector Integer)
+   (_15151 . Void)
+   (_15146 . Void)
+   (tmp15187 . Void)
+   (_15130 . Void)
+   (tmp15172 . Integer)
+   (tmp15179 . Void)
+   (tmp15158 . Void)
+   (_15139 . Void)
+   (tmp15200 . Void)
+   (tmp15184 . Integer)
+   (tmp15165 . Integer)
+   (_15141 . Void)
+   (_15145 . Void)
+   (tmp15181 . Void)
+   (tmp15176 . Void)
+   (tmp15174 . Integer)
+   (vector15138 Vector Integer Integer (Vector Boolean))
+   (tmp15161 . Void)
+   (initvar15131 . Boolean)
+   (tmp15182 . Boolean)
+   (tmp15191 . Boolean)
+   (initvar15147 Vector Integer Integer (Vector Boolean))
+   (tmp15157 . Boolean)
+   (tmp15175 . Boolean)
+   (tmp15166 . Boolean)
+   (initvar15148 Vector (Vector Integer))
+   (vector15132 Vector Boolean)
+   (tmp15160 Vector Integer)
+   (initvar15135 . Integer)
+   (tmp15156 . Integer)
+   (tmp15193 . Integer)
+   (tmp15154 . Integer))
+  #hash((0
+         .
+         #<set:
+          initvar15137
+          dummy15125
+          initvar15147
+          initvar15148
+          initvar15143>)
+        (1
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15131
+          initvar15135
+          initvar15147
+          initvar15148
+          initvar15143
+          initvar15127>)
+        (tmp15200 . #<set: vector15149>)
+        (tmp15199 . #<set: initvar15147 vector15149>)
+        (tmp15198 . #<set: initvar15147 initvar15148>)
+        (tmp15196 . #<set: initvar15147 initvar15148>)
+        (tmp15194 . #<set: tmp15192 initvar15147 initvar15148>)
+        (tmp15193 . #<set: initvar15147 initvar15148>)
+        (tmp15192 . #<set: tmp15194 initvar15147 initvar15148>)
+        (tmp15191 . #<set: initvar15147 initvar15148>)
+        (tmp15195 . #<set: initvar15147 initvar15148>)
+        (tmp15190 . #<set: initvar15147 vector15144>)
+        (tmp15189 . #<set: initvar15147 initvar15143>)
+        (tmp15187 . #<set: initvar15147 initvar15143>)
+        (tmp15185 . #<set: initvar15147 tmp15183 initvar15143>)
+        (tmp15184 . #<set: initvar15147 initvar15143>)
+        (tmp15183 . #<set: tmp15185 initvar15147 initvar15143>)
+        (tmp15182 . #<set: initvar15147 initvar15143>)
+        (tmp15186 . #<set: initvar15147 initvar15143>)
+        (tmp15181 . #<set: dummy15125 vector15138>)
+        (tmp15180 . #<set: dummy15125 initvar15135 vector15138>)
+        (tmp15179 . #<set: initvar15136 dummy15125 initvar15135 vector15138>)
+        (tmp15178 . #<set: initvar15136 initvar15137 dummy15125 initvar15135>)
+        (tmp15176 . #<set: initvar15136 initvar15137 dummy15125 initvar15135>)
+        (tmp15174
+         .
+         #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15172>)
+        (tmp15173 . #<set: initvar15136 initvar15137 dummy15125 initvar15135>)
+        (tmp15172
+         .
+         #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15174>)
+        (tmp15171 . #<set: initvar15136 initvar15137 dummy15125 initvar15135>)
+        (tmp15175 . #<set: initvar15136 initvar15137 dummy15125 initvar15135>)
+        (tmp15170 . #<set: initvar15136 dummy15125 vector15132 initvar15135>)
+        (tmp15169 . #<set: initvar15136 dummy15125 initvar15131 initvar15135>)
+        (tmp15167 . #<set: initvar15136 dummy15125 initvar15131 initvar15135>)
+        (tmp15165
+         .
+         #<set: initvar15136 tmp15163 dummy15125 initvar15131 initvar15135>)
+        (tmp15164 . #<set: initvar15136 dummy15125 initvar15131 initvar15135>)
+        (tmp15163
+         .
+         #<set: initvar15136 dummy15125 initvar15131 tmp15165 initvar15135>)
+        (tmp15162 . #<set: initvar15136 dummy15125 initvar15131 initvar15135>)
+        (tmp15166 . #<set: initvar15136 dummy15125 initvar15131 initvar15135>)
+        (initvar15131
+         .
+         #<set:
+          1
+          5
+          initvar15136
+          tmp15163
+          dummy15125
+          tmp15164
+          _15133
+          3
+          7
+          tmp15166
+          tmp15165
+          vector15132
+          initvar15135
+          tmp15162
+          tmp15167
+          tmp15169
+          2
+          6
+          4>)
+        (initvar15136
+         .
+         #<set:
+          1
+          5
+          tmp15163
+          initvar15137
+          dummy15125
+          initvar15131
+          tmp15164
+          _15133
+          3
+          7
+          tmp15166
+          tmp15165
+          vector15132
+          initvar15135
+          tmp15162
+          tmp15167
+          _15134
+          tmp15169
+          tmp15172
+          tmp15178
+          _15139
+          2
+          6
+          tmp15170
+          tmp15173
+          tmp15179
+          vector15138
+          tmp15175
+          tmp15174
+          _15142
+          4
+          tmp15171
+          tmp15176>)
+        (initvar15135
+         .
+         #<set:
+          1
+          5
+          initvar15136
+          tmp15163
+          initvar15137
+          dummy15125
+          initvar15131
+          tmp15164
+          _15133
+          3
+          7
+          tmp15166
+          tmp15165
+          vector15132
+          tmp15162
+          tmp15167
+          _15134
+          tmp15169
+          tmp15172
+          tmp15178
+          _15139
+          2
+          6
+          tmp15170
+          tmp15173
+          tmp15179
+          vector15138
+          tmp15175
+          tmp15174
+          tmp15180
+          _15142
+          4
+          tmp15171
+          tmp15176
+          _15141>)
+        (tmp15161 . #<set: vector15128>)
+        (tmp15160 . #<set: initvar15127>)
+        (tmp15158 . #<set: initvar15127>)
+        (tmp15156 . #<set: tmp15154 initvar15127>)
+        (tmp15155 . #<set: initvar15127>)
+        (tmp15154 . #<set: tmp15156 initvar15127>)
+        (tmp15153 . #<set: initvar15127>)
+        (tmp15157 . #<set: initvar15127>)
+        (initvar15127
+         .
+         #<set:
+          1
+          5
+          tmp15153
+          tmp15158
+          _15129
+          tmp15154
+          tmp15160
+          vector15128
+          3
+          7
+          tmp15155
+          tmp15156
+          2
+          6
+          4
+          tmp15157>)
+        (_15151 . #<set: vector15149>)
+        (_15152 . #<set: initvar15147 vector15149>)
+        (vector15149
+         .
+         #<set: tmp15200 initvar15147 tmp15199 _15152 initvar15148 _15151>)
+        (_15150 . #<set: initvar15147 initvar15148>)
+        (_15146 . #<set: initvar15147 vector15144>)
+        (vector15144 . #<set: tmp15190 initvar15147 _15146 initvar15143>)
+        (_15145 . #<set: initvar15147 initvar15143>)
+        (initvar15143
+         .
+         #<set:
+          1
+          5
+          9
+          tmp15185
+          tmp15187
+          3
+          7
+          tmp15189
+          initvar15147
+          tmp15186
+          vector15144
+          2
+          6
+          10
+          tmp15182
+          tmp15183
+          0
+          4
+          8
+          tmp15184
+          _15145>)
+        (initvar15148
+         .
+         #<set:
+          1
+          5
+          9
+          tmp15195
+          tmp15194
+          tmp15191
+          tmp15196
+          3
+          7
+          tmp15192
+          tmp15198
+          tmp15193
+          initvar15147
+          2
+          6
+          10
+          _15150
+          0
+          4
+          8
+          vector15149>)
+        (_15140 . #<set: dummy15125 vector15138>)
+        (_15141 . #<set: dummy15125 initvar15135 vector15138>)
+        (_15142 . #<set: initvar15136 dummy15125 initvar15135 vector15138>)
+        (vector15138
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15135
+          _15140
+          tmp15179
+          tmp15180
+          _15142
+          tmp15181
+          _15141>)
+        (_15139 . #<set: initvar15136 initvar15137 dummy15125 initvar15135>)
+        (_15134 . #<set: initvar15136 dummy15125 vector15132 initvar15135>)
+        (vector15132
+         .
+         #<set:
+          initvar15136
+          dummy15125
+          initvar15131
+          initvar15135
+          _15134
+          tmp15170>)
+        (_15133 . #<set: initvar15136 dummy15125 initvar15131 initvar15135>)
+        (initvar15137
+         .
+         #<set:
+          1
+          5
+          9
+          initvar15136
+          dummy15125
+          3
+          7
+          initvar15135
+          tmp15172
+          tmp15178
+          _15139
+          2
+          6
+          10
+          tmp15173
+          vector15138
+          tmp15175
+          tmp15174
+          0
+          4
+          8
+          tmp15171
+          tmp15176>)
+        (initvar15147
+         .
+         #<set:
+          1
+          5
+          9
+          tmp15185
+          tmp15195
+          tmp15194
+          dummy15125
+          tmp15187
+          tmp15191
+          tmp15196
+          3
+          7
+          tmp15189
+          tmp15192
+          tmp15198
+          tmp15190
+          tmp15193
+          tmp15199
+          tmp15186
+          vector15144
+          _15152
+          2
+          6
+          10
+          tmp15182
+          initvar15148
+          _15146
+          tmp15183
+          initvar15143
+          _15150
+          0
+          4
+          8
+          tmp15184
+          _15145
+          vector15149>)
+        (_15130 . #<set: vector15128>)
+        (vector15128 . #<set: tmp15161 _15130 initvar15127>)
+        (_15129 . #<set: initvar15127>)
+        (4
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15131
+          initvar15135
+          initvar15147
+          initvar15148
+          initvar15143
+          initvar15127>)
+        (dummy15125
+         .
+         #<set:
+          1
+          5
+          9
+          initvar15136
+          tmp15163
+          initvar15137
+          initvar15131
+          tmp15164
+          _15133
+          3
+          7
+          tmp15166
+          tmp15165
+          vector15132
+          initvar15135
+          tmp15162
+          tmp15167
+          initvar15147
+          _15134
+          tmp15169
+          tmp15172
+          tmp15178
+          _15139
+          _15140
+          2
+          6
+          10
+          tmp15170
+          tmp15173
+          tmp15179
+          vector15138
+          tmp15175
+          tmp15174
+          tmp15180
+          _15142
+          0
+          4
+          8
+          tmp15171
+          tmp15176
+          tmp15181
+          _15141>)
+        (f15126 . #<set:>)
+        (9
+         .
+         #<set:
+          initvar15137
+          dummy15125
+          initvar15147
+          initvar15148
+          initvar15143>)
+        (6
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15131
+          initvar15135
+          initvar15147
+          initvar15148
+          initvar15143
+          initvar15127>)
+        (3
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15131
+          initvar15135
+          initvar15147
+          initvar15148
+          initvar15143
+          initvar15127>)
+        (8
+         .
+         #<set:
+          initvar15137
+          dummy15125
+          initvar15147
+          initvar15148
+          initvar15143>)
+        (5
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15131
+          initvar15135
+          initvar15147
+          initvar15148
+          initvar15143
+          initvar15127>)
+        (2
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15131
+          initvar15135
+          initvar15147
+          initvar15148
+          initvar15143
+          initvar15127>)
+        (7
+         .
+         #<set:
+          initvar15136
+          initvar15137
+          dummy15125
+          initvar15131
+          initvar15135
+          initvar15147
+          initvar15148
+          initvar15143
+          initvar15127>)
+        (10
+         .
+         #<set:
+          initvar15137
+          dummy15125
+          initvar15147
+          initvar15148
+          initvar15143>)))
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (movq (int 0) (var initvar15127))
+ (movq (global-value free_ptr) (var tmp15155))
+ (movq (var tmp15155) (var tmp15154))
+ (addq (int 16) (var tmp15154))
+ (movq (global-value fromspace_end) (var tmp15156))
+ (cmpq (var tmp15154) (var tmp15156))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15153))
+ (if (eq? (int 1) (var tmp15153))
+   ((movq (int 0) (var tmp15158)) (movq (var tmp15158) (var tmp15157)))
+   (#<set: initvar15127>
+    #<set: tmp15158 initvar15127>
+    #<set: initvar15127 tmp15157>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15157)))
+   (#<set: initvar15127>
+    #<set: initvar15127>
+    #<set: initvar15127>
+    #<set: initvar15127>
+    #<set: initvar15127 tmp15157>))
+ (movq (var tmp15157) (var _15129))
+ (movq (global-value free_ptr) (var tmp15160))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15160) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (var tmp15160) (var vector15128))
+ (movq (var vector15128) (reg r11))
+ (movq (var initvar15127) (deref r11 8))
+ (movq (int 0) (var tmp15161))
+ (movq (var tmp15161) (var _15130))
+ (movq (var vector15128) (var dummy15125))
+ (movq (int 1) (var initvar15135))
+ (movq (int 2) (var initvar15136))
+ (movq (int 1) (var initvar15131))
+ (movq (global-value free_ptr) (var tmp15164))
+ (movq (var tmp15164) (var tmp15163))
+ (addq (int 16) (var tmp15163))
+ (movq (global-value fromspace_end) (var tmp15165))
+ (cmpq (var tmp15163) (var tmp15165))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15162))
+ (if (eq? (int 1) (var tmp15162))
+   ((movq (int 0) (var tmp15167)) (movq (var tmp15167) (var tmp15166)))
+   (#<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135 tmp15167>
+    #<set: initvar15136 dummy15125 initvar15131 tmp15166 initvar15135>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15166)))
+   (#<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 initvar15135>
+    #<set: initvar15136 dummy15125 initvar15131 tmp15166 initvar15135>))
+ (movq (var tmp15166) (var _15133))
+ (movq (global-value free_ptr) (var tmp15169))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15169) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (var tmp15169) (var vector15132))
+ (movq (var vector15132) (reg r11))
+ (movq (var initvar15131) (deref r11 8))
+ (movq (int 0) (var tmp15170))
+ (movq (var tmp15170) (var _15134))
+ (movq (var vector15132) (var initvar15137))
+ (movq (global-value free_ptr) (var tmp15173))
+ (movq (var tmp15173) (var tmp15172))
+ (addq (int 32) (var tmp15172))
+ (movq (global-value fromspace_end) (var tmp15174))
+ (cmpq (var tmp15172) (var tmp15174))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15171))
+ (if (eq? (int 1) (var tmp15171))
+   ((movq (int 0) (var tmp15176)) (movq (var tmp15176) (var tmp15175)))
+   (#<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15176>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15175>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 32) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15175)))
+   (#<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135>
+    #<set: initvar15136 initvar15137 dummy15125 initvar15135 tmp15175>))
+ (movq (var tmp15175) (var _15139))
+ (movq (global-value free_ptr) (var tmp15178))
+ (addq (int 32) (global-value free_ptr))
+ (movq (var tmp15178) (reg r11))
+ (movq (int 135) (deref r11 0))
+ (movq (var tmp15178) (var vector15138))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15137) (deref r11 24))
+ (movq (int 0) (var tmp15179))
+ (movq (var tmp15179) (var _15142))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15136) (deref r11 16))
+ (movq (int 0) (var tmp15180))
+ (movq (var tmp15180) (var _15141))
+ (movq (var vector15138) (reg r11))
+ (movq (var initvar15135) (deref r11 8))
+ (movq (int 0) (var tmp15181))
+ (movq (var tmp15181) (var _15140))
+ (movq (var vector15138) (var initvar15147))
+ (movq (var dummy15125) (var initvar15143))
+ (movq (global-value free_ptr) (var tmp15184))
+ (movq (var tmp15184) (var tmp15183))
+ (addq (int 16) (var tmp15183))
+ (movq (global-value fromspace_end) (var tmp15185))
+ (cmpq (var tmp15183) (var tmp15185))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15182))
+ (if (eq? (int 1) (var tmp15182))
+   ((movq (int 0) (var tmp15187)) (movq (var tmp15187) (var tmp15186)))
+   (#<set: initvar15147 initvar15143>
+    #<set: tmp15187 initvar15147 initvar15143>
+    #<set: initvar15147 tmp15186 initvar15143>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15186)))
+   (#<set: initvar15147 initvar15143>
+    #<set: initvar15147 initvar15143>
+    #<set: initvar15147 initvar15143>
+    #<set: initvar15147 initvar15143>
+    #<set: initvar15147 tmp15186 initvar15143>))
+ (movq (var tmp15186) (var _15145))
+ (movq (global-value free_ptr) (var tmp15189))
+ (addq (int 16) (global-value free_ptr))
+ (movq (var tmp15189) (reg r11))
+ (movq (int 131) (deref r11 0))
+ (movq (var tmp15189) (var vector15144))
+ (movq (var vector15144) (reg r11))
+ (movq (var initvar15143) (deref r11 8))
+ (movq (int 0) (var tmp15190))
+ (movq (var tmp15190) (var _15146))
+ (movq (var vector15144) (var initvar15148))
+ (movq (global-value free_ptr) (var tmp15193))
+ (movq (var tmp15193) (var tmp15192))
+ (addq (int 24) (var tmp15192))
+ (movq (global-value fromspace_end) (var tmp15194))
+ (cmpq (var tmp15192) (var tmp15194))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (var tmp15191))
+ (if (eq? (int 1) (var tmp15191))
+   ((movq (int 0) (var tmp15196)) (movq (var tmp15196) (var tmp15195)))
+   (#<set: initvar15147 initvar15148>
+    #<set: tmp15196 initvar15147 initvar15148>
+    #<set: tmp15195 initvar15147 initvar15148>)
+   ((movq (reg r15) (reg rdi))
+    (movq (int 24) (reg rsi))
+    (callq collect)
+    (movq (int 0) (var tmp15195)))
+   (#<set: initvar15147 initvar15148>
+    #<set: initvar15147 initvar15148>
+    #<set: initvar15147 initvar15148>
+    #<set: initvar15147 initvar15148>
+    #<set: tmp15195 initvar15147 initvar15148>))
+ (movq (var tmp15195) (var _15150))
+ (movq (global-value free_ptr) (var tmp15198))
+ (addq (int 24) (global-value free_ptr))
+ (movq (var tmp15198) (reg r11))
+ (movq (int 389) (deref r11 0))
+ (movq (var tmp15198) (var vector15149))
+ (movq (var vector15149) (reg r11))
+ (movq (var initvar15148) (deref r11 16))
+ (movq (int 0) (var tmp15199))
+ (movq (var tmp15199) (var _15152))
+ (movq (var vector15149) (reg r11))
+ (movq (var initvar15147) (deref r11 8))
+ (movq (int 0) (var tmp15200))
+ (movq (var tmp15200) (var _15151))
+ (movq (var vector15149) (var f15126))
+ (movq (var f15126) (reg rax)))
+|
+v
+
+Running Pass: assign-homes on:
+
+(program
+ (()
+  (tmp15160
+   vector15132
+   initvar15148
+   initvar15147
+   vector15138
+   vector15128
+   vector15144
+   tmp15169
+   initvar15143
+   tmp15198
+   f15126
+   tmp15178
+   tmp15189
+   vector15149
+   initvar15137
+   dummy15125))
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (movq (int 0) (reg rbx))
+ (movq (global-value free_ptr) (reg rcx))
+ (movq (reg rcx) (reg rdx))
+ (addq (int 16) (reg rdx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rdx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (if (eq? (int 1) (reg rcx))
+   ((movq (int 0) (reg rcx)) (movq (reg rcx) (reg rcx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rcx))))
+ (movq (reg rcx) (reg rcx))
+ (movq (global-value free_ptr) (reg r12))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg r12) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg r12) (reg r12))
+ (movq (reg r12) (reg r11))
+ (movq (reg rbx) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (movq (reg r12) (reg r12))
+ (movq (int 1) (reg r14))
+ (movq (int 2) (reg rbx))
+ (movq (int 1) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (addq (int 16) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (if (eq? (int 1) (reg rcx))
+   ((movq (int 0) (reg rcx)) (movq (reg rcx) (reg rcx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rcx))))
+ (movq (reg rcx) (reg rcx))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg rcx) (reg rcx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rdx))
+ (movq (reg rdx) (reg rdx))
+ (movq (reg rcx) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (addq (int 32) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (if (eq? (int 1) (reg rcx))
+   ((movq (int 0) (reg rcx)) (movq (reg rcx) (reg rcx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 32) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rcx))))
+ (movq (reg rcx) (reg rcx))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 32) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 135) (deref r11 0))
+ (movq (reg rcx) (reg rcx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 24))
+ (movq (int 0) (reg rdx))
+ (movq (reg rdx) (reg rdx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg rbx) (deref r11 16))
+ (movq (int 0) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r14) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (movq (reg rcx) (reg r13))
+ (movq (reg r12) (reg r12))
+ (movq (global-value free_ptr) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (addq (int 16) (reg rbx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rbx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (if (eq? (int 1) (reg rbx))
+   ((movq (int 0) (reg rbx)) (movq (reg rbx) (reg rbx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rbx))))
+ (movq (reg rbx) (reg rbx))
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 131) (deref r11 0))
+ (movq (reg rbx) (reg rbx))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (movq (reg rbx) (reg r12))
+ (movq (global-value free_ptr) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (addq (int 24) (reg rcx))
+ (movq (global-value fromspace_end) (reg rbx))
+ (cmpq (reg rcx) (reg rbx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (if (eq? (int 1) (reg rbx))
+   ((movq (int 0) (reg rbx)) (movq (reg rbx) (reg rbx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 24) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rbx))))
+ (movq (reg rbx) (reg rbx))
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 24) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 389) (deref r11 0))
+ (movq (reg rbx) (reg rbx))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 16))
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (movq (reg rbx) (reg rbx))
+ (movq (reg rbx) (reg rax)))
+|
+v
+
+Running Pass: lower-conditionals on:
+
+(program
+ (0 128)
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (movq (int 0) (reg rbx))
+ (movq (global-value free_ptr) (reg rcx))
+ (movq (reg rcx) (reg rdx))
+ (addq (int 16) (reg rdx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rdx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (if (eq? (int 1) (reg rcx))
+   ((movq (int 0) (reg rcx)) (movq (reg rcx) (reg rcx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rcx))))
+ (movq (global-value free_ptr) (reg r12))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg r12) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg r12) (reg r11))
+ (movq (reg rbx) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (int 1) (reg r14))
+ (movq (int 2) (reg rbx))
+ (movq (int 1) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 16) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (if (eq? (int 1) (reg rcx))
+   ((movq (int 0) (reg rcx)) (movq (reg rcx) (reg rcx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rcx))))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rdx))
+ (movq (reg rcx) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 32) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (if (eq? (int 1) (reg rcx))
+   ((movq (int 0) (reg rcx)) (movq (reg rcx) (reg rcx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 32) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rcx))))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 32) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 135) (deref r11 0))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 24))
+ (movq (int 0) (reg rdx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg rbx) (deref r11 16))
+ (movq (int 0) (reg rbx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r14) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (reg rcx) (reg r13))
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 16) (reg rbx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rbx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (if (eq? (int 1) (reg rbx))
+   ((movq (int 0) (reg rbx)) (movq (reg rbx) (reg rbx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 16) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rbx))))
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 131) (deref r11 0))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg r12))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 24) (reg rcx))
+ (movq (global-value fromspace_end) (reg rbx))
+ (cmpq (reg rcx) (reg rbx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (if (eq? (int 1) (reg rbx))
+   ((movq (int 0) (reg rbx)) (movq (reg rbx) (reg rbx)))
+   ((movq (reg r15) (reg rdi))
+    (movq (int 24) (reg rsi))
+    (callq collect)
+    (movq (int 0) (reg rbx))))
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 24) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 389) (deref r11 0))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 16))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg rax)))
+|
+v
+
+Running Pass: patch-instructions on:
+
+(program
+ (0 128)
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (movq (int 0) (reg rbx))
+ (movq (global-value free_ptr) (reg rcx))
+ (movq (reg rcx) (reg rdx))
+ (addq (int 16) (reg rdx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rdx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (cmpq (reg rcx) (int 1))
+ (jmp-if e then15201)
+ (movq (reg r15) (reg rdi))
+ (movq (int 16) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rcx))
+ (jmp end15202)
+ (label then15201)
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (label end15202)
+ (movq (global-value free_ptr) (reg r12))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg r12) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg r12) (reg r11))
+ (movq (reg rbx) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (int 1) (reg r14))
+ (movq (int 2) (reg rbx))
+ (movq (int 1) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 16) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (cmpq (reg rcx) (int 1))
+ (jmp-if e then15203)
+ (movq (reg r15) (reg rdi))
+ (movq (int 16) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rcx))
+ (jmp end15204)
+ (label then15203)
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (label end15204)
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rdx))
+ (movq (reg rcx) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 32) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (cmpq (reg rcx) (int 1))
+ (jmp-if e then15205)
+ (movq (reg r15) (reg rdi))
+ (movq (int 32) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rcx))
+ (jmp end15206)
+ (label then15205)
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (label end15206)
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 32) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 135) (deref r11 0))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 24))
+ (movq (int 0) (reg rdx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg rbx) (deref r11 16))
+ (movq (int 0) (reg rbx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r14) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (reg rcx) (reg r13))
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 16) (reg rbx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rbx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (cmpq (reg rbx) (int 1))
+ (jmp-if e then15207)
+ (movq (reg r15) (reg rdi))
+ (movq (int 16) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rbx))
+ (jmp end15208)
+ (label then15207)
+ (movq (int 0) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (label end15208)
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 131) (deref r11 0))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg r12))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 24) (reg rcx))
+ (movq (global-value fromspace_end) (reg rbx))
+ (cmpq (reg rcx) (reg rbx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (cmpq (reg rbx) (int 1))
+ (jmp-if e then15209)
+ (movq (reg r15) (reg rdi))
+ (movq (int 24) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rbx))
+ (jmp end15210)
+ (label then15209)
+ (movq (int 0) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (label end15210)
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 24) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 389) (deref r11 0))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 16))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg rax)))
+|
+v
+
+Running Pass: print-x86 on:
+
+(program
+ (0 128)
+ (type
+  (Vector (Vector Integer Integer (Vector Boolean)) (Vector (Vector Integer))))
+ (defines)
+ (movq (int 0) (reg rbx))
+ (movq (global-value free_ptr) (reg rcx))
+ (movq (reg rcx) (reg rdx))
+ (addq (int 16) (reg rdx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rdx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (cmpq (int 1) (reg rcx))
+ (jmp-if e then15201)
+ (movq (reg r15) (reg rdi))
+ (movq (int 16) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rcx))
+ (jmp end15202)
+ (label then15201)
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (label end15202)
+ (movq (global-value free_ptr) (reg r12))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg r12) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg r12) (reg r11))
+ (movq (reg rbx) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (int 1) (reg r14))
+ (movq (int 2) (reg rbx))
+ (movq (int 1) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 16) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (cmpq (int 1) (reg rcx))
+ (jmp-if e then15203)
+ (movq (reg r15) (reg rdi))
+ (movq (int 16) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rcx))
+ (jmp end15204)
+ (label then15203)
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (label end15204)
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 3) (deref r11 0))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rdx))
+ (movq (reg rcx) (reg r13))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 32) (reg rcx))
+ (movq (global-value fromspace_end) (reg rdx))
+ (cmpq (reg rcx) (reg rdx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rcx))
+ (cmpq (int 1) (reg rcx))
+ (jmp-if e then15205)
+ (movq (reg r15) (reg rdi))
+ (movq (int 32) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rcx))
+ (jmp end15206)
+ (label then15205)
+ (movq (int 0) (reg rcx))
+ (movq (reg rcx) (reg rcx))
+ (label end15206)
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 32) (global-value free_ptr))
+ (movq (reg rcx) (reg r11))
+ (movq (int 135) (deref r11 0))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r13) (deref r11 24))
+ (movq (int 0) (reg rdx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg rbx) (deref r11 16))
+ (movq (int 0) (reg rbx))
+ (movq (reg rcx) (reg r11))
+ (movq (reg r14) (deref r11 8))
+ (movq (int 0) (reg rbx))
+ (movq (reg rcx) (reg r13))
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 16) (reg rbx))
+ (movq (global-value fromspace_end) (reg rcx))
+ (cmpq (reg rbx) (reg rcx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (cmpq (int 1) (reg rbx))
+ (jmp-if e then15207)
+ (movq (reg r15) (reg rdi))
+ (movq (int 16) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rbx))
+ (jmp end15208)
+ (label then15207)
+ (movq (int 0) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (label end15208)
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 16) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 131) (deref r11 0))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg r12))
+ (movq (global-value free_ptr) (reg rcx))
+ (addq (int 24) (reg rcx))
+ (movq (global-value fromspace_end) (reg rbx))
+ (cmpq (reg rcx) (reg rbx))
+ (set l (byte-reg al))
+ (movzbq (byte-reg al) (reg rbx))
+ (cmpq (int 1) (reg rbx))
+ (jmp-if e then15209)
+ (movq (reg r15) (reg rdi))
+ (movq (int 24) (reg rsi))
+ (callq collect)
+ (movq (int 0) (reg rbx))
+ (jmp end15210)
+ (label then15209)
+ (movq (int 0) (reg rbx))
+ (movq (reg rbx) (reg rbx))
+ (label end15210)
+ (movq (global-value free_ptr) (reg rbx))
+ (addq (int 24) (global-value free_ptr))
+ (movq (reg rbx) (reg r11))
+ (movq (int 389) (deref r11 0))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r12) (deref r11 16))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg r11))
+ (movq (reg r13) (deref r11 8))
+ (movq (int 0) (reg rcx))
+ (movq (reg rbx) (reg rax)))
+|
+v
+
+	.globl main
+main:
+	pushq %rbp
+	movq %rsp, %rbp
+	pushq %r14
+	pushq %r13
+	pushq %r12
+	pushq %rbx
+	subq $48, %rsp
+	movq $16384, %rdi 
+	movq $16, %rsi 
+	callq initialize 
+	movq rootstack_begin(%rip), %r15
+	addq $128, %r15
+	movq $0, -128(%r15)
+	movq $0, -120(%r15)
+	movq $0, -112(%r15)
+	movq $0, -104(%r15)
+	movq $0, -96(%r15)
+	movq $0, -88(%r15)
+	movq $0, -80(%r15)
+	movq $0, -72(%r15)
+	movq $0, -64(%r15)
+	movq $0, -56(%r15)
+	movq $0, -48(%r15)
+	movq $0, -40(%r15)
+	movq $0, -32(%r15)
+	movq $0, -24(%r15)
+	movq $0, -16(%r15)
+	movq $0, -8(%r15)
+
+	movq $0, %rbx
+	movq free_ptr(%rip), %rcx
+	movq %rcx, %rdx
+	addq $16, %rdx
+	movq fromspace_end(%rip), %rcx
+	cmpq %rdx, %rcx
+	sete %al
+	movzbq %al, %rcx
+	cmpq $1, %rcx
+	je then15201
+	movq %r15, %rdi
+	movq $16, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end15202
+then15201:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end15202:
+	movq free_ptr(%rip), %r12
+	addq $16, free_ptr(%rip)
+	movq %r12, %r11
+	movq $3, 0(%r11)
+	movq %r12, %r11
+	movq %rbx, 8(%r11)
+	movq $0, %rbx
+	movq $1, %r14
+	movq $2, %rbx
+	movq $1, %r13
+	movq free_ptr(%rip), %rcx
+	addq $16, %rcx
+	movq fromspace_end(%rip), %rdx
+	cmpq %rcx, %rdx
+	sete %al
+	movzbq %al, %rcx
+	cmpq $1, %rcx
+	je then15203
+	movq %r15, %rdi
+	movq $16, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end15204
+then15203:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end15204:
+	movq free_ptr(%rip), %rcx
+	addq $16, free_ptr(%rip)
+	movq %rcx, %r11
+	movq $3, 0(%r11)
+	movq %rcx, %r11
+	movq %r13, 8(%r11)
+	movq $0, %rdx
+	movq %rcx, %r13
+	movq free_ptr(%rip), %rcx
+	addq $32, %rcx
+	movq fromspace_end(%rip), %rdx
+	cmpq %rcx, %rdx
+	sete %al
+	movzbq %al, %rcx
+	cmpq $1, %rcx
+	je then15205
+	movq %r15, %rdi
+	movq $32, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end15206
+then15205:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end15206:
+	movq free_ptr(%rip), %rcx
+	addq $32, free_ptr(%rip)
+	movq %rcx, %r11
+	movq $135, 0(%r11)
+	movq %rcx, %r11
+	movq %r13, 24(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq %rbx, 16(%r11)
+	movq $0, %rbx
+	movq %rcx, %r11
+	movq %r14, 8(%r11)
+	movq $0, %rbx
+	movq %rcx, %r13
+	movq free_ptr(%rip), %rbx
+	addq $16, %rbx
+	movq fromspace_end(%rip), %rcx
+	cmpq %rbx, %rcx
+	sete %al
+	movzbq %al, %rbx
+	cmpq $1, %rbx
+	je then15207
+	movq %r15, %rdi
+	movq $16, %rsi
+	callq collect
+	movq $0, %rbx
+	jmp end15208
+then15207:
+	movq $0, %rbx
+	movq %rbx, %rbx
+end15208:
+	movq free_ptr(%rip), %rbx
+	addq $16, free_ptr(%rip)
+	movq %rbx, %r11
+	movq $131, 0(%r11)
+	movq %rbx, %r11
+	movq %r12, 8(%r11)
+	movq $0, %rcx
+	movq %rbx, %r12
+	movq free_ptr(%rip), %rcx
+	addq $24, %rcx
+	movq fromspace_end(%rip), %rbx
+	cmpq %rcx, %rbx
+	sete %al
+	movzbq %al, %rbx
+	cmpq $1, %rbx
+	je then15209
+	movq %r15, %rdi
+	movq $24, %rsi
+	callq collect
+	movq $0, %rbx
+	jmp end15210
+then15209:
+	movq $0, %rbx
+	movq %rbx, %rbx
+end15210:
+	movq free_ptr(%rip), %rbx
+	addq $24, free_ptr(%rip)
+	movq %rbx, %r11
+	movq $389, 0(%r11)
+	movq %rbx, %r11
+	movq %r12, 16(%r11)
+	movq $0, %rcx
+	movq %rbx, %r11
+	movq %r13, 8(%r11)
+	movq $0, %rcx
+	movq %rbx, %rax
+
+	movq %rax, %rdi
+	movq	%rax, %r12
+	callq	print_vecbegin
+	movq	8(%r12), %rax
+	movq	%rax, %r13
+	callq	print_vecbegin
+	movq	8(%r13), %rax
+	movq	%rax, %rdi
+	callq	print_int
+	callq	print_space
+	movq	16(%r13), %rax
+	movq	%rax, %rdi
+	callq	print_int
+	callq	print_space
+	movq	24(%r13), %rax
+	movq	%rax, %r14
+	callq	print_vecbegin
+	movq	8(%r14), %rax
+	movq	%rax, %rdi
+	callq	print_bool
+	callq	print_vecend
+	callq	print_vecend
+	callq	print_space
+	movq	16(%r12), %rax
+	movq	%rax, %r13
+	callq	print_vecbegin
+	movq	8(%r13), %rax
+	movq	%rax, %r14
+	callq	print_vecbegin
+	movq	8(%r14), %rax
+	movq	%rax, %rdi
+	callq	print_int
+	callq	print_vecend
+	callq	print_vecend
+	callq	print_vecend
+	subq $128, %r15
+	addq $48, %rsp
+	movq $0, %rax
+	popq %rbx
+	popq %r12
+	popq %r13
+	popq %r14
+	popq %rbp
+	retq
+
+----------
+
+tests passed!

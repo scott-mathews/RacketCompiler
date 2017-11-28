@@ -18,12 +18,12 @@
        `(define (,f) ,n ((,new-vars ,rootstack-spill) ,m) ,@(map (lambda (instr) (update-name new-names instr)) instrs))]
       [`(program (,vars ,graph) ,type (defines ,defs ...) ,instrs ...)
        (define new-names (color-graph graph (build-MoveG (map car vars) instrs) (map car vars)))
-       (define-values (spill rootstack-spill) (split-spills vars))
-       (define new-vars (prune-vars new-names spill))
+       (define new-vars (prune-vars new-names vars))
+       (define-values (spill rootstack-spill) (split-spills new-vars))
        `(program (,new-vars ,rootstack-spill) ,type (defines ,@(map allocate-registers defs)) ,@(map (lambda (instr) (update-name new-names instr)) instrs))]))
 
 (define (prune-vars new-names vars)
-  (filter (lambda (var) (>= (hash-ref new-names var) (vector-length general-registers))) vars))
+  (filter (lambda (var) (>= (hash-ref new-names (car var)) (vector-length general-registers))) vars))
 
 ; splits list of var . type into list of list of var . type list of var . type
 ; aka a list containing regular vars, and a list containing rootStack vars
