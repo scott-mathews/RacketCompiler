@@ -24,6 +24,7 @@
 ;(interp-tests "allocate registers" (type-check '()) allocate-registers-pass interp-scheme "r1" (range 1 49))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r1" (range 36 37))
 ;(compiler-tests "r1-compiler" (type-check '()) r5-passes "r1" (range 1 49))
+;(my-run-tests passes "r2" (range 1 2) "")
 
 ;;; === R2 Tests === ;;;
 ;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-scheme "r2" (range 1 53))

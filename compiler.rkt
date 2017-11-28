@@ -18,7 +18,7 @@
 (require "passes/flatten.rkt")
 (require "passes/select-instructions-new.rkt")
 (require "passes/uncover-live-new.rkt")
-(require "passes/build-interference.rkt")
+(require "passes/build-interference-new.rkt")
 (require "passes/allocate-registers.rkt")
 (require "passes/assign-homes.rkt")
 (require "passes/lower-conditionals.rkt")

@@ -39,45 +39,28 @@
     ; Returns live-after for an (op args...) instruction
     [`(,op ,args ...)
      (match op
-       [`addq
+       [(? add-like-op?) ; addq, xorq, cmpq, cmp?
         (define read (set-union (get-arg (first args)) (get-arg (second args))))
         (define written (set))
         (values instr (make-live-before read written last-live-after))]
-       [`movq
+       
+       [(? move-like-op?) ; movq, movzbq, leaq
         (define read (get-arg (first args)))
         (define written (get-arg (second args)))
         (values instr (make-live-before read written last-live-after))]
-       [`negq
+       
+       [(? neg-like-op?) ; negq, indirect-callq
         (define read (get-arg (first args)))
         (define written (set))
         (values instr (make-live-before read written last-live-after))]
-       [`xorq
-        (define read (set-union (get-arg (first args)) (get-arg (second args))))
-        (define written (set))
-        (values instr (make-live-before read written last-live-after))]
+
+       ; Odd ones out
        [`callq
         (values instr last-live-after)]
-       [`movzbq
-        (define read (get-arg (first args)))
-        (define written (get-arg (second args)))
-        (values instr (make-live-before read written last-live-after))]
-       [`cmpq
-        (define read (set-union (get-arg (first args)) (get-arg (second args))))
-        (define written (set))
-        (values instr (make-live-before read written last-live-after))]
+       
        [`set
         (values instr last-live-after)]
-       [`indirect-callq
-        (define read (get-arg (first args)))
-        (values instr (make-live-before read (set)))]
-       [`leaq
-        (define read (get-arg (first args)))
-        (define written (get-arg (second args)))
-        (values instr (make-live-before read written))]
-       [cmp #:when (cmp? op)
-             (define read (set-union (get-arg (first args)) (get-arg (second args))))
-             (define written (set))
-             (values instr (make-live-before read written last-live-after))]
+       
        [else (error "Not matched in uncover-instr (,op ,args ...): ~a" op)])]
     [else (error "Not matched in uncover-instr: ~a" instr)]))
 

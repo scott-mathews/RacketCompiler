@@ -10,7 +10,9 @@
 ;;; === Patch Instructions === ;;;
 
 (define (patch-instructions exp)  
-  (match exp  
+  (match exp
+    [`(movq (global-value ,name) (deref ,reg ,n)) (list `(movq (global-value ,name) (reg rax))
+                                                        `(movq (reg rax) (deref ,reg ,n)))]
     [`(addq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) 
                                                    `(addq (reg rax) (deref ,reg2 ,n2)))]
     [`(movq (deref ,reg1 ,n1) (deref ,reg2 ,n2)) (list `(movq (deref ,reg1 ,n1) (reg rax)) `(movq (reg rax) (deref ,reg2 ,n2)))]

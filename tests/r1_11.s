@@ -13,10 +13,8 @@ main:
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $1, %rbx
-	addq $1, %rbx
 	movq $1, %rcx
-	addq %rbx, %rcx
+	addq $1, %rcx
 	movq $1, %rbx
 	addq %rcx, %rbx
 	movq $1, %rcx
@@ -95,7 +93,9 @@ main:
 	addq %rbx, %rcx
 	movq $1, %rbx
 	addq %rcx, %rbx
-	movq %rbx, %rax
+	movq $1, %rcx
+	addq %rbx, %rcx
+	movq %rcx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
