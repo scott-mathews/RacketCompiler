@@ -35,39 +35,39 @@ main:
 	movq $0, -16(%r15)
 	movq $0, -8(%r15)
 
-	movq $4, %r12
-	movq $2, -48(%rbp)
-	movq $6, %r13
-	movq $1, %r14
+	movq $4, %r14
+	movq $2, %r13
+	movq $6, -48(%rbp)
+	movq $1, %r12
 	movq $42, %rbx
-	movq free_ptr(%rip), %rcx
-	addq $24, %rcx
 	movq free_ptr(%rip), %rdx
-	cmpq %rcx, %rdx
+	addq $24, %rdx
+	movq free_ptr(%rip), %rcx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then124839
+	je then3714
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end124840
-then124839:
+	jmp end3715
+then3714:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end124840:
+end3715:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $5, 0(%r11)
 	movq %rcx, %r11
-	movq %r14, 8(%r11)
+	movq %r12, 8(%r11)
 	movq $0, %rdx
 	movq %rcx, %r11
 	movq %rbx, 16(%r11)
 	movq $0, %rbx
-	movq %rcx, %r14
+	movq %rcx, %r12
 	movq $3, %rbx
 	movq free_ptr(%rip), %rdx
 	addq $16, %rdx
@@ -76,16 +76,16 @@ end124840:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then124841
+	je then3716
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end124842
-then124841:
+	jmp end3717
+then3716:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end124842:
+end3717:
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
@@ -94,29 +94,29 @@ end124842:
 	movq %rbx, 8(%r11)
 	movq $0, %rbx
 	movq %rcx, %rbx
-	movq free_ptr(%rip), %rdx
-	addq $24, %rdx
 	movq free_ptr(%rip), %rcx
-	cmpq %rdx, %rcx
+	addq $24, %rcx
+	movq free_ptr(%rip), %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then124843
+	je then3718
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end124844
-then124843:
+	jmp end3719
+then3718:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end124844:
+end3719:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $389, 0(%r11)
 	movq %rcx, %r11
-	movq %r14, 8(%r11)
+	movq %r12, 8(%r11)
 	movq $0, %rdx
 	movq %rcx, %r11
 	movq %rbx, 16(%r11)
@@ -130,45 +130,16 @@ end124844:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then124845
+	je then3720
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end124846
-then124845:
+	jmp end3721
+then3720:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end124846:
-	movq free_ptr(%rip), %rcx
-	addq $24, free_ptr(%rip)
-	movq %rcx, %r11
-	movq $133, 0(%r11)
-	movq %rcx, %r11
-	movq %r13, 8(%r11)
-	movq $0, %rdx
-	movq %rcx, %r11
-	movq %rbx, 16(%r11)
-	movq $0, %rbx
-	movq %rcx, %rbx
-	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
-	addq $24, %rdx
-	movq free_ptr(%rip), %rcx
-	cmpq %rdx, %rcx
-	sete %al
-	movzbq %al, %rcx
-	cmpq $1, %rcx
-	je then124847
-	movq %r15, %rdi
-	movq $24, %rsi
-	callq collect
-	movq $0, %rcx
-	jmp end124848
-then124847:
-	movq $0, %rcx
-	movq %rcx, %rcx
-end124848:
+end3721:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
@@ -181,30 +152,57 @@ end124848:
 	movq %rbx, 16(%r11)
 	movq $0, %rbx
 	movq %rcx, %rbx
-	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
+	movq free_ptr(%rip), %rdx
 	addq $24, %rdx
 	movq free_ptr(%rip), %rcx
 	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then124849
+	je then3722
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end124850
-then124849:
+	jmp end3723
+then3722:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end124850:
+end3723:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $133, 0(%r11)
 	movq %rcx, %r11
-	movq %r12, 8(%r11)
+	movq %r13, 8(%r11)
+	movq $0, %rdx
+	movq %rcx, %r11
+	movq %rbx, 16(%r11)
+	movq $0, %rbx
+	movq %rcx, %rbx
+	movq free_ptr(%rip), %rcx
+	addq $24, %rcx
+	movq free_ptr(%rip), %rdx
+	cmpq %rcx, %rdx
+	sete %al
+	movzbq %al, %rcx
+	cmpq $1, %rcx
+	je then3724
+	movq %r15, %rdi
+	movq $24, %rsi
+	callq collect
+	movq $0, %rcx
+	jmp end3725
+then3724:
+	movq $0, %rcx
+	movq %rcx, %rcx
+end3725:
+	movq free_ptr(%rip), %rcx
+	addq $24, free_ptr(%rip)
+	movq %rcx, %r11
+	movq $133, 0(%r11)
+	movq %rcx, %r11
+	movq %r14, 8(%r11)
 	movq $0, %rdx
 	movq %rcx, %r11
 	movq %rbx, 16(%r11)

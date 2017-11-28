@@ -5,11 +5,41 @@
 ; export utility functions
 (provide function-type terminal? map-me remove-duplicate-movq cmp->cc
          look-up-type get-function-type get-lambda-type get-lambda-env
-         update-arg-format make-f-list make-typed-f-list cmp?)
+         update-arg-format make-f-list make-typed-f-list cmp?
+         move-like-op? add-like-op? neg-like-op?)
 
 ;;;;;;;;;;;
 ; Helpers ;
 ;;;;;;;;;;;
+
+;;
+; Register Allocation Helpers ;
+;
+; Operations can be performed similarly
+; on certain groups of operations.
+;;
+(define (move-like-op? op)
+  (match op
+    [`movq #t]
+    [`movzbq #t]
+    [`leaq #t]
+    [else #f]))
+
+(define (add-like-op? op)
+  (match op
+    [`addq #t]
+    [`xorq #t]
+    [`cmpq #t]
+    [(? cmp?) #t]
+    [else #f]))
+
+(define (neg-like-op? op)
+  (match op
+    [`negq #t]
+    [`indirect-callq #t]
+    [else #f]))
+; END Register Allocation Helpers ;
+
 
 ; Traverses through a list of defines, and returns a list containing
 ; the name of each function.
