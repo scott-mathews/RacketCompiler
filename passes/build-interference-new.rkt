@@ -44,7 +44,7 @@
        (match op
          ; If instruction I is a (movq s d), add an edge (d,v) for every
          ; v in the live-after set of I (UNLESS v == d OR v == s)
-         [(? move-like-op?)
+         [(? move-like-op?) ; addq, xorq, cmpq, cmp?
           (for ([var live-after-set])
             (if (and (var-typed-arg? (second args)) (not (or (equal? var (get-name (first args))) (equal? var (get-name (second args))))))
                 (add-edge graph var (get-name (second args)))
@@ -52,7 +52,7 @@
          
          ; If instruction I is a (addq s d), add an edge (d,v) for every
          ; v in the live-after set of I (UNLESS v == d)
-         [(? add-like-op?)
+         [(? add-like-op?) ; movq, movzbq, leaq
           (for ([var live-after-set])
             (if (and (var-typed-arg? (second args)) (not (equal? var (get-name (second args)))))
                 (add-edge graph var (get-name (second args)))
@@ -60,7 +60,7 @@
 
          ; If instruction I is a (negq sd), add an edge (sd, v) for every
          ; v in the live-after set of I (UNLESS v == sd)
-         [(? neg-like-op?)
+         [`negq
           (for ([var live-after-set])
             (if (and (var-typed-arg? (first args)) (not (equal? var (get-name (first args)))))
                 (add-edge graph var (get-name (first args)))
@@ -78,7 +78,8 @@
          ; r. Additionally, if the call is to collect, add an edge (r,v)
          ; for every v with type Vector, for all callee-save registers
          ; r.
-         [`callq
+         [(? call-like-op?)
+          ; Handle callq collect
           (if (equal? (first args) `collect)
               (for ([var live-after-set])
                 (if (and (list? (lookup var vars)) (equal? (car (lookup var vars)) 'Vector))
@@ -86,6 +87,14 @@
                       (add-edge graph (register->color callee) var))
                     (void)))
               (void))
+          ; Handle indirect-callq
+          (if (equal? op `indirect-callq)
+              (for ([var live-after-set])
+                (if (and (var-typed-arg? (first args)) (not (equal? var (get-name (first args)))))
+                    (add-edge graph var (get-name (first args)))
+                    (void)))
+              (void))
+          ; Run in both cases
           (for ([var live-after-set])
             (for ([caller caller-save])
               (add-edge graph (register->color caller) var)))]
