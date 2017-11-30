@@ -10,8 +10,7 @@
 (define (select-instructions exp)
   (match exp
     [`(program (,vars ...) ,type (defines ,defs ...) ,stmts ...)
-     `(program ,vars ,type (defines ,@(map select-instructions defs)) ,@(convert-statements stmts))]))
-
+     `(program ,vars ,type (defines ,@(map convert-def defs)) ,@(convert-statements stmts))]))
 
 ; Converts a list of defs from its C to its x86 equivalent
 (define (convert-defs defs)
@@ -21,7 +20,7 @@
 (define (convert-def def)
   (match def
     [`(define (,fname ,args ...) ,vars ,stmts ...)
-     `(define (,fname) ,(calc-maxstack args) ,vars ,@(modify-move-arguments args) ,@(convert-statements stmts))]))
+     `(define (,fname) (,vars ,(calc-maxstack args))  ,@(modify-move-arguments args) ,@(convert-statements stmts))]))
 
 (define (calc-maxstack vars)
   (max 0 (* 8 (- (length vars) 6))))
@@ -64,18 +63,28 @@
 ; converts an exp form from its C to its x86 equivalent.
 (define (convert-exp exp)
   (match exp
-    [(? arg?) `((movq ,(convert-arg exp) lhs))]
+    ; In the case of a function-ref arg we must return a leaq
+    ; Otherwise just a movq
+    [(? arg?) `(,(if (and (list? exp) (equal? (car exp) 'function-ref))
+                     (convert-arg exp)
+                     `(movq ,(convert-arg exp) lhs)))]
     [`(void) `((movq (int 0) lhs))]
     [`(global-value ,name) `((movq (global-value ,name) lhs))]
     
-
     ;;;;;;;;;;;;;;;;;;;;;
-    ; Handle Operations
+    ; Handle Operations ;
     ;;;;;;;;;;;;;;;;;;;;;
 
     ;; Function Operations ;;
     [`(app ,arg ,args ...) `(,@(move-arguments args)
-                             (indirect-callq ,(convert-arg arg)))]
+                             ; I believe the below code is unnecessary. On your next trip
+                             ; here please remove it!
+                             ; If the applied arg is a function-ref, we must first leaq it.
+                             ;,(if (and (list? arg) (equal? (car arg) 'function-ref))
+                             ;     (convert-arg arg)
+                             ;     `(movq ,(convert-arg arg) lhs))
+                             (indirect-callq ,(convert-arg arg))
+                             (movq (reg rax) lhs))]
 
     ;; Vector Operations ;;
     [`(vector-ref ,vec ,n) `((movq ,(convert-arg vec) (reg r11))
@@ -118,7 +127,7 @@
     [`(function-ref ,name) `(leaq (function-ref ,name) lhs)]))
 
 (define (arg? exp)
-  (or (boolean? exp) (fixnum? exp) (symbol? exp)))
+  (or (boolean? exp) (fixnum? exp) (symbol? exp) (or (if (list? exp) (equal? 'function-ref (car exp)) #f))))
 
 ;; Tag Helpers ;;
 (define (build-pointer-mask type)

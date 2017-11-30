@@ -63,10 +63,10 @@
 ; handles writing up a function.
 (define (print-fn def)
   (match def
-    [`(define (,name) ,n ((,regn ,rootn) ,n2) ,instrs ...)
-     (string-append (fn-intro regn rootn n)
+    [`(define (,name) (,regn ,rootn ,n) ,instrs ...)
+     (string-append (fn-intro regn (- rootn) n)
                     (foldr string-append "" (map print-x86 instrs))
-                    (fn-conclusion regn rootn))]))
+                    (fn-conclusion regn (- rootn)))]))
 
 (define (print-x86 exp)
   (match exp
@@ -77,10 +77,10 @@
     [`(indirect-callq ,arg) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" (arg->string arg)) (format "\tcallq *~a\n" (arg->string arg)))]
     [`(,op ,arg) (string-append "\t" (format "~a" op) " " (arg->string arg) "\n")]   
     [`(callq ,fn) (if (equal? (system-type) `macosx) (format "\tcallq _~a\n" fn) (format "callq ~a\n" fn))]
-    [`(define (,f) ,n ((,regn ,rootn) ,maxstack) ,instrs ...) (string-append
-                                                        (fn-intro f regn rootn maxstack)
-                                                        (foldr string-append "" (map print-x86 instrs))
-                                                        (fn-conclusion regn rootn maxstack))]
+    [`(define (,f) (,regn ,rootn ,maxstack) ,instrs ...) (string-append
+                                                          (fn-intro f regn (- rootn) maxstack)
+                                                          (foldr string-append "" (map print-x86 instrs))
+                                                          (fn-conclusion regn rootn maxstack))]
     [`(program (,regn ,rootn) (type ,t) (defines ,defs ...) ,instrs ...)
      (string-append 
                     (foldr string-append "" (map print-x86 defs))

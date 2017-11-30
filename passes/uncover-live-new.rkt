@@ -11,7 +11,13 @@
   (match prog
     [`(program (,vars ...) ,type (defines ,defs ...) ,instrs ...)
      (define-values (new-instrs live-afters) (uncover-instrs instrs (set)))
-     `(program (,vars ,live-afters) ,type (defines ,@defs) ,@new-instrs)]))
+     `(program (,vars ,live-afters) ,type (defines ,@(map uncover-live-def defs)) ,@new-instrs)]))
+
+(define (uncover-live-def def)
+  (match def
+    [`(define (,name) ((,vars ...) ,max-stack) ,instrs ...)
+     (define-values (new-instrs live-afters) (uncover-instrs instrs (set)))
+     `(define (,name) (,vars ,live-afters ,max-stack) ,@new-instrs)]))
 
 ; Iterates through a list of instructions, building up the live-after sets and the new instructions
 ; for that list of instructions
@@ -73,6 +79,7 @@
     [`byte-reg (set)]
     [`global-value (set)]
     [`reg (set)]
+    [`function-ref (set)]
     [else (error "Not matched in get-arg (uncover-live): ~a" (first arg))]))
 
 ; Using the set of read and written args and the previous live-after set, construct

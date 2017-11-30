@@ -77,7 +77,7 @@
                                          (define arg-exps '())
                                          (define arg-assignments '())
                                          (define arg-vars '())
-                                         (for ([arg args*])
+                                         (for ([arg (reverse args*)])
                                            (define-values (arg-exp arg-ass arg-var) (flatten-helper arg))
                                            (set! arg-exps (cons arg-exp arg-exps))
                                            (set! arg-assignments (append arg-ass arg-assignments))

@@ -19,14 +19,12 @@
      (define-values (regular-vars rootstack-vars) (update-and-split vars colors))
      `(program (,regular-vars ,rootstack-vars) ,type (defines ,@(map allocate-registers-define defs)) ,@(map (update-instr-factory colors) instrs))]))
 
-(define (allocate-registers-define defs)
-  (foldr append '()
-    (lambda (def)
-      (match def
-        [`(define (,fname) ,n ((,vars ,graph) ,m) ,instrs ...)
-         (define colors (color-graph (map car vars) graph))
-         (define-values (regular-vars rootstack-vars) (update-and-split vars colors))
-         `(define (,fname) ,n ((,regular-vars ,rootstack-vars) ,m) ,@(map (update-instr-factory colors) instrs))]))))
+(define (allocate-registers-define def)
+  (match def
+    [`(define (,fname) (,vars ,graph ,max-stack) ,instrs ...)
+     (define colors (color-graph (map car vars) graph))
+     (define-values (regular-vars rootstack-vars) (update-and-split vars colors))
+     `(define (,fname) ((,regular-vars ,rootstack-vars) ,max-stack) ,@(map (update-instr-factory colors) instrs))]))
 
 ; Takes in list of vars (var . type)
 ; returns two lists:

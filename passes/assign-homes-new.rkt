@@ -10,8 +10,14 @@
      (define homes (append (make-stack-homes stack-vars) (make-rootstack-homes rootstack-vars)))
      `(program (,(push-stack stack-vars) ,(push-rootstack rootstack-vars))
                ,type
-               (defines ,@(map assign-homes-defines defs))
+               (defines ,@(map assign-homes-define defs))
                ,@(map (update-home homes) instrs))]))
+
+(define (assign-homes-define def)
+  (match def
+    [`(define (,name) ((,stack-vars ,rootstack-vars) ,max-stack) ,instrs ...)
+     (define homes (append (make-stack-homes stack-vars) (make-rootstack-homes rootstack-vars)))
+     `(define (,name) (,(push-stack stack-vars) ,(push-rootstack rootstack-vars) ,max-stack) ,@(map (update-home homes) instrs))]))
 
 (define (push-stack vars)
   (+ (* 8 (length vars)) 40))
@@ -31,9 +37,6 @@
   (match arg
     [`(var ,var) (lookup var homes)]
     [else arg]))
-
-(define (assign-homes-defines defines)
-  1)
 
 ; makes an association list between variable names and
 ; their new homes

@@ -20,8 +20,8 @@
                                             (label ,thnlabel)
                                             ,@(map-me lower-conditionals thns)
                                             (label ,endlabel))]
-    [`(define (,name) ,l ((,regn ,rootn) ,maxstack) ,instrs ...)
-     (list `(define (,name) ,l ((,regn ,rootn) ,maxstack) ,@(values (map-me lower-conditionals instrs))))]
+    [`(define (,name) (,regn ,rootn ,maxstack) ,instrs ...)
+     (list `(define (,name) (,regn ,rootn ,maxstack) ,@(values (map-me lower-conditionals instrs))))]
     [`(program (,regn ,rootn) ,type (defines ,defs ...) ,instrs ...)
      `(program (,regn ,rootn) ,type (defines ,@(values (map-me lower-conditionals defs))) ,@(values (map-me lower-conditionals instrs)))]
     [else `(,exp)]))

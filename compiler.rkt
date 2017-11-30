@@ -22,7 +22,7 @@
 (require "passes/allocate-registers-new.rkt")
 (require "passes/assign-homes-new.rkt")
 (require "passes/lower-conditionals.rkt")
-(require "passes/patch-instructions.rkt")
+(require "passes/patch-instructions-new.rkt")
 (require "passes/print-x86.rkt")
 
 ; Provide Passes
@@ -115,7 +115,7 @@
 (define r5-passes
   `( ("uniquify"            ,(uniquify '())         ,interp-scheme)
      ("reveal functions"    ,(reveal-functions '()) ,interp-scheme)
-     ("convert-closures"    ,convert-closures       ,interp-scheme)
+     ;("convert-closures"    ,convert-closures       ,interp-scheme)
      ("expose-allocation"   ,expose-allocation      ,interp-scheme)
      ("flatten"             ,flatten                ,interp-C)
      ("select-instructions" ,select-instructions    ,interp-x86)

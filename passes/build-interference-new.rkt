@@ -16,8 +16,8 @@
 ; Build the interference graph for a function
 (define (build-define-graph def)
   (match def
-    [`(define (,name) (,num-args ,maxstack) ((,vars ...) (,live-afters ....)) ,instrs ...)
-     `(define (,name) (,num-args ,maxstack) ((,vars ...) ,(build-graph vars live-afters instrs (make-graph (map car vars)))) ,@instrs)]))
+    [`(define (,name) ((,vars ...) (,live-afters ...) ,max-stack) ,instrs ...)
+     `(define (,name) (,vars ,(build-graph vars live-afters instrs (make-graph (map car vars))) ,max-stack) ,@instrs)]))
 
 ; Build the interference graph
 (define (build-graph vars live-afters instrs initial-graph)
@@ -54,7 +54,7 @@
        (match op
          ; If instruction I is a (movq s d), add an edge (d,v) for every
          ; v in the live-after set of I (UNLESS v == d OR v == s)
-         [(? move-like-op?) ; addq, xorq, cmpq, cmp?
+         [(? move-like-op?) ; movq, movzbq, leaq
           (for ([var live-after-set])
             (if (and (var-typed-arg? (second args)) (not (or (equal? var (get-name (first args))) (equal? var (get-name (second args))))))
                 (add-edge graph var (get-name (second args)))
@@ -62,7 +62,7 @@
          
          ; If instruction I is a (addq s d), add an edge (d,v) for every
          ; v in the live-after set of I (UNLESS v == d)
-         [(? add-like-op?) ; movq, movzbq, leaq
+         [(? add-like-op?) ; addq, xorq, cmpq, cmp
           (for ([var live-after-set])
             (if (and (var-typed-arg? (second args)) (not (equal? var (get-name (second args)))))
                 (add-edge graph var (get-name (second args)))
