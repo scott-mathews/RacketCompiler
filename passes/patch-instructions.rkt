@@ -20,6 +20,15 @@
                                        (list `(movq (int ,n) (reg rax))
                                              `(cmpq (,type ,val) (reg rax)))
                                        (list `(cmpq (int ,n) (,type ,val))))]
+    [`(cmpq ,arg1 ,arg2) #:when (and (equal? (first arg1) `deref) (equal? (first arg2) `deref))
+                         (list `(movq ,arg1 (reg rax))
+                               `(cmpq (reg rax) ,arg2))]
+    [`(cmpq ,arg1 ,arg2) #:when (equal? (first arg2) `int)
+                         (list `(movq ,arg2 (reg rax))
+                               `(cmpq ,arg1 (reg rax)))]
+    [`(movzbq ,arg1 ,arg2) #:when (equal? (first arg2) `deref)
+                          (list `(movzbq ,arg1 (reg rax))
+                                `(movq (reg rax) ,arg2))]
     [`(leaq (function-ref ,label) (deref ,reg ,n)) (list `(leaq (function-ref ,label) (reg rax))
                                                          `(movq (reg rax) (deref ,reg ,n)))]
     [`(define (,name) ,l ((,regn ,rootn) ,maxstack) ,instrs ...)

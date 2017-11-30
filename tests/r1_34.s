@@ -6,60 +6,74 @@ main:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $48, %rsp
+	subq $88, %rsp
 	movq $16384, %rdi 
 	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $1, %rdx
-	addq $1, %rdx
+	movq $1, %rcx
+	addq $1, %rcx
 	movq $1, %rbx
 	addq $1, %rbx
+	movq %rcx, %rdx
 	addq %rbx, %rdx
 	movq $1, %rbx
 	addq $1, %rbx
 	movq $1, %rcx
 	addq $1, %rcx
+	movq %rbx, %rbx
 	addq %rcx, %rbx
 	movq %rdx, %rcx
 	addq %rbx, %rcx
+	movq $1, %rdx
+	addq $1, %rdx
 	movq $1, %rbx
 	addq $1, %rbx
+	movq %rdx, %rsi
+	addq %rbx, %rsi
 	movq $1, %rdx
 	addq $1, %rdx
+	movq $1, %rbx
+	addq $1, %rbx
+	movq %rdx, %rdx
+	addq %rbx, %rdx
+	movq %rsi, %rbx
 	addq %rdx, %rbx
-	movq $1, %rsi
-	addq $1, %rsi
-	movq $1, %rdx
-	addq $1, %rdx
-	addq %rdx, %rsi
-	addq %rsi, %rbx
+	movq %rcx, %rcx
 	addq %rbx, %rcx
 	movq $1, %rbx
 	addq $1, %rbx
 	movq $1, %rdx
 	addq $1, %rdx
+	movq %rbx, %rbx
 	addq %rdx, %rbx
 	movq $1, %rsi
 	addq $1, %rsi
 	movq $1, %rdx
 	addq $1, %rdx
+	movq %rsi, %rsi
 	addq %rdx, %rsi
+	movq %rbx, %rbx
 	addq %rsi, %rbx
 	movq $1, %rsi
 	addq $1, %rsi
 	movq $1, %rdx
 	addq $1, %rdx
+	movq %rsi, %rsi
 	addq %rdx, %rsi
 	movq $1, %rdx
 	addq $1, %rdx
 	movq $1, %rdi
 	addq $1, %rdi
+	movq %rdx, %rdx
 	addq %rdi, %rdx
+	movq %rsi, %rsi
 	addq %rdx, %rsi
+	movq %rbx, %rbx
 	addq %rsi, %rbx
+	movq %rcx, %rcx
 	addq %rbx, %rcx
 	movq $10, %rbx
 	addq %rcx, %rbx
@@ -69,7 +83,7 @@ main:
 	movq	%rax, %rdi
 	callq	print_int
 	subq $0, %r15
-	addq $48, %rsp
+	addq $88, %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12

@@ -40,7 +40,7 @@
     [`(collect ,bytes) `((movq (reg r15) (reg rdi))
                          (movq (int ,bytes) (reg rsi))
                          (callq collect))]
-    [`(if (,cmp ,arg1 ,arg2) ,stmts-thn ,stmts-els) `((if (,cmp ,(convert-arg arg1) ,(convert-arg arg2))
+    [`(if (,cmp ,arg1 ,arg2) ,stmts-thn ,stmts-els) `((if (,cmp ,(convert-arg arg2) ,(convert-arg arg1))
                                                                       ,(convert-statements stmts-thn)
                                                                       ,(convert-statements stmts-els)))]
     [`(return ,arg) `((movq ,(convert-arg arg) (reg rax)))]
@@ -123,20 +123,22 @@
 ;; Tag Helpers ;;
 (define (build-pointer-mask type)
   (define n 0)
-  (for ([item type])
-    (if (list? item)
-        (begin (set! n (arithmetic-shift n 1))
-               (set! n (bitwise-ior n 1)))
-        (set! n (arithmetic-shift n 1))))
+  (for ([item (reverse (cdr type))])
+    (if (and (list? item) (equal? (car item) 'Vector))
+        (set! n (bitwise-ior (arithmetic-shift n 1) 1))
+        (set! n (bitwise-ior (arithmetic-shift n 1) 0))))
   n)
 
 (define (insert-length len pointer-mask)
-  (bitwise-ior (arithmetic-shift pointer-mask 6) len))
+  (bitwise-ior len (arithmetic-shift pointer-mask 6)))
 
 (define (build-tag type len)
-  (define pointer-mask (build-pointer-mask type))
-  (define len-tagged (insert-length len pointer-mask))
-  (bitwise-ior (arithmetic-shift len-tagged 1) 1))
+  (bitwise-ior 1
+  (arithmetic-shift
+  (bitwise-ior (length (cdr type))
+  (arithmetic-shift (build-pointer-mask type)
+  6))
+1)))
 
 ;; Function Application Helpers ;;
 (define (move-arguments args)

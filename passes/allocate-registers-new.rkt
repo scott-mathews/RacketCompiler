@@ -12,8 +12,6 @@
 ; isters.                                                                               ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO: make the vars be pruneded and splitted
-
 (define (allocate-registers prog)
   (match prog
     [`(program ((,vars ...) ,graph) ,type (defines ,defs ...) ,instrs ...)
@@ -71,8 +69,7 @@
 
 ; Assign colors to variables based on an interference graph
 (define (color-graph vars graph)
-  (displayln vars)
-  
+
   ; Maps variables/registers to the set of constraints they have
   (define saturations (make-hash))
 
@@ -112,6 +109,5 @@
     (for ([var (adjacent graph current-var)])
       (hash-update! saturations var (lambda (saturation-set) (set-union (set current-color) saturation-set)) (set current-color))))
 
-  (displayln colors)
   ; Return the mapping between variables and colors
   colors)

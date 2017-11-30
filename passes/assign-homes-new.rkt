@@ -14,16 +14,16 @@
                ,@(map (update-home homes) instrs))]))
 
 (define (push-stack vars)
-  (- (- (* 8 (length vars))) 40))
+  (+ (* 8 (length vars)) 40))
 
 (define (push-rootstack vars)
-  (- (* 8 (length vars))))
+  (* 8 (length vars)))
 
 (define (update-home homes)
   (lambda (instr)
     (match instr
       [`(if (,op ,args ...) ,instr-thns ,instr-elss)
-       `(if (,op ,@(map (lambda (arg) (arg->home arg homes)) args)) ,((update-home homes) instr-thns) ,((update-home homes) instr-elss))]
+       `(if (,op ,@(map (lambda (arg) (arg->home arg homes)) args)) ,(map (update-home homes) instr-thns) ,(map (update-home homes) instr-elss))]
       [`(,op ,args ...)
        `(,op ,@(map (lambda (arg) (arg->home arg homes)) args))])))
 
