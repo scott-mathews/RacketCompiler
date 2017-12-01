@@ -6,50 +6,68 @@ function0:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $40, %rsp
-	addq $0, %r15
+	subq $152, %rsp
+	addq $24, %r15
+	movq $0, -24(%r15)
+	movq $0, -16(%r15)
+	movq $0, -8(%r15)
 
-	movq %rdi, %rbx
-	leaq function0(%rip), %rbx
-	movq %rbx, %rbx
-	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
-	addq $16, %rdx
-	movq fromspace_end(%rip), %rcx
-	cmpq %rdx, %rcx
+	movq %rdi, -96(%rbp)
+	leaq function0(%rip), %rax
+	movq %rax, -152(%rbp)
+	movq -152(%rbp), %rax
+	movq %rax, -64(%rbp)
+	movq free_ptr(%rip), %rax
+	movq %rax, -80(%rbp)
+	movq -80(%rbp), %rax
+	movq %rax, -136(%rbp)
+	addq $16, -136(%rbp)
+	movq fromspace_end(%rip), %rax
+	movq %rax, -144(%rbp)
+	movq -136(%rbp), %rax
+	cmpq %rax, -144(%rbp)
 	sete %al
-	movzbq %al, %rcx
-	cmpq $1, %rcx
-	je then600222
+	movzbq %al, %rax
+	movq %rax, -72(%rbp)
+	cmpq $1, -72(%rbp)
+	je then376892
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
-	movq $0, %rcx
-	jmp end600223
-then600222:
-	movq $0, %rcx
-	movq %rcx, %rcx
-end600223:
-	movq %rcx, %rcx
-	movq free_ptr(%rip), %rcx
+	movq $0, -112(%rbp)
+	jmp end376893
+then376892:
+	movq $0, -120(%rbp)
+	movq -120(%rbp), %rax
+	movq %rax, -112(%rbp)
+end376893:
+	movq -112(%rbp), %rax
+	movq %rax, -48(%rbp)
+	movq free_ptr(%rip), %rax
+	movq %rax, -8(%r15)
 	addq $16, free_ptr(%rip)
-	movq %rcx, %r11
+	movq -8(%r15), %r11
 	movq $3, 0(%r11)
-	movq %rcx, %rcx
-	movq %rcx, %r11
-	movq %rbx, 8(%r11)
-	movq $0, %rbx
-	movq %rbx, %rbx
-	movq %rcx, %rcx
-	movq %rcx, %r11
-	movq 8(%r11), %rbx
-	movq %rcx, %rdi
-	callq *%rbx
-	movq %rax, %rbx
-	movq %rbx, %rax
+	movq -8(%r15), %rax
+	movq %rax, -16(%r15)
+	movq -16(%r15), %r11
+	movq -64(%rbp), %rax
+	movq %rax, 8(%r11)
+	movq $0, -128(%rbp)
+	movq -128(%rbp), %rax
+	movq %rax, -56(%rbp)
+	movq -16(%r15), %rax
+	movq %rax, -24(%r15)
+	movq -24(%r15), %r11
+	movq 8(%r11), %rax
+	movq %rax, -88(%rbp)
+	movq -24(%r15), %rdi
+	callq *-88(%rbp)
+	movq %rax, -104(%rbp)
+	movq -104(%rbp), %rax
 
-	addq $40, %rsp
-	subq $0, %r15
+	addq $152, %rsp
+	subq $24, %r15
 	popq %rbx
 	popq %r12
 	popq %r13

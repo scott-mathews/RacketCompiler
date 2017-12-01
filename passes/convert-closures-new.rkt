@@ -30,13 +30,16 @@
      ; update the global list of function names
      (set! function-names (make-f-list defs))
 
-     `(program ,type ,@(map convert-define defs) ,@lambda-defines ,(convert-exp body))]))
+     (define converted-body (convert-exp body))
+     (define converted-defines (map convert-define defs))
+     
+     `(program ,type ,@converted-defines ,@lambda-defines ,converted-body)]))
 
 (define (convert-define def)
   (match def
     [`(define (,fn ,args ...) ,body)
      ; update the types in the function signature and process the body
-     `(define ((has-type ,(second fn) ,(fix-type (third fn))) ,@(map (lambda (arg) `(has-type ,(second arg) ,(fix-type (third arg)))) args))
+     `(define ((has-type ,(second fn) ,(fix-type (third fn))) (has-type closure Closure) ,@(map (lambda (arg) `(has-type ,(second arg) ,(fix-type (third arg)))) args))
         ,(convert-exp body))]))
 
 ; convert expressions
@@ -69,6 +72,8 @@
            ; name e.g. (has-type (function-ref lambda1) (_ Integer -> Integer))
            ; free-vars e.g. `( (has-type y134 Integer) (has-type b343 Boolean) )
            (define-values (name free-vars) (make-define-from-lambda e))
+
+           (set! updated-expression-type `(Vector ,(third name) ,@(map (lambda (var) (third var)) free-vars)))
            
            ; the actual return is a vector containing a reference to the new lambda function
            ; and the free variables passed into that function
@@ -130,7 +135,7 @@
 
      ; Put together the final define!
      (define new-define
-       `(define ((has-type ,name ,(fix-type type)) ,@(map (lambda (arg) `(,(first arg) ,(second arg) ,(fix-type (third arg)))) args))
+       `(define ((has-type ,name ,(fix-type type)) (has-type closure Closure) ,@(map (lambda (arg) `(,(first arg) ,(second arg) ,(fix-type (third arg)))) args))
           ,define-body))
 
      ; Add that define to the global list tracking new defines
@@ -148,7 +153,7 @@
     (set! lets (cons `(has-type (let ((,(second var) (has-type (vector-ref (has-type closure Closure) (has-type ,vector-ctr Integer)) ,(third var))))
                         placeholder)
                                 ; This is a guess. I may have to do more complex stuff to get the right type here
-                                ,(third var))
+                                ,(fix-type (third var)))
                      lets))
     (set! vector-ctr (add1 vector-ctr)))
 
@@ -185,6 +190,7 @@
                              '()
                              `((has-type ,v ,t)))]
       [`(has-type ,v ,t) #:when (terminal? v) '()]
+      [`(has-type (function-ref ,v) ,t) '()]
       [`(has-type (let ((,var ,e)) ,body) ,type)
        (append ((find-free-vars (cons var env)) e) ((find-free-vars (cons var env)) body))]
       [`(has-type (lambda (,args* ...) ,body) ,type)
@@ -207,6 +213,7 @@
     [`Integer type]
     [`Boolean type]
     [`Void    type]
+    [`Closure type]
 
     ; Vectors are traversed through recursively
     [`(Vector ,types ...) `(Vector ,@(map fix-type types))]
