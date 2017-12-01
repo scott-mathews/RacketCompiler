@@ -13,7 +13,7 @@
 (require "passes/typecheck.rkt")
 (require "passes/uniquify.rkt")
 (require "passes/reveal-functions.rkt")
-(require "passes/convert-closures.rkt")
+(require "passes/convert-closures-new.rkt")
 (require "passes/expose-allocation-new.rkt")
 (require "passes/flatten.rkt")
 (require "passes/select-instructions-new.rkt")
@@ -115,7 +115,7 @@
 (define r5-passes
   `( ("uniquify"            ,(uniquify '())         ,interp-scheme)
      ("reveal functions"    ,(reveal-functions '()) ,interp-scheme)
-     ;("convert-closures"    ,convert-closures       ,interp-scheme)
+     ("convert-closures"    ,convert-closures       ,interp-scheme)
      ("expose-allocation"   ,expose-allocation      ,interp-scheme)
      ("flatten"             ,flatten                ,interp-C)
      ("select-instructions" ,select-instructions    ,interp-x86)

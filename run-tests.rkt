@@ -66,7 +66,7 @@
 
 ;;; === R5 Tests === ;;;
 ;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r5" (range 1 23))
-(compiler-tests "r5 compiler" (type-check '()) r5-passes "r5" (range 1 14))
-;(my-run-tests passes "r5" (range 1 14) "" "flatten")
+(compiler-tests "r5 compiler" (type-check '()) r5-passes "r5" (range 50 51))
+;(my-run-tests passes "r5" (range 50 51) "")
 
 (display "tests passed!") (newline)

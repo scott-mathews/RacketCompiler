@@ -6,31 +6,28 @@ main:
 	pushq %r13
 	pushq %r12
 	pushq %rbx
-	subq $120, %rsp
+	subq $88, %rsp
 	movq $16384, %rdi 
 	movq $16, %rsi 
 	callq initialize 
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $10, -48(%rbp)
-	addq $11, -48(%rbp)
-	movq $4, -72(%rbp)
-	negq -72(%rbp)
-	movq $25, -64(%rbp)
-	movq -72(%rbp), %rax
-	addq %rax, -64(%rbp)
-	movq -48(%rbp), %rax
-	movq %rax, -56(%rbp)
-	movq -64(%rbp), %rax
-	addq %rax, -56(%rbp)
-	movq -56(%rbp), %rax
+	movq $10, %rcx
+	addq $11, %rcx
+	movq $4, %rbx
+	negq %rbx
+	movq $25, %rdx
+	addq %rbx, %rdx
+	movq %rcx, %rbx
+	addq %rdx, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
 	callq	print_int
 	subq $0, %r15
-	addq $120, %rsp
+	addq $88, %rsp
 	movq $0, %rax
 	popq %rbx
 	popq %r12

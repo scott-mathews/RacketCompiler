@@ -140,8 +140,41 @@
                                      (values v `(,@(values assignments) (assign ,v (,op ,@flat-exps))) (cons (cons v t) (foldr append '() vars)))]
     ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;   Duplicate Type Handling   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; When we perform closure conv- ;
+; ersion, we end up changing    ;
+; some types in one place, but  ;
+; not in other places. To fix   ;
+; this problem, we take the     ;
+; simpler approach of resolving ;
+; type conflicts by choosin the ;
+; longer type. This is because  ;
+; when we mangle the types, we  ;
+; never make them shorter. Only ;
+; longer. Thus, the new/proper  ;
+; type will be the longer one.  ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (cleanup vars)
-  (set->list (list->set vars)))
+  ; first we get rid of any exact (var .type) duplicates
+  (set! vars (set->list (list->set vars)))
+  ; now we initialize an empty association list of vars
+  (define new-vars '())
+  ; we iterate through every variable
+  (for ([var vars])
+    (define found-type (lookup (car var) new-vars #f))
+    ; if the variable is not yet in new-vars, add it in there
+    ; otherwise we need to make sure new-vars has the type of
+    ; whichever is longer, the currently inspected version of
+    ; var's type, or looked-up version of var's type
+    (if (and found-type (list? (cdr var)))
+        (if (or (not (list? found-type)) (> (length (cdr var)) (length found-type)))
+            (set! new-vars (cons var (remove (cons (car var) found-type) new-vars)))
+            (void))
+        (set! new-vars (cons var new-vars))))
+  new-vars)
 
 ; Makes it so there is only one copy of each var
 (define (check-duplicate-vars vars)
