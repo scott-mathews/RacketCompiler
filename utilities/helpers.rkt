@@ -8,9 +8,22 @@
          update-arg-format make-f-list make-typed-f-list cmp?
          move-like-op? add-like-op? neg-like-op? call-like-op?)
 
-;;;;;;;;;;;
-; Helpers ;
-;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;
+; ==> Helpers <== ;
+;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Dynamic Typing Helpers ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (tagof type)
+  (match type
+    [`Integer 1]
+    [`Boolean 4]
+    [`(Vector ,types ...) 2]
+    [`(Vectorof ,types ...) 2]
+    [`(,input-types ... -> ,output-type) 3]
+    [`Void 5]))
 
 ;;
 ; Register Allocation Helpers ;
