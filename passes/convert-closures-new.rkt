@@ -29,18 +29,39 @@
 
      ; update the global list of function names
      (set! function-names (make-f-list defs))
+     (set! lambda-defines '())
+     (set! lambda-counter 0)
 
      (define converted-body (convert-exp body))
      (define converted-defines (map convert-define defs))
      
      `(program ,type ,@converted-defines ,@lambda-defines ,converted-body)]))
 
+
+;(define (fix-define-type def)
+;  (match def
+;    [`(define (,fn ,args ...) ,body)
+;
+;     (define input-types (map third args))
+;     (define output-type (third body))
+;
+;     (if (function-type output-type)
+;         (set! output-type `(Vector ,(fix-type output-type))))
+;
+;     ()
+;     
+;     `(define (,) ,body)]))
+
+
 (define (convert-define def)
   (match def
     [`(define (,fn ,args ...) ,body)
+
+     (define converted-body (convert-exp body))
+     
      ; update the types in the function signature and process the body
-     `(define ((has-type ,(second fn) ,(fix-type (third fn))) (has-type closure Closure) ,@(map (lambda (arg) `(has-type ,(second arg) ,(fix-type (third arg)))) args))
-        ,(convert-exp body))]))
+     `(define ((has-type ,(second fn) ,(third converted-body)) (has-type closure Closure) ,@(map (lambda (arg) `(has-type ,(second arg) ,(fix-type (third arg)))) args))
+        ,converted-body)]))
 
 ; convert expressions
 (define (convert-exp e)
@@ -85,17 +106,33 @@
           [`(app ,exp ,exps ...)
 
            (define closure-expression (convert-exp exp))
+           (define converted-arguments (map convert-exp exps))
            
            ; make a new variables to store the closure
            (define closure-variable `(has-type ,(gensym 'appclos) ,(third closure-expression)))
 
-           `(let ((,(second closure-variable) ,(convert-exp exp)))
-              (has-type (app (has-type (vector-ref ,closure-variable (has-type 0 Integer)) ,(fix-type (third exp))) ,closure-variable ,@(map convert-exp exps)) ,updated-expression-type))
+           ;(displayln closure-expression)
+           ; update the output type based on the new output type
+           ;(set! updated-expression-type
+           ;      (match (second (third closure-expression))
+           ;        [`(,input-types ... -> ,output-type) output-type]))
+           
+           
+           `(let ((,(second closure-variable) ,closure-expression))
+              (has-type (app (has-type (vector-ref ,closure-variable (has-type 0 Integer)) ,(second (third closure-expression)))
+                             ,closure-variable
+                             ,@converted-arguments)
+                        ,updated-expression-type))
            ]
 
           ; Lets are trivially recursed upon
           [`(let ((,name ,exp)) ,body)
-           `(let ((,name ,(convert-exp exp))) ,(convert-exp body))]
+
+           (define converted-body (convert-exp body))
+           
+           (set! updated-expression-type (third converted-body))
+           
+           `(let ((,name ,(convert-exp exp))) ,converted-body)]
 
           ; Ifs are trivially recursed upon
           [`(if ,cnd ,thn ,els)
@@ -157,7 +194,7 @@
                      lets))
     (set! vector-ctr (add1 vector-ctr)))
 
-  (reverse lets))
+  lets)
 
 ; takes a list of lets
 ; and inserts the lets sequentially into each other.
@@ -222,6 +259,7 @@
     ; therefore when we see a function type, we add Closure
     ; to represent the closure.
     [`(,input-types ... -> ,output-type) `(Closure ,@(map fix-type input-types) -> ,(fix-type output-type))]))
+
 
 
 
