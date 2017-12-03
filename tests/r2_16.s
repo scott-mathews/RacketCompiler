@@ -15,19 +15,19 @@ main:
 
 	movq $1, %rax
 	cmpq $1, %rax
-	je then549232
+	je then22015
 	movq $0, %rbx
-	jmp end549233
-then549232:
+	jmp end22016
+then22015:
 	movq $1, %rbx
-end549233:
+end22016:
 	cmpq $1, %rbx
-	je then549234
+	je then22017
 	movq $777, %rbx
-	jmp end549235
-then549234:
+	jmp end22018
+then22017:
 	movq $42, %rbx
-end549235:
+end22018:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

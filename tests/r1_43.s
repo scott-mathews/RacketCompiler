@@ -17,18 +17,18 @@ main:
 	movq $46, %rdx
 	movq %rbx, %rbx
 	addq $7, %rbx
-	movq %rbx, %rcx
-	movq $4, %rbx
-	addq %rcx, %rbx
 	movq %rbx, %rbx
-	movq %rcx, %rcx
-	addq %rdx, %rcx
-	movq %rcx, %rcx
-	movq %rbx, %rbx
-	negq %rbx
-	movq %rcx, %rcx
+	movq $4, %rcx
 	addq %rbx, %rcx
-	movq %rcx, %rax
+	movq %rcx, %rcx
+	movq %rbx, %rbx
+	addq %rdx, %rbx
+	movq %rbx, %rbx
+	movq %rcx, %rcx
+	negq %rcx
+	movq %rbx, %rbx
+	addq %rcx, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi

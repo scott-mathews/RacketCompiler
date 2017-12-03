@@ -29,7 +29,7 @@
 (provide uniquify-pass flatten-pass select-instructions-pass
          allocate-registers-pass patch-instructions-pass type-check
          lower-conditionals-pass r5-passes expose-allocation-pass
-         reveal-functions-pass passes)
+         reveal-functions-pass passes r3-passes r4-passes)
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
@@ -126,6 +126,9 @@
      ("lower-conditionals"  ,lower-conditionals     ,interp-x86)
      ("patch-instructions"  ,patch-instructions     ,interp-x86)
      ("print-x86"           ,print-x86              ,interp-x86)))
+
+(define r3-passes r5-passes)
+(define r4-passes r5-passes)
 
 (define passes
   (cons `("type-check" ,(type-check '()) ,interp-scheme) r5-passes))
