@@ -55,16 +55,16 @@ main:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then12448
+	je then23877
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end12449
-then12448:
+	jmp end23878
+then23877:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end12449:
+end23878:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)

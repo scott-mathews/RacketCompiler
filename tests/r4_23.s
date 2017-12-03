@@ -16,27 +16,27 @@ function0:
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then8926
+	je then20442
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
 	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
-	addq $16, %rdx
-	movq fromspace_end(%rip), %rcx
-	cmpq %rdx, %rcx
+	movq %rcx, %rcx
+	addq $16, %rcx
+	movq fromspace_end(%rip), %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then8928
+	je then20444
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end8929
-then8928:
+	jmp end20445
+then20444:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end8929:
+end20445:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -47,24 +47,24 @@ end8929:
 	movq %rbx, 8(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
-	movq %rcx, %rdx
-	movq %rdx, %r11
+	movq %rcx, %rcx
+	movq %rcx, %r11
 	movq 8(%r11), %rbx
-	movq $1, %rsi
-	negq %rsi
-	movq %r12, %rcx
-	addq %rsi, %rcx
-	movq %rdx, %rdi
-	movq %rcx, %rsi
+	movq $1, %rdx
+	negq %rdx
+	movq %r12, %rsi
+	addq %rdx, %rsi
+	movq %rcx, %rdi
+	movq %rsi, %rsi
 	callq *%rbx
 	movq %rax, %rbx
 	movq %r12, %rcx
 	addq %rbx, %rcx
 	movq %rcx, %rbx
-	jmp end8927
-then8926:
+	jmp end20443
+then20442:
 	movq $1, %rbx
-end8927:
+end20443:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -94,23 +94,23 @@ main:
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
 	movq free_ptr(%rip), %rcx
-	movq %rcx, %rcx
-	addq $16, %rcx
-	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
+	movq %rcx, %rdx
+	addq $16, %rdx
+	movq fromspace_end(%rip), %rcx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then8930
+	je then20446
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end8931
-then8930:
+	jmp end20447
+then20446:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end8931:
+end20447:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -133,12 +133,12 @@ end8931:
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then8932
+	je then20448
 	movq $777, %rbx
-	jmp end8933
-then8932:
+	jmp end20449
+then20448:
 	movq $42, %rbx
-end8933:
+end20449:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

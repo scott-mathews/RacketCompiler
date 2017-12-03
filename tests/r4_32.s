@@ -17,27 +17,27 @@ function0:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then9572
+	je then21039
 	leaq function0(%rip), %rcx
 	movq %rcx, %r12
 	movq free_ptr(%rip), %rcx
-	movq %rcx, %rcx
-	addq $16, %rcx
-	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
+	movq %rcx, %rdx
+	addq $16, %rdx
+	movq fromspace_end(%rip), %rcx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then9574
+	je then21041
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end9575
-then9574:
+	jmp end21042
+then21041:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end9575:
+end21042:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -60,16 +60,16 @@ end9575:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then9576
+	je then21043
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end9577
-then9576:
+	jmp end21044
+then21043:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end9577:
+end21044:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -91,8 +91,8 @@ end9577:
 	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end9573
-then9572:
+	jmp end21040
+then21039:
 	movq free_ptr(%rip), %rbx
 	movq %rbx, %rcx
 	addq $8, %rcx
@@ -101,16 +101,16 @@ then9572:
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then9578
+	je then21045
 	movq %r15, %rdi
 	movq $8, %rsi
 	callq collect
 	movq $0, %rbx
-	jmp end9579
-then9578:
+	jmp end21046
+then21045:
 	movq $0, %rbx
 	movq %rbx, %rbx
-end9579:
+end21046:
 	movq %rbx, %rbx
 	movq free_ptr(%rip), %rbx
 	addq $8, free_ptr(%rip)
@@ -118,7 +118,7 @@ end9579:
 	movq $1, 0(%r11)
 	movq %rbx, %rbx
 	movq %rbx, %rbx
-end9573:
+end21040:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -150,23 +150,23 @@ main:
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
 	movq free_ptr(%rip), %rcx
-	movq %rcx, %rcx
-	addq $16, %rcx
-	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
+	movq %rcx, %rdx
+	addq $16, %rdx
+	movq fromspace_end(%rip), %rcx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then9580
+	je then21047
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end9581
-then9580:
+	jmp end21048
+then21047:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end9581:
+end21048:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -195,16 +195,16 @@ end9581:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then9582
+	je then21049
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end9583
-then9582:
+	jmp end21050
+then21049:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end9583:
+end21050:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -225,23 +225,23 @@ end9583:
 	movq %rbx, -16(%r15)
 	movq $42, %rbx
 	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
-	addq $32, %rdx
-	movq fromspace_end(%rip), %rcx
-	cmpq %rdx, %rcx
+	movq %rcx, %rcx
+	addq $32, %rcx
+	movq fromspace_end(%rip), %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then9584
+	je then21051
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end9585
-then9584:
+	jmp end21052
+then21051:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end9585:
+end21052:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $32, free_ptr(%rip)

@@ -19,14 +19,14 @@ main:
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then3830
+	je then15742
 	movq $777, %rbx
-	jmp end3831
-then3830:
+	jmp end15743
+then15742:
 	callq read_int
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end3831:
+end15743:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

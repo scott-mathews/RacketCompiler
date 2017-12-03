@@ -10,28 +10,28 @@ function0:
 	addq $0, %r15
 
 	movq %rdi, %rbx
-	movq %rsi, %rcx
-	movq %rdx, %r9
-	movq %rcx, %rsi
-	movq %r8, %r10
-	movq %r9, %rbx
-	movq 16(%rbp), %rdx
-	movq 24(%rbp), %rdi
-	movq 32(%rbp), %r8
-	movq %rdi, %rdi
-	addq %r8, %rdi
+	movq %rsi, %r8
 	movq %rdx, %rdx
-	addq %rdi, %rdx
-	movq %rbx, %rbx
-	addq %rdx, %rbx
-	movq %r10, %rdx
-	addq %rbx, %rdx
-	movq %rsi, %rbx
-	addq %rdx, %rbx
-	movq %r9, %rdx
-	addq %rbx, %rdx
 	movq %rcx, %rbx
-	addq %rdx, %rbx
+	movq %r8, %rsi
+	movq %r9, %rdi
+	movq 16(%rbp), %rcx
+	movq 24(%rbp), %r9
+	movq 32(%rbp), %r10
+	movq %r9, %r9
+	addq %r10, %r9
+	movq %rcx, %rcx
+	addq %r9, %rcx
+	movq %rdi, %rdi
+	addq %rcx, %rdi
+	movq %rsi, %rcx
+	addq %rdi, %rcx
+	movq %rbx, %rbx
+	addq %rcx, %rbx
+	movq %rdx, %rcx
+	addq %rbx, %rcx
+	movq %r8, %rbx
+	addq %rcx, %rbx
 	movq %rbx, %rax
 
 	addq $64, %rsp
@@ -68,16 +68,16 @@ main:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then8877
+	je then20398
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end8878
-then8877:
+	jmp end20399
+then20398:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end8878:
+end20399:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
