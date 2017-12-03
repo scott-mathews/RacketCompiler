@@ -45,7 +45,7 @@
 ;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r3" (range 50 51))
-(compiler-tests "r3 compiler" (type-check '()) r5-passes "r3" (range 1 37))
+(compiler-tests "r3 compiler" (type-check '()) r3_passes "r3" (range 1 37))
 ;(my-run-tests passes "r3" (range 50 51) "")
 
 ;;; === R4 Tests === ;;;
@@ -57,7 +57,7 @@
 ;(interp-tests "allocate-registers" (typecheck-R3 '()) allocate-registers-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r4" (range 1 39))
-(compiler-tests "r4 compiler" (type-check '()) r5-passes "r4" (range 1 39));
+(compiler-tests "r4 compiler" (type-check '()) r4_passes "r4" (range 1 39));
 ;(my-run-tests passes "r4" (range 1 2) "" "expose-allocation")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;

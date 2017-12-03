@@ -20,16 +20,16 @@ function0:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then26823
+	je then8463
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end26824
-then26823:
+	jmp end8464
+then8463:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end26824:
+end8464:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
