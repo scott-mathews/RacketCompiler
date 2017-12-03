@@ -17,27 +17,27 @@ function0:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then21039
+	je then43352
 	leaq function0(%rip), %rcx
 	movq %rcx, %r12
+	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
-	addq $16, %rdx
-	movq fromspace_end(%rip), %rcx
+	movq %rcx, %rcx
+	addq $16, %rcx
 	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then21041
+	je then43354
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end21042
-then21041:
+	jmp end43355
+then43354:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end21042:
+end43355:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -52,24 +52,24 @@ end21042:
 	movq -8(%r15), %r11
 	movq 8(%r11), %r12
 	movq %rbx, %rbx
+	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
 	movq %rcx, %rcx
 	addq $16, %rcx
-	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then21043
+	je then43356
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end21044
-then21043:
+	jmp end43357
+then43356:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end21044:
+end43357:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -81,36 +81,36 @@ end21044:
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %r11
-	movq 8(%r11), %rcx
-	movq $1, %rbx
-	negq %rbx
-	movq %rcx, %rcx
-	addq %rbx, %rcx
+	movq 8(%r11), %rbx
+	movq $1, %rcx
+	negq %rcx
+	movq %rbx, %rbx
+	addq %rcx, %rbx
 	movq -8(%r15), %rdi
-	movq %rcx, %rsi
+	movq %rbx, %rsi
 	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end21040
-then21039:
-	movq free_ptr(%rip), %rbx
-	movq %rbx, %rcx
-	addq $8, %rcx
+	jmp end43353
+then43352:
 	movq fromspace_end(%rip), %rbx
-	cmpq %rcx, %rbx
+	movq free_ptr(%rip), %rcx
+	movq %rcx, %rcx
+	addq $8, %rcx
+	cmpq %rbx, %rcx
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then21045
+	je then43358
 	movq %r15, %rdi
 	movq $8, %rsi
 	callq collect
 	movq $0, %rbx
-	jmp end21046
-then21045:
+	jmp end43359
+then43358:
 	movq $0, %rbx
 	movq %rbx, %rbx
-end21046:
+end43359:
 	movq %rbx, %rbx
 	movq free_ptr(%rip), %rbx
 	addq $8, free_ptr(%rip)
@@ -118,7 +118,7 @@ end21046:
 	movq $1, 0(%r11)
 	movq %rbx, %rbx
 	movq %rbx, %rbx
-end21040:
+end43353:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -149,24 +149,24 @@ main:
 
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
-	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
-	addq $16, %rdx
 	movq fromspace_end(%rip), %rcx
-	cmpq %rdx, %rcx
+	movq free_ptr(%rip), %rdx
+	movq %rdx, %rdx
+	addq $16, %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then21047
+	je then43360
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end21048
-then21047:
+	jmp end43361
+then43360:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end21048:
+end43361:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -187,24 +187,24 @@ end21048:
 	movq %rbx, -8(%r15)
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
+	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
-	movq %rcx, %rdx
-	addq $16, %rdx
-	movq fromspace_end(%rip), %rcx
+	movq %rcx, %rcx
+	addq $16, %rcx
 	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then21049
+	je then43362
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end21050
-then21049:
+	jmp end43363
+then43362:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end21050:
+end43363:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -224,24 +224,24 @@ end21050:
 	movq %rax, %rbx
 	movq %rbx, -16(%r15)
 	movq $42, %rbx
+	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
 	movq %rcx, %rcx
 	addq $32, %rcx
-	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then21051
+	je then43364
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end21052
-then21051:
+	jmp end43365
+then43364:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end21052:
+end43365:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $32, free_ptr(%rip)

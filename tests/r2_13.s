@@ -15,27 +15,27 @@ main:
 
 	movq $1, %rbx
 	cmpq $1, %rbx
-	je then15633
+	je then37411
 	movq $0, %rbx
-	jmp end15634
-then15633:
+	jmp end37412
+then37411:
 	movq %rbx, %rbx
-end15634:
+end37412:
 	cmpq $1, %rbx
-	je then15635
+	je then37413
 	movq $0, %rbx
-	jmp end15636
-then15635:
+	jmp end37414
+then37413:
 	movq $1, %rbx
-end15636:
+end37414:
 	movq %rbx, %rbx
 	cmpq $1, %rbx
-	je then15637
+	je then37415
 	movq $777, %rbx
-	jmp end15638
-then15637:
+	jmp end37416
+then37415:
 	movq $42, %rbx
-end15638:
+end37416:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

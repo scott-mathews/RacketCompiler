@@ -58,7 +58,7 @@
 ;(interp-tests "lower conditionals" (type-check '()) lower-conditionals-pass interp-scheme "r3" (range 1 37))
 ;(interp-tests "patch instructions" (type-check '()) patch-instructions-pass interp-scheme "r4" (range 1 39))
 (compiler-tests "r4 compiler" (type-check '()) r4_passes "r4" (range 1 39));
-;(my-run-tests passes "r4" (range 1 2) "" "expose-allocation")
+;(my-run-tests passes "r4" (range 4 5) "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;; New Tests ;;;;;;
@@ -66,7 +66,7 @@
 
 ;;; === R5 Tests === ;;;
 ;(interp-tests "uniquify" (type-check '()) uniquify-pass interp-R4 "r5" (range 1 23))
-;(compiler-tests "r5 compiler" (type-check '()) r5-passes "r5" (range 1 14))
-;(my-run-tests passes "r5" (range 6 7) ""); "convert-closures")
+(compiler-tests "r5 compiler" (type-check '()) r5-passes "r5" (range 1 14))
+;(my-run-tests passes "r5" (range 4 5) ""); "convert-closures")
 
 (display "tests passed!") (newline)

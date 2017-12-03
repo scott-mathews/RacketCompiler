@@ -80,7 +80,7 @@
           ; function-refs are put into vectors
           [`(function-ref ,name)
            ; make sure we take note that we are putting the function-ref in a vector
-           (set! updated-expression-type `(Vector ,updated-expression-type))
+           ;(set! updated-expression-type `(Vector ,updated-expression-type))
            
            `(vector (has-type (function-ref ,name) ,(second updated-expression-type)))
            ]
@@ -178,7 +178,7 @@
      ; Add that define to the global list tracking new defines
      (set! lambda-defines (cons new-define lambda-defines))
 
-     (values `(has-type (function-ref ,name) ,(fix-type type)) free-vars)]))
+     (values `(has-type (function-ref ,name) ,(cadr (fix-type type))) free-vars)]))
 
 ; Make a list of lets which assign closure stuff to free vars!!!!
 (define (make-lambda-lets free-vars)
@@ -258,7 +258,7 @@
     ; Every function takes a closure as its first variable
     ; therefore when we see a function type, we add Closure
     ; to represent the closure.
-    [`(,input-types ... -> ,output-type) `(Closure ,@(map fix-type input-types) -> ,(fix-type output-type))]))
+    [`(,input-types ... -> ,output-type) `(Vector ((Vector Closure) ,@(map fix-type input-types) -> ,(fix-type output-type)))]))
 
 
 
