@@ -44,11 +44,18 @@
     [`xorq #t]
     [`cmpq #t]
     [(? cmp?) #t]
+    ; Dec 4: Added R7 instrs
+    [`orq #t]
+    [`salq #t]
+    [`sarq #t]
+    [`andq #t]
+    
     [else #f]))
 
 (define (neg-like-op? op)
   (match op
     [`negq #t]
+    [`notq #t]
     [`indirect-callq #t]
     [else #f]))
 

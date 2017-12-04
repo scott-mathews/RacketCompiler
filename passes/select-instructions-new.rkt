@@ -50,15 +50,22 @@
   (* 8 (add1 n)))
 
 ; replace marker in instructions with expression
+; iterates through some instructions, then iterates
+; through each arg of the instruction, replacing the
+; instr args indicated for replacement by assoc list
+; marker mappings
+; Dec 4: added if following
 (define (replace-marker stmts marker-mappings)
+  (define replace-arg (lambda (instr-arg)
+                        (if
+                         (member instr-arg (map car marker-mappings))
+                         (lookup instr-arg marker-mappings)
+                         instr-arg)))
   (map (lambda (instr)
-         (if (list? instr)
-             (map (lambda (instr-arg)
-                    (if
-                     (member instr-arg (map car marker-mappings))
-                     (lookup instr-arg marker-mappings)
-                     instr-arg)) instr)
-             instr)) stmts))
+         (match instr 
+           [`(if ,cnd ,thn ,els)
+            `(if ,(map replace-arg cnd) ,(replace-marker thn marker-mappings) ,(replace-marker els marker-mappings))]
+           [else (map replace-arg instr)])) stmts))
 
 ; converts an exp form from its C to its x86 equivalent.
 (define (convert-exp exp)
@@ -84,7 +91,7 @@
                             ; All other types
                             [else `((movq ,(convert-arg arg) lhs)
                                     (salq (int 3) lhs)
-                                    (orq (int ,(tagof type) lhs)))])]
+                                    (orq (int ,(tagof type)) lhs))])]
 
     
     [`(project ,arg ,type) (cond

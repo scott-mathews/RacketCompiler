@@ -148,7 +148,7 @@
                        (i . < . (length ts)))
             (error `type-check "invalid index ~a" i))
           (let ([t (list-ref ts i)])
-            (values `(has-type (inject (has-type (vector-ref (has-type (project ,e (Vector ,@ts)) (Vector ,@ts)) (has-type ,i Integer)) ,t) ,t) Any)
+            (values `(has-type (vector-ref (has-type (project ,e (Vector ,@ts)) (Vector ,@ts)) (has-type ,i Integer)) ,t)
                     t))]
          [`(Vectorof ,t)
           (unless (exact-nonnegative-integer? i)

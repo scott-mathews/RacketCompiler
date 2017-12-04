@@ -124,7 +124,7 @@
 
            (define closure-variable-t (if (list? (third closure-expression))
                                           (second (third closure-expression))
-                                          `Any))
+                                          `(Any -> Any)))
            
            
            `(let ((,(second closure-variable) ,closure-expression))
