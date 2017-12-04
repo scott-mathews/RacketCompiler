@@ -6,7 +6,7 @@
 (provide function-type terminal? map-me remove-duplicate-movq cmp->cc
          look-up-type get-function-type get-lambda-type get-lambda-env
          update-arg-format make-f-list make-typed-f-list cmp?
-         move-like-op? add-like-op? neg-like-op? call-like-op?)
+         move-like-op? add-like-op? neg-like-op? call-like-op? tagof)
 
 ;;;;;;;;;;;;;;;;;;;
 ; ==> Helpers <== ;

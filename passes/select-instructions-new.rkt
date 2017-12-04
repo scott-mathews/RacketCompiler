@@ -75,6 +75,36 @@
     ; Handle Operations ;
     ;;;;;;;;;;;;;;;;;;;;;
 
+    ;; Project and Inject ;;
+    [`(inject ,arg ,type) (cond
+                            ; Vectors and Procedures
+                            [(list? type) `((movq ,(convert-arg arg) lhs)
+                                            (orq (int ,(tagof type)) lhs))]
+
+                            ; All other types
+                            [else `((movq ,(convert-arg arg) lhs)
+                                    (salq (int 3) lhs)
+                                    (orq (int ,(tagof type) lhs)))])]
+
+    
+    [`(project ,arg ,type) (cond
+                             ; Vectors and Procedures
+                             [(list? type) `((movq ,(convert-arg arg) lhs)
+                                             (andq (int 7) lhs)
+                                             (if (eq? lhs (int ,(tagof type)))
+                                                 ((movq (int 7) lhs)
+                                                  (notq lhs)
+                                                  (andq ,(convert-arg arg) lhs))
+                                                 ((callq exit))))]
+
+                             ; All other types
+                             [else `((movq ,(convert-arg arg) lhs)
+                                     (andq (int 7) lhs)
+                                     (if (eq? lhs (int ,(tagof type)))
+                                         ((movq ,(convert-arg arg) lhs)
+                                          (sarq (int 3) lhs))
+                                         ((callq exit))))])]
+    
     ;; Function Operations ;;
     [`(app ,arg ,args ...) `(,@(move-arguments args)
                              ; I believe the below code is unnecessary. On your next trip
