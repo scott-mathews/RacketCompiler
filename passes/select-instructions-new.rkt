@@ -51,14 +51,21 @@
 
 ; replace marker in instructions with expression
 (define (replace-marker stmts marker-mappings)
+  (define replace-arg (lambda (instr-arg)
+                        (if
+                         (member instr-arg (map car marker-mappings))
+                         (lookup instr-arg marker-mappings)
+                         instr-arg)))
   (map (lambda (instr)
-         (if (list? instr)
-             (map (lambda (instr-arg)
-                    (if
-                     (member instr-arg (map car marker-mappings))
-                     (lookup instr-arg marker-mappings)
-                     instr-arg)) instr)
-             instr)) stmts))
+         (cond
+           [(equal? `if (car instr))
+            `(if ,(map replace-arg (second instr))
+                 ,(replace-marker (third instr) marker-mappings)
+                 ,(replace-marker (fourth instr) marker-mappings))]
+           [(list? instr)
+            (map replace-arg instr)]
+           [else instr]))
+       stmts))
 
 ; converts an exp form from its C to its x86 equivalent.
 (define (convert-exp exp)
@@ -75,6 +82,45 @@
     ; Handle Operations ;
     ;;;;;;;;;;;;;;;;;;;;;
 
+    ;; Injection/Projection ;;
+    [`(inject ,arg ,t) (cond
+                         ; Argument is a vector or function
+                         ; the last three bits are already 0
+                         ; so we simply change them to the tag
+                         [(list? t) `((movq ,(convert-arg arg) lhs)
+                                      (orq (int ,(tagof t)) lhs))]
+                         
+                         ; Any other kind of argument
+                         ; Shift the argument left 3, then
+                         ; change the last 3 bits to the tag
+                         [else `((movq ,(convert-arg arg) lhs)
+                                 (salq (int 3) lhs)
+                                 (orq (int ,(tagof t)) lhs))])]
+
+    [`(project ,arg ,t) (cond
+                          ; Argument is a vector or function
+                          ; so we zero out the right three bits
+                          ; (or exit if we find an unexpected
+                          ; type there.
+                          [(list? t) `((movq ,(convert-arg arg) lhs)
+                                       (andq (int 7) lhs)
+                                       (if (eq? lhs (int ,(tagof t)))
+                                           ((movq (int 7) lhs)
+                                            (notq lhs)
+                                            (andq ,(convert-arg arg) lhs))
+                                           ((callq exit))))]
+                          
+                          ; Argument is not a vector or a function
+                          ; so we shift right by three bits
+                          ; (or exit if unexpected type there)
+                          [else `((movq ,(convert-arg arg) lhs)
+                                  (andq (int 7) lhs)
+                                  (if (eq? lhs (int ,(tagof t)))
+                                      ((movq ,(convert-arg arg) lhs)
+                                       (sarq (int 3) lhs))
+                                      ((callq exit))))])]
+
+    
     ;; Function Operations ;;
     [`(app ,arg ,args ...) `(,@(move-arguments args)
                              ; I believe the below code is unnecessary. On your next trip
@@ -144,7 +190,7 @@
 (define (build-tag type len)
   (bitwise-ior 1
   (arithmetic-shift
-  (bitwise-ior (length (cdr type))
+  (bitwise-ior len ; changed from (length (cdr type))
   (arithmetic-shift (build-pointer-mask type)
   6))
 1)))

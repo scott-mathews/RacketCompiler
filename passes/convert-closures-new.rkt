@@ -68,6 +68,13 @@
   ; extract type from expression
   
     (match e
+
+      ;;;;;;;;;;;;;;;;;;
+      ; Inject/Project ;
+      ;;;;;;;;;;;;;;;;;;
+      [`(inject ,e ,t) `(inject ,(convert-exp e) ,t)]
+      [`(project ,e ,t) `(inject ,(convert-exp e) ,t)]
+      
       ; terminals remain unchanged
       [t #:when (terminal? t) t]
 
@@ -75,10 +82,8 @@
       [`(function-ref ,name)
        ; make sure we take note that we are putting the function-ref in a vector
        ;(set! updated-expression-type `(Vector ,updated-expression-type))
-
-       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;POINTER TO WHERE WE LEFT OFFF STUFF AFTER AINT DONE
        
-       `(vector (function-ref ,name) )
+       `(inject (vector (inject (function-ref ,name) (Any -> Any))) (Vector (Any -> Any)))
        ]
           
       ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -93,7 +98,7 @@
            
        ; the actual return is a vector containing a reference to the new lambda function
        ; and the free variables passed into that function
-       `(vector ,name ,@free-vars)
+       `(inject (vector ,name ,@free-vars) (Vector (Any -> Any) ,@(map (lambda (free-var) `Any) free-vars)))
        ]
 
       ; In an application, the applied must be a closure, and the first item
@@ -104,7 +109,7 @@
        (define converted-arguments (map convert-exp exps))
            
        ; make a new variables to store the closure
-       (define closure-variable `(has-type ,(gensym 'appclos) ,(third closure-expression)))
+       (define closure-variable (gensym 'appclos))
 
        ;(displayln closure-expression)
        ; update the output type based on the new output type
@@ -113,11 +118,10 @@
        ;        [`(,input-types ... -> ,output-type) output-type]))
            
            
-       `(let ((,(second closure-variable) ,closure-expression))
-          (has-type (app (has-type (vector-ref ,closure-variable (has-type 0 Integer)) ,(second (third closure-expression)))
+       `(let ((,closure-variable ,closure-expression))
+          (app (project (vector-ref ,closure-variable 0) (Any -> Any))
                          ,closure-variable
-                         ,@converted-arguments)
-                    ))
+                         ,@converted-arguments))
        ]
 
       ; Lets are trivially recursed upon
@@ -125,7 +129,6 @@
 
        (define converted-body (convert-exp body))
            
-       
            
        `(let ((,name ,(convert-exp exp))) ,converted-body)]
 
@@ -145,7 +148,7 @@
 ;;;;;;;;;;;;;;;;;;;;
 (define (make-define-from-lambda lam)
   (match lam
-    [`(has-type (lambda (,args ...) ,body) ,type)
+    [`(lambda (,args ...) ,body)
 
      ; process the body of the lambda
      (define processed-body (convert-exp body))
@@ -154,7 +157,7 @@
      (define name (get-lambda-name))
 
      ; make a list of bound variables
-     (define arg-bound-vars (map (lambda (arg) (second arg)) args))
+     (define arg-bound-vars args)
      (define initial-bound-vars (append function-names arg-bound-vars))
      ; find free variables in the lambdas body
      ; free-vars e.g. `( (has-type x123 Integer) (x345 Vector) )
@@ -165,13 +168,13 @@
 
      ; Put together the final define!
      (define new-define
-       `(define ((has-type ,name ,(fix-type type)) (has-type closure Closure) ,@(map (lambda (arg) `(,(first arg) ,(second arg) ,(fix-type (third arg)))) args))
+       `(define (,name closure ,@args)
           ,define-body))
 
      ; Add that define to the global list tracking new defines
      (set! lambda-defines (cons new-define lambda-defines))
 
-     (values `(has-type (function-ref ,name) ,(cadr (fix-type type))) free-vars)]))
+     (values `(inject (function-ref ,name) (Any -> Any)) free-vars)]))
 
 ; Make a list of lets which assign closure stuff to free vars!!!!
 (define (make-lambda-lets free-vars)
@@ -180,10 +183,8 @@
 
   ; Make the lets for the free vars
   (for ([var free-vars])
-    (set! lets (cons `(has-type (let ((,(second var) (has-type (vector-ref (has-type closure Closure) (has-type ,vector-ctr Integer)) ,(third var))))
-                        placeholder)
-                                ; This is a guess. I may have to do more complex stuff to get the right type here
-                                ,(fix-type (third var)))
+    (set! lets (cons `(let ((,var (vector-ref closure ,vector-ctr)))
+                        placeholder)           
                      lets))
     (set! vector-ctr (add1 vector-ctr)))
 
@@ -205,8 +206,8 @@
 (define (insert-into-body enclosing enclosed)
   (match enclosing
     [`placeholder enclosed]
-    [`(has-type (let ((,v ,e)) ,body) ,type)
-     `(has-type (let ((,v ,e)) ,(insert-into-body body enclosed)) ,type)]))
+    [`(let ((,v ,e)) ,body)
+     `(let ((,v ,e)) ,(insert-into-body body enclosed))]))
 
 ; Returns the free variables within an expression
 ; (free variables are variables not bound by anything)
@@ -215,18 +216,18 @@
 (define (find-free-vars env)
   (lambda (exp)
     (match exp
-      [`(has-type ,v ,t) #:when (symbol? v)
-                         (if (member v env)
-                             '()
-                             `((has-type ,v ,t)))]
-      [`(has-type ,v ,t) #:when (terminal? v) '()]
-      [`(has-type (function-ref ,v) ,t) '()]
-      [`(has-type (let ((,var ,e)) ,body) ,type)
+      [v #:when (symbol? v)
+         (if (member v env)
+             '()
+             `(,v))]
+      [v #:when (terminal? v) '()]
+      [`(function-ref ,v) '()]
+      [`(let ((,var ,e)) ,body)
        (append ((find-free-vars (cons var env)) e) ((find-free-vars (cons var env)) body))]
-      [`(has-type (lambda (,args* ...) ,body) ,type)
-       (define new-env (foldr cons env (map (lambda (arg) (second arg)) args*)))
+      [`(lambda (,args* ...) ,body)
+       (define new-env (foldr cons env args*))
        ((find-free-vars new-env) body)]
-      [`(has-type (,op ,args* ...) ,type)
+      [`(,op ,args* ...)
        (foldr append '() (map (find-free-vars env) args*))]
       )))
 

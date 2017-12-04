@@ -40,61 +40,67 @@
      (for ([def defs])
        (set! new-defs (cons (flatten-helper def) new-defs)))
      (define-values (flat-exp assignments vars) (flatten-helper body))
-                   `(program ,(check-duplicate-vars (cleanup vars)) ,type (defines ,@(reverse new-defs)) ,@assignments (return ,flat-exp))]
+                   `(program ,vars ,type (defines ,@(reverse new-defs)) ,@assignments (return ,flat-exp))]
     ))
 
 (define (flatten-helper exp . var)
   ;(display exp)
   (match exp
-    [`(has-type (if ,cnd ,thn ,els) ,t) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
+    [`(inject ,e ,t) (define-values (flat-e assignments vars) (flatten-helper e))
+                     (define v (genvar var))
+                     (values flat-e `(,@assignments (assign ,v (inject ,flat-e ,t))) (cons v vars))]
+    [`(project ,e ,t) (define-values (flat-e assignments vars) (flatten-helper e))
+                     (define v (genvar var))
+                     (values flat-e `(,@assignments (assign ,v (project ,flat-e ,t))) (cons v vars))]
+    [`(if ,cnd ,thn ,els) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
                           (define v (gensym `tmp))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
                           (define-values (flat-els assignments-els vars-els) (flatten-helper els))
                           (values v `(,@assignments-cnd (if (eq? #t ,flat-cnd)
                                                             (,@assignments-thn (assign ,v ,flat-thn))
                                                             (,@assignments-els (assign ,v ,flat-els))))
-                                  (cons (cons v (if (terminal? flat-cnd) `Boolean (lookup flat-thn vars-thn))) (append vars-cnd vars-thn vars-els)))]
-    [`(has-type ,v ,t) #:when (symbol? v) (values v '() (list (cons v t)))]
-    [`(has-type ,n ,t) #:when (fixnum? n) (values n '() '())]
-    [`(has-type ,b ,t) #:when (boolean? b) (values b '() '())]
-    [`(has-type (void) ,t) (define v (genvar var))
-                           (values v `((assign ,v (void))) (list (cons v t)))]
+                                  (cons v (append vars-cnd vars-thn vars-els)))]
+    [v #:when (symbol? v) (values v '() (list v))]
+    [n #:when (fixnum? n) (values n '() '())]
+    [b #:when (boolean? b) (values b '() '())]
+    [`(void) (define v (genvar var))
+            (values v `((assign ,v (void))) (list v))]
     [`(global-value ,name) (define v (genvar var))
-                           (values v `((assign ,v (global-value ,name))) (list (cons v `Integer)))]
-    [`(has-type (collect ,n) Void) (define v (genvar var))
-                                   (values `(void) `((collect ,n)) `())]; (list (cons v `Void)))]
-    [`(has-type (allocate ,n ,t) ,type) (define v (genvar var))
-                                       (values v `((assign ,v (allocate ,n ,t))) (list (cons v t)))]
-    [`(has-type (read) ,t) (define v (genvar var))
-             (values v (list `(assign ,v (read))) (list (cons v t)))]
-    [`(has-type (not ,e) ,t) (define v (genvar var))
+                           (values v `((assign ,v (global-value ,name))) (list v))]
+    [`(collect ,n) (define v (genvar var))
+                   (values `(void) `((collect ,n)) `())]; (list (cons v `Void)))]
+    [`(allocate ,n ,t) (define v (genvar var))
+                       (values v `((assign ,v (allocate ,n ,t))) (list v))]
+    [`(read) (define v (genvar var))
+             (values v (list `(assign ,v (read))) (list v))]
+    [`(not ,e) (define v (genvar var))
                (define-values (flat-exp assignments vars) (flatten-helper e))
-               (values v `(,@assignments (assign ,v (not ,flat-exp))) (cons (cons v t) vars))]
-    [`(has-type (function-ref ,label) ,t) (define v (genvar var))
-                                          (values v `((assign ,v (function-ref ,label))) (list (cons v t)))]
-    [`(has-type (app ,fn ,args* ...) ,t) (define v (genvar var))
-                                         (define-values (fn-exp fn-assignments fn-vars) (flatten-helper fn))
-                                         (define arg-exps '())
-                                         (define arg-assignments '())
-                                         (define arg-vars '())
-                                         (for ([arg (reverse args*)])
-                                           (define-values (arg-exp arg-ass arg-var) (flatten-helper arg))
-                                           (set! arg-exps (cons arg-exp arg-exps))
-                                           (set! arg-assignments (append arg-ass arg-assignments))
-                                           (set! arg-vars (append arg-var arg-vars)))
-                                         (values v `(,@fn-assignments ,@arg-assignments (assign ,v (app, fn-exp ,@arg-exps))) (cons (cons v t) (append arg-vars fn-vars)))]
+               (values v `(,@assignments (assign ,v (not ,flat-exp))) (cons v vars))]
+    [`(function-ref ,label) (define v (genvar var))
+                            (values v `((assign ,v (function-ref ,label))) (list v))]
+    [`(app ,fn ,args* ...) (define v (genvar var))
+                           (define-values (fn-exp fn-assignments fn-vars) (flatten-helper fn))
+                           (define arg-exps '())
+                           (define arg-assignments '())
+                           (define arg-vars '())
+                           (for ([arg (reverse args*)])
+                             (define-values (arg-exp arg-ass arg-var) (flatten-helper arg))
+                             (set! arg-exps (cons arg-exp arg-exps))
+                             (set! arg-assignments (append arg-ass arg-assignments))
+                             (set! arg-vars (append arg-var arg-vars)))
+                           (values v `(,@fn-assignments ,@arg-assignments (assign ,v (app, fn-exp ,@arg-exps))) (cons v (append arg-vars fn-vars)))]
 
     [`(define (,fn ,args* ...) ,body)
      (define-values (flat-exp assignments vars) (flatten-helper body))
      ; fix type annotations for function name and args
-     (define new-fn (cadr fn))
-     (define new-args* (map cadr args*))
+     ;(define new-fn (cadr fn))
+     ;(define new-args* (map cadr args*))
      ; make sure vars contains all arguments as well.
-     `(define (,new-fn ,@new-args*) ,(check-duplicate-vars (cleanup (append vars (args->vars args*)))) ,@assignments (return ,flat-exp))]
-    [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)
-     (define-values (flat-exp1 assignments1 vars1) (flatten-helper `(has-type ,e ,te)))
+     `(define (,fn ,@args*) ,(append vars args*) ,@assignments (return ,flat-exp))]
+    [`(let ([,v ,e]) ,body)
+     (define-values (flat-exp1 assignments1 vars1) (flatten-helper e))
      (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
-     (define v-type (cons v te))
+     ;(define v-type (cons v te))
      ;(cond
      ;  [(empty? assignments1) (set! vars1 (cons v-type vars1))
      ;                         (set! assignments1 (cons `(assign ,v ,flat-exp1) assignments1))]
@@ -105,7 +111,7 @@
      ;                                     [`(assign ,y ,stuff) `((assign ,v ,stuff))]
      ;                                     [else (last assignments1)])))
      ;        (set! vars1 (cons v-type (cdr vars1)))])
-     (values flat-exp2 `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2) (append `(,v-type) vars1 vars2))
+     (values flat-exp2 `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2) (append `(,v) vars1 vars2))
      ]
     ;[`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)     
     ; (define-values (flat-exp1 assignments1 vars1)
@@ -119,25 +125,24 @@
      ;            `(,@assignments1 (assign ,v ,flat-exp1) ,@assignments2))
      ;        ;(set->list (list->set (cons (cons v (flat-type v e)) (append vars1 vars2)))))]
      ;        (set->list (list->set (cons (cons v te) (append vars1 vars2)))))]
-    [`(has-type (and ,e1 ,e2) ,t) (flatten-helper `(has-type (if ,e1 ,e2 (has-type #f Boolean)) Boolean))]
-    [`(has-type (,op ,e1 ,e2) ,t) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
+    [`(and ,e1 ,e2) (flatten-helper `(if ,e1 ,e2 (inject #f Boolean)))]
+    [`(,op ,e1 ,e2) ;#:when (or (member op cmp-syms) (member op arith-syms-biadic))
                     (define v (genvar var))
                     ;(display (format "Type: ~a" (cons v t)))
                     (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
                     (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
-                    (values v `(,@assignments1 ,@assignments2 (assign ,v (,op ,flat-exp1 ,flat-exp2))) (cons (cons v t) (append vars1 vars2)))]
-    [`(has-type (,op ,e1 ,e2 ,e3) ,t) (define v (genvar var))
-                                      (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
-                                      (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
-                                      (define-values (flat-exp3 assignments3 vars3) (flatten-helper e3))
-                                      (values v `(,@assignments1 ,@assignments2 ,@assignments3 (assign ,v (,op ,flat-exp1 ,flat-exp2 ,flat-exp3))) (cons (cons v t) (append vars1 vars2 vars3)))]
-    [`(has-type (- ,e) ,t) (define v (genvar var))
+                    (values v `(,@assignments1 ,@assignments2 (assign ,v (,op ,flat-exp1 ,flat-exp2))) (cons v (append vars1 vars2)))]
+    [`(,op ,e1 ,e2 ,e3) (define v (genvar var))
+                        (define-values (flat-exp1 assignments1 vars1) (flatten-helper e1))
+                        (define-values (flat-exp2 assignments2 vars2) (flatten-helper e2))
+                        (define-values (flat-exp3 assignments3 vars3) (flatten-helper e3))
+                        (values v `(,@assignments1 ,@assignments2 ,@assignments3 (assign ,v (,op ,flat-exp1 ,flat-exp2 ,flat-exp3))) (cons v (append vars1 vars2 vars3)))]
+    [`(- ,e) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
-             (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
-    [`(has-type (,op ,args* ...) ,t) (define v (genvar var))
-                                     (define-values (flat-exps assignments vars) (map3 flatten-helper args*))
-                                     (displayln exp)
-                                     (values v `(,@(values assignments) (assign ,v (,op ,@flat-exps))) (cons (cons v t) (foldr append '() vars)))]
+             (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons v vars))]
+    [`(,op ,args* ...) (define v (genvar var))
+                       (define-values (flat-exps assignments vars) (map3 flatten-helper args*))
+                       (values v `(,@(values assignments) (assign ,v (,op ,@flat-exps))) (cons v (foldr append '() vars)))]
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

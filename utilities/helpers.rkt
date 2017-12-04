@@ -67,7 +67,7 @@
   (define fns '())
   (for ([def defs])
     (match def
-      [`(define ((has-type ,name ,type) ,args* ...) ,body)
+      [`(define (,name ,args* ...) ,body)
        (set! fns (cons name fns))]))
   fns)
 
