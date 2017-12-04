@@ -1,5 +1,7 @@
 #lang racket
 
+(require racket/trace)
+
 ; Import provided
 (require "../utilities.rkt")
 
@@ -15,8 +17,16 @@
   ;(define recur (reveal-functions f-list))
   (lambda (exp)
     (match exp
+
+      ; Inject / Project
+      [`(has-type (inject ,(app (reveal-functions f-list) e) ,t) ,ty) `(has-type (inject ,e ,t) ,ty)]
+      [`(has-type (project ,(app (reveal-functions f-list) e) ,t) ,ty) `(has-type (project ,e ,t) ,ty)]
+      
       [(? terminal?) exp]
-      [`(has-type ,v ,t) #:when (member v f-list) `(has-type (function-ref ,v) ,t)]
+      
+      [`(has-type ,v ,t) #:when (member v f-list) `(has-type (inject (has-type (function-ref ,v) ,t) ,t) Any)]
+
+      
       [`(has-type ,v ,t) #:when (or (symbol? v) (boolean? v) (integer? v)) `(has-type ,v ,t)]
       [`(program ,type ,exps ...)
        (define e (last exps))

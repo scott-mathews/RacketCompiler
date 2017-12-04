@@ -114,7 +114,7 @@
 
 (define r5-passes
   `( ("uniquify"            ,(uniquify '())         ,interp-scheme)
-     ("reveal functions"    ,(reveal-functions '()) ,interp-scheme)
+     ("reveal-functions"    ,(reveal-functions '()) ,interp-scheme)
      ("convert-closures"    ,convert-closures       ,interp-scheme)
      ("expose-allocation"   ,expose-allocation      ,interp-scheme)
      ("flatten"             ,flatten                ,interp-C)

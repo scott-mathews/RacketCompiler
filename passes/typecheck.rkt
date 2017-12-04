@@ -57,8 +57,8 @@
       [(? fixnum?) (values `(has-type (inject (has-type ,e Integer) Integer) Any) `Any)]
       [(? boolean?) (values `(has-type (inject (has-type ,e Boolean) Boolean) Any) `Any)]
       [(? symbol?) (values `(has-type ,e ,(lookup e env)) (lookup e env))]
-      [`(void) (values `(inject (has-type (void) Void) Void) `Any)]
-      [`(read) (values `(inject (has-type (read) Integer) Integer) `Any)]
+      [`(void) (values `(has-type (inject (has-type (void) Void) Void) Any) `Any)]
+      [`(read) (values `(has-type (inject (has-type (read) Integer) Integer) Any) `Any)]
 
       ; Project/Inject
       [`(inject ,(app recur new-e e-ty) ,ty)
@@ -69,7 +69,7 @@
       [`(project ,(app recur new-e e-ty) ,ty)
        (cond
          [(equal? e-ty `Any)
-          (values `(project ,new-e ,ty) ty)]
+          (values `(has-type (project ,new-e ,ty) ,ty) ty)]
          [else (error "project wrong type")])]
 
       ; Type Predicates
@@ -88,7 +88,7 @@
 
       ; If
       [`(if ,(app recur cnd-e cnd-T) ,(app recur thn-e thn-T) ,(app recur els-e els-T))
-       (values `(has-type (if (eq? ,cnd-e (inject #f Boolean)) ,els-e ,thn-e) ,thn-T) thn-T)]
+       (values `(has-type (if (has-type (eq? ,cnd-e (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean) ,els-e ,thn-e) ,thn-T) thn-T)]
 
       ; Lambda
       [`(lambda (,args* ...) ,body)
@@ -110,7 +110,7 @@
        (define body-env (append env arg-env))
        (define-values (new-body t-body) ((type-check body-env) body))
        (define function-type `(,@(map (lambda (arg) `Any) args) -> ,t-body))
-       (values `(define (,var ,@args) ,new-body)
+       (values `(define ((has-type ,var ,function-type) ,@(map (lambda (arg) `(has-type ,arg `Any)) args)) ,new-body)
                function-type)]
       
       ;[`(define (,var ,args* ...) ,body)
@@ -139,7 +139,7 @@
       ; Vector Operations
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
-         (values `(has-type (inject (vector ,@e*) ,t) ,t) t))]
+         (values `(has-type (inject (has-type (vector ,@e*) ,t) ,t) ,t) t))]
 
       [`(vector-ref ,(app recur e t) ,i)
        (match t
@@ -148,14 +148,14 @@
                        (i . < . (length ts)))
             (error `type-check "invalid index ~a" i))
           (let ([t (list-ref ts i)])
-            (values `(has-type (inject (vector-ref (has-type (project ,e (Vector ,@ts)) (Vector ,@ts)) (has-type ,i Integer)) ,t) Any)
+            (values `(has-type (inject (has-type (vector-ref (has-type (project ,e (Vector ,@ts)) (Vector ,@ts)) (has-type ,i Integer)) ,t) ,t) Any)
                     t))]
          [`(Vectorof ,t)
           (unless (exact-nonnegative-integer? i)
             (error `type-check "invalid index to vector-ref"))
-          (values `(vector-ref ,e ,i) t)]
+          (values `(has-type (vector-ref ,e ,i) ,t) t)]
          [`Any
-          (values `(vector-ref ,e ,i) t)]
+          (values `(has-type (vector-ref ,e ,i) Any) t)]
          [else (error `type-check "expected a vector in vector-ref, not ~a" t)])]
 
       [`(vector-set! ,(app recur e-vec^ t-vec) ,i
@@ -165,15 +165,15 @@
                               (error `type-check "invalid index ~a" i))
                             (unless (equal? (list-ref ts i) t-arg)
                               (error `type-check "type mistmatch in vector-set! ~a ~a" (list-ref ts i) t-arg))
-                            (values `(has-type (vector-set! (project ,e-vec^)
+                            (values `(has-type (vector-set! (has-type (project ,e-vec^ ,t-vec) ,t-vec)
                                                             (has-type ,i Integer)
                                                             ,e-arg^) Void) `Void)]
          [`(Vectorof ,t)
           (unless (exact-nonnegative-integer? i)
             (error `type-check) "invalid index to vector-set!")
-          (values `(vector-set! ,e-vec^ ,i ,e-arg^) `Void)]
+          (values `(has-type (vector-set! ,e-vec^ ,i ,e-arg^) Void) `Void)]
          [`Any
-          (values `(vector-set! ,e-vec^ ,i ,e-arg^) `Void)]
+          (values `(has-type (vector-set! ,e-vec^ ,i ,e-arg^) Void) `Void)]
          [else (error `type-check "expected a vector in vector-set!, not ~a" t-vec)])]
 
 
@@ -182,15 +182,15 @@
        (cond
 
          ; +
-         [(member op arith-syms-biadic) (values `(has-type (inject (+ (has-type (project (first args) Integer) Integer)
-                                                                      (has-type (project (second args) Integer) Integer)) Integer) Any) `Any)]
+         [(member op arith-syms-biadic) (values `(has-type (inject (has-type (+ (has-type (project ,(first args) Integer) Integer)
+                                                                      (has-type (project ,(second args) Integer) Integer)) Integer) Integer) Any) `Any)]
          ; -
-         [(member op arith-syms-monadic) (values `(has-type (inject (- (has-type (project (first args) Integer) Integer)) Integer) Any) `Any)]
+         [(member op arith-syms-monadic) (values `(has-type (inject (has-type (- (has-type (project ,(first args) Integer) Integer)) Integer) Integer) Any) `Any)]
 
          ; not
-         [(equal? op `not) (values `(has-type (if (has-type (eq? ,(first args) (has-type (inject #f Boolean) Any)) Boolean)
+         [(equal? op `not) (values `(has-type (if (has-type (eq? ,(first args) (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
                                                   (has-type (inject (has-type #t Boolean) Boolean) Any)
-                                                  ,(first args)))
+                                                  ,(first args)) Any)
                                    `Any)]
 
          ; and
@@ -199,7 +199,7 @@
                                        (let ([,tmp ,(first args)])
                                          (has-type
                                           (if (has-type (eq? ,tmp (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
-                                              (has-type ,tmp ,(first ts))
+                                              ,tmp
                                               ,(second args))
                                           Any))
                                        Any) `Any))]
@@ -211,11 +211,11 @@
                                         (has-type
                                          (if (has-type (eq? ,tmp (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
                                              ,(second args)
-                                             (has-type ,tmp ,(first ts)))
+                                             ,tmp)
                                          Any))
                                       Any) `Any))]
          ; eq?
-         [(equal? op `eq?) (values `(has-type (inject (eq? ,(first args) ,(second args)) Boolean) Any) `Any)]
+         [(equal? op `eq?) (values `(has-type (inject (has-type (eq? ,(first args) ,(second args)) Boolean) Boolean) Any) `Any)]
 
          ; >/</<=/>=
          [(member op cmp-syms) (values `(has-type (inject (,op (has-type (project ,(first args) Integer) Integer) (has-type (project ,(second args) Integer) Integer)) Boolean) Any)
