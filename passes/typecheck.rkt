@@ -51,11 +51,11 @@
        `(program (type ,T) ,@new-defs ,new-body)]
 
       ; Trivial cases
-      [(? fixnum?) (values `(has-type ,e Integer) `Integer)]
-      [(? boolean?) (values `(has-type ,e Boolean) `Boolean)]
+      [(? fixnum?) (values `(has-type (inject (has-type ,e Integer) Integer) Any) `Any)]
+      [(? boolean?) (values `(has-type (inject (has-type ,e Boolean) Boolean) Any) `Any)]
       [(? symbol?) (values `(has-type ,e ,(lookup e env)) (lookup e env))]
-      [`(void) (values `(has-type (void) Void) `Void)]
-      [`(read) (values `(has-type (read) Integer) `Integer)]
+      [`(void) (values `(inject (has-type (void) Void) Void) `Any)]
+      [`(read) (values `(inject (has-type (read) Integer) Integer) `Any)]
 
       ; Let
       [`(let ([,x ,(app recur e T)]) ,body)
@@ -65,11 +65,7 @@
 
       ; If
       [`(if ,(app recur cnd-e cnd-T) ,(app recur thn-e thn-T) ,(app recur els-e els-T))
-       (if (equal? cnd-T `Boolean)
-           (if (equal? thn-T els-T)
-               (values `(has-type (if ,cnd-e ,thn-e ,els-e) ,thn-T) thn-T)
-               (error `type-check "both branches of if must be same type"))
-           (error `type-check "if expects a boolean in the conditional"))]
+       (values `(has-type (if ,cnd-e ,thn-e ,els-e) ,thn-T) thn-T)]
 
       ; Lambda
       [`(lambda: (,args* ...) : ,type ,body)
@@ -101,7 +97,7 @@
            (error `type-check "expected body to have type ~a but found type ~a" type tb))
        ]
 
-      ; Vectors
+      ; Vector Operations
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
          (values `(has-type (vector ,@e*) ,t) t))]
@@ -133,17 +129,45 @@
       ; Operations
       [`(,op ,(app recur args ts) ...)
        (cond
+
+         ; +
          [(member op arith-syms-biadic) (values `(has-type (inject (+ (has-type (project (first args) Integer) Integer)
                                                                       (has-type (project (second args) Integer) Integer)) Integer) Any) `Any)]
+         ; -
          [(member op arith-syms-monadic) (values `(has-type (inject (- (has-type (project (first args) Integer) Integer)) Integer) Any) `Any)]
-         [(member op bool-syms-biadic) (let ([tmp (gensym 'booltmp)])
-                                         (values `(has-type
-                                                   (let ([,tmp (first args)])
-                                                     (has-type
-                                                      (if (has-type (inject (eq? ,tmp #f) Boolean) Any))
-                                                      Any))
-                                                   Any)
-                                                 `Any))]
+
+         ; and
+         [(equal? op `and) (let ([tmp (gensym 'booltmp)])
+                             (values `(has-type
+                                       (let ([,tmp ,(first args)])
+                                         (has-type
+                                          (if (has-type (eq? ,tmp (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
+                                              (has-type ,tmp ,(first ts))
+                                              ,(second args))
+                                          Any))
+                                       Any) `Any))]
+
+         ; or
+         [(equal? op `or) (let ([tmp (gensym 'booltmp)])
+                            (values `(has-type
+                                      (let ([,tmp ,(first args)])
+                                        (has-type
+                                         (if (has-type (eq? ,tmp (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
+                                             ,(second args)
+                                             (has-type ,tmp ,(first ts)))
+                                         Any))
+                                      Any) `Any))]
+         ; eq?
+         [(equal? op `eq?) (values `(has-type (inject (eq? (first args) (second args)) Boolean) Any))]
+
+         ; >/</<=/>=
+         [(member op cmp-syms) (values `(has-type (inject (,op (has-type (project ,(first args) Integer) Integer) (has-type (project ,(second args) Integer) Integer)) Boolean) Any)
+                                       `Any)]
+
+         [else
+          (define-values (op-e op-t) (recur op))
+          (values `(has-type (,op-e ,@args) Any) `Any)]
+         
          )]
       
 
