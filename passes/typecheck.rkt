@@ -110,7 +110,7 @@
        (define body-env (append env arg-env))
        (define-values (new-body t-body) ((type-check body-env) body))
        (define function-type `(,@(map (lambda (arg) `Any) args) -> ,t-body))
-       (values `(define ((has-type ,var ,function-type) ,@(map (lambda (arg) `(has-type ,arg `Any)) args)) ,new-body)
+       (values `(define ((has-type ,var ,function-type) ,@(map (lambda (arg) `(has-type ,arg Any)) args)) ,new-body)
                function-type)]
       
       ;[`(define (,var ,args* ...) ,body)
@@ -153,9 +153,9 @@
          [`(Vectorof ,t)
           (unless (exact-nonnegative-integer? i)
             (error `type-check "invalid index to vector-ref"))
-          (values `(has-type (vector-ref ,e ,i) ,t) t)]
+          (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t) t)]
          [`Any
-          (values `(has-type (vector-ref ,e ,i) Any) t)]
+          (values `(has-type (vector-ref ,e (has-type ,i Integer)) Any) t)]
          [else (error `type-check "expected a vector in vector-ref, not ~a" t)])]
 
       [`(vector-set! ,(app recur e-vec^ t-vec) ,i
@@ -171,9 +171,9 @@
          [`(Vectorof ,t)
           (unless (exact-nonnegative-integer? i)
             (error `type-check) "invalid index to vector-set!")
-          (values `(has-type (vector-set! ,e-vec^ ,i ,e-arg^) Void) `Void)]
+          (values `(has-type (vector-set! ,e-vec^ (has-type ,i Integer) ,e-arg^) Void) `Void)]
          [`Any
-          (values `(has-type (vector-set! ,e-vec^ ,i ,e-arg^) Void) `Void)]
+          (values `(has-type (vector-set! ,e-vec^ (has-type ,i Integer) ,e-arg^) Void) `Void)]
          [else (error `type-check "expected a vector in vector-set!, not ~a" t-vec)])]
 
 
@@ -198,8 +198,8 @@
                              (values `(has-type
                                        (let ([,tmp ,(first args)])
                                          (has-type
-                                          (if (has-type (eq? ,tmp (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
-                                              ,tmp
+                                          (if (has-type (eq? (has-type ,tmp ,(first ts)) (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
+                                              (has-type ,tmp ,(first ts))
                                               ,(second args))
                                           Any))
                                        Any) `Any))]
@@ -209,9 +209,9 @@
                             (values `(has-type
                                       (let ([,tmp ,(first args)])
                                         (has-type
-                                         (if (has-type (eq? ,tmp (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
+                                         (if (has-type (eq? (has-type ,tmp ,(first ts)) (has-type (inject (has-type #f Boolean) Boolean) Any)) Boolean)
                                              ,(second args)
-                                             ,tmp)
+                                             (has-type ,tmp ,(first ts)))
                                          Any))
                                       Any) `Any))]
          ; eq?
@@ -225,7 +225,7 @@
          [else
           (displayln op)
           (define-values (op-e op-t) (recur op))
-          (values `(has-type (,op-e ,@args) ,op-t) `Any)]
+          (values `(has-type (,op-e ,@args) ,op-t) (last op-t))]
          
          )]
       

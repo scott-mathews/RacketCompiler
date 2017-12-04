@@ -65,6 +65,6 @@
 
 ;;; === R7 Tests === ;;;
 ;(compiler-tests "r7 compiler" (type-check '()) r6_passes "r7" (range 1 11))
-(my-run-tests passes "r7" (range 1 11) "" "reveal-functions"); "convert-closures")
+(my-run-tests passes "r7" (range 1 11) "" "flatten"); "convert-closures")
 
 (display "tests passed!") (newline)

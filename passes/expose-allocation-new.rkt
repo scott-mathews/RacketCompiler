@@ -16,6 +16,10 @@
     [`(has-type (vector ,exps* ...) ,type)
      (make-lets exp)]
 
+    ; Project/Inject are handled trivially
+    [`(has-type (project ,e ,t) ,ty) `(has-type (project ,(expose-allocation e) ,t) ,ty)]
+    [`(has-type (inject ,e ,t) ,ty) `(has-type (inject ,(expose-allocation e) ,t) ,ty)]
+
     ; Lets are handled trivially
     [`(has-type (let ((,v ,e)) ,body) ,type)
      `(has-type (let ((,v ,(expose-allocation e))) ,(expose-allocation body)) ,type)]
