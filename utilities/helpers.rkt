@@ -95,30 +95,35 @@
 ; get-lambda-type
 (define (get-lambda-type lam)
   (match lam
-    [`(lambda: (,args* ...) : ,type ,body)
+    [`(lambda (,args* ...) ,body)
      (define arg-types (foldr cons '()
                               (map (lambda (arg)
-                                     (match arg
-                                       [`[,name : ,t]
-                                        t]))
+                                     arg
+                                     ;(match arg
+                                     ;  [`[,name : ,t]
+                                     ;   t])
+                                     )
                                    args*)))
-     `(,@arg-types -> ,type)]))
+     `(,@arg-types -> Any)]))
 
 ; get-lambda-env
 (define (get-lambda-env lam env)
   (match lam
-    [`(lambda: (,args* ...) : ,type ,body)
+    [`(lambda (,args* ...) ,body)
      (foldr cons env
             (map (lambda (arg)
-                   (match arg
-                     [`[,name : ,t]
-                      (cons name t)]))
+                   (cons arg `Any)
+                   ;(match arg
+                   ;  [`[,name : ,t]
+                   ;   (cons name t)])
+                   )
                  args*))]))
 
 ; update-arg-format
 (define (update-arg-format args)
   (map (lambda (arg)
          (match arg
+           [name `(has-type ,name Any)]
            [`[,name : ,type] `(has-type ,name ,type)]))
        args))
 
