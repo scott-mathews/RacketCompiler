@@ -36,26 +36,26 @@ function1:
 	addq $0, %r15
 
 	movq %rdi, %rbx
-	movq %rsi, %r12
-	movq %rdx, %rbx
-	movq %r12, %rdx
-	movq %rdx, %r11
-	movq 8(%r11), %r13
+	movq %rsi, %rbx
+	movq %rdx, %r13
+	movq %rbx, %rbx
 	movq %rbx, %r11
-	movq 8(%r11), %rcx
-	movq %rdx, %rdi
-	movq %rcx, %rsi
-	callq *%r13
-	movq %rax, %rcx
-	movq %rcx, %r13
-	movq %r12, %rcx
-	movq %rcx, %r11
 	movq 8(%r11), %r12
-	movq %rbx, %r11
-	movq 16(%r11), %rbx
-	movq %rcx, %rdi
-	movq %rbx, %rsi
+	movq %r13, %r11
+	movq 8(%r11), %rcx
+	movq %rbx, %rdi
+	movq %rcx, %rsi
 	callq *%r12
+	movq %rax, %rcx
+	movq %rcx, %r12
+	movq %rbx, %rcx
+	movq %rcx, %r11
+	movq 8(%r11), %rbx
+	movq %r13, %r11
+	movq 16(%r11), %rdx
+	movq %rcx, %rdi
+	movq %rdx, %rsi
+	callq *%rbx
 	movq %rax, %rbx
 	movq %rbx, %rbx
 	movq fromspace_end(%rip), %rdx
@@ -66,16 +66,16 @@ function1:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then43031
+	je then75172
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end43032
-then43031:
+	jmp end75173
+then75172:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end43032:
+end75173:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
@@ -87,7 +87,7 @@ end43032:
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %r11
-	movq %r13, 8(%r11)
+	movq %r12, 8(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %rax
@@ -120,24 +120,24 @@ main:
 
 	leaq function1(%rip), %rbx
 	movq %rbx, %rbx
-	movq fromspace_end(%rip), %rdx
-	movq free_ptr(%rip), %rcx
-	movq %rcx, %rcx
-	addq $16, %rcx
-	cmpq %rdx, %rcx
+	movq fromspace_end(%rip), %rcx
+	movq free_ptr(%rip), %rdx
+	movq %rdx, %rdx
+	addq $16, %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then43033
+	je then75174
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end43034
-then43033:
+	jmp end75175
+then75174:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end43034:
+end75175:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -150,7 +150,7 @@ end43034:
 	movq %rbx, %rbx
 	movq %rcx, -8(%r15)
 	movq -8(%r15), %r11
-	movq 8(%r11), %r13
+	movq 8(%r11), %r12
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
 	movq fromspace_end(%rip), %rdx
@@ -161,16 +161,16 @@ end43034:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then43035
+	je then75176
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end43036
-then43035:
+	jmp end75177
+then75176:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end43036:
+end75177:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -182,7 +182,7 @@ end43036:
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq $0, %rbx
-	movq $41, %r12
+	movq $41, %r13
 	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
 	movq %rcx, %rcx
@@ -191,16 +191,16 @@ end43036:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then43037
+	je then75178
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end43038
-then43037:
+	jmp end75179
+then75178:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end43038:
+end75179:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
@@ -208,7 +208,7 @@ end43038:
 	movq $5, 0(%r11)
 	movq %rcx, %rcx
 	movq %rcx, %r11
-	movq %r12, 16(%r11)
+	movq %r13, 16(%r11)
 	movq $0, %rdx
 	movq %rdx, %rdx
 	movq %rcx, %r11
@@ -218,7 +218,7 @@ end43038:
 	movq -8(%r15), %rdi
 	movq -16(%r15), %rsi
 	movq %rcx, %rdx
-	callq *%r13
+	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %r11
 	movq 16(%r11), %rbx

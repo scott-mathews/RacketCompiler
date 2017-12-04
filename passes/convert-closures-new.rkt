@@ -60,91 +60,84 @@
      (define converted-body (convert-exp body))
      
      ; update the types in the function signature and process the body
-     `(define ((has-type ,(second fn) ,(third converted-body)) (has-type closure Closure) ,@(map (lambda (arg) `(has-type ,(second arg) ,(fix-type (third arg)))) args))
+     `(define (,fn closure ,@args)
         ,converted-body)]))
 
 ; convert expressions
 (define (convert-exp e)
   ; extract type from expression
-  (match e
-    
-    [`(has-type ,exp ,type)
-     ; all expressions have their types fixed.
-     (define updated-expression-type (fix-type type))
-     
-     `(has-type
-       ,(match exp
-          ; terminals remain unchanged
-          [t #:when (terminal? t) t]
+  
+    (match e
+      ; terminals remain unchanged
+      [t #:when (terminal? t) t]
 
-          ; function-refs are put into vectors
-          [`(function-ref ,name)
-           ; make sure we take note that we are putting the function-ref in a vector
-           ;(set! updated-expression-type `(Vector ,updated-expression-type))
-           
-           `(vector (has-type (function-ref ,name) ,(second updated-expression-type)))
-           ]
+      ; function-refs are put into vectors
+      [`(function-ref ,name)
+       ; make sure we take note that we are putting the function-ref in a vector
+       ;(set! updated-expression-type `(Vector ,updated-expression-type))
+
+       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;POINTER TO WHERE WE LEFT OFFF STUFF AFTER AINT DONE
+       
+       `(vector (function-ref ,name) )
+       ]
           
-          ;;;;;;;;;;;;;;;;;;;;;;;;
-          ;;; Handling Lambdas ;;;
-          ;;;;;;;;;;;;;;;;;;;;;;;;
-          [`(lambda (,args ...) ,body)
+      ;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;; Handling Lambdas ;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;
+      [`(lambda (,args ...) ,body)
 
-           ; name e.g. (has-type (function-ref lambda1) (_ Integer -> Integer))
-           ; free-vars e.g. `( (has-type y134 Integer) (has-type b343 Boolean) )
-           (define-values (name free-vars) (make-define-from-lambda e))
+       ; name e.g. (has-type (function-ref lambda1) (_ Integer -> Integer))
+       ; free-vars e.g. `( (has-type y134 Integer) (has-type b343 Boolean) )
+       (define-values (name free-vars) (make-define-from-lambda e))
 
-           (set! updated-expression-type `(Vector ,(third name) ,@(map (lambda (var) (third var)) free-vars)))
            
-           ; the actual return is a vector containing a reference to the new lambda function
-           ; and the free variables passed into that function
-           `(vector ,name ,@free-vars)
-           ]
+       ; the actual return is a vector containing a reference to the new lambda function
+       ; and the free variables passed into that function
+       `(vector ,name ,@free-vars)
+       ]
 
-          ; In an application, the applied must be a closure, and the first item
-          ; of that closure is the function which we are trying to apply.
-          [`(app ,exp ,exps ...)
+      ; In an application, the applied must be a closure, and the first item
+      ; of that closure is the function which we are trying to apply.
+      [`(app ,exp ,exps ...)
 
-           (define closure-expression (convert-exp exp))
-           (define converted-arguments (map convert-exp exps))
+       (define closure-expression (convert-exp exp))
+       (define converted-arguments (map convert-exp exps))
            
-           ; make a new variables to store the closure
-           (define closure-variable `(has-type ,(gensym 'appclos) ,(third closure-expression)))
+       ; make a new variables to store the closure
+       (define closure-variable `(has-type ,(gensym 'appclos) ,(third closure-expression)))
 
-           ;(displayln closure-expression)
-           ; update the output type based on the new output type
-           ;(set! updated-expression-type
-           ;      (match (second (third closure-expression))
-           ;        [`(,input-types ... -> ,output-type) output-type]))
+       ;(displayln closure-expression)
+       ; update the output type based on the new output type
+       ;(set! updated-expression-type
+       ;      (match (second (third closure-expression))
+       ;        [`(,input-types ... -> ,output-type) output-type]))
            
            
-           `(let ((,(second closure-variable) ,closure-expression))
-              (has-type (app (has-type (vector-ref ,closure-variable (has-type 0 Integer)) ,(second (third closure-expression)))
-                             ,closure-variable
-                             ,@converted-arguments)
-                        ,updated-expression-type))
-           ]
+       `(let ((,(second closure-variable) ,closure-expression))
+          (has-type (app (has-type (vector-ref ,closure-variable (has-type 0 Integer)) ,(second (third closure-expression)))
+                         ,closure-variable
+                         ,@converted-arguments)
+                    ))
+       ]
 
-          ; Lets are trivially recursed upon
-          [`(let ((,name ,exp)) ,body)
+      ; Lets are trivially recursed upon
+      [`(let ((,name ,exp)) ,body)
 
-           (define converted-body (convert-exp body))
+       (define converted-body (convert-exp body))
            
-           (set! updated-expression-type (third converted-body))
+       
            
-           `(let ((,name ,(convert-exp exp))) ,converted-body)]
+       `(let ((,name ,(convert-exp exp))) ,converted-body)]
 
-          ; Ifs are trivially recursed upon
-          [`(if ,cnd ,thn ,els)
-           `(if ,(convert-exp cnd) ,(convert-exp thn) ,(convert-exp els))
-           ]
+      ; Ifs are trivially recursed upon
+      [`(if ,cnd ,thn ,els)
+       `(if ,(convert-exp cnd) ,(convert-exp thn) ,(convert-exp els))
+       ]
 
-          ; Primitive ops on args are trivially recursed upon
-          [`(,op ,args ...)
-           `(,op ,@(map convert-exp args))]
-          )
-
-       ,updated-expression-type)]))
+      ; Primitive ops on args are trivially recursed upon
+      [`(,op ,args ...)
+       `(,op ,@(map convert-exp args))]
+      ))
 
 ;;;;;;;;;;;;;;;;;;;;
 ; Building Defines ;

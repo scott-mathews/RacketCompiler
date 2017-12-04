@@ -10,11 +10,11 @@ function0:
 	addq $0, %r15
 
 	movq %rdi, %rbx
-	movq %rsi, %rcx
-	movq %rdx, %rbx
-	movq %rcx, %rcx
-	addq %rbx, %rcx
-	movq %rcx, %rax
+	movq %rsi, %rbx
+	movq %rdx, %rcx
+	movq %rbx, %rbx
+	addq %rcx, %rbx
+	movq %rbx, %rax
 
 	addq $40, %rsp
 	subq $0, %r15
@@ -50,16 +50,16 @@ main:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then42948
+	je then75089
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end42949
-then42948:
+	jmp end75090
+then75089:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end42949:
+end75090:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
