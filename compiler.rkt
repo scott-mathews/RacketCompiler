@@ -129,6 +129,8 @@
 
 (define r3_passes r5-passes)
 (define r4_passes r5-passes)
+(define r6_passes r5-passes)
+(define r7_passes r5-passes)
 
 (define passes
   (cons `("type-check" ,(type-check '()) ,interp-scheme) r5-passes))
