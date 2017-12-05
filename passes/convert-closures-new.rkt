@@ -73,6 +73,7 @@
      (define updated-expression-type (fix-type type))
      
      `(has-type
+       
        ,(match exp
           ; terminals remain unchanged
           [t #:when (terminal? t) t]
@@ -86,7 +87,7 @@
            ; make sure we take note that we are putting the function-ref in a vector
            ;(set! updated-expression-type `(Vector ,updated-expression-type))
            
-           `(vector (has-type (function-ref ,name) ,(second updated-expression-type)))
+           `(vector (has-type (inject (has-type (function-ref ,name) ,(second updated-expression-type)) ,(second updated-expression-type)) Any))
            ]
           
           ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -102,7 +103,7 @@
            
            ; the actual return is a vector containing a reference to the new lambda function
            ; and the free variables passed into that function
-           `(vector ,name ,@free-vars)
+           `(vector (has-type (inject ,name ,(third name)) Any) ,@free-vars)
            ]
 
           ; In an application, the applied must be a closure, and the first item
@@ -128,7 +129,7 @@
            
            
            `(let ((,(second closure-variable) ,closure-expression))
-              (has-type (app (has-type (vector-ref ,closure-variable (has-type 0 Integer)) ,closure-variable-t)
+              (has-type (app (has-type (project (has-type (vector-ref ,closure-variable (has-type 0 Integer)) Any) ,closure-variable-t) ,closure-variable-t)
                              ,closure-variable
                              ,@converted-arguments)
                         ,updated-expression-type))

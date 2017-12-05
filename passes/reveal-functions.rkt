@@ -24,7 +24,7 @@
       
       [(? terminal?) exp]
       
-      [`(has-type ,v ,t) #:when (member v f-list) `(has-type (inject (has-type (function-ref ,v) ,t) ,t) Any)]
+      [`(has-type ,v ,t) #:when (member v f-list) `(has-type (function-ref ,v) ,t)]
 
       
       [`(has-type ,v ,t) #:when (or (symbol? v) (boolean? v) (integer? v)) `(has-type ,v ,t)]
@@ -51,8 +51,11 @@
 
       [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((reveal-functions f-list) cnd) ,((reveal-functions f-list) thn) ,((reveal-functions f-list) els)) ,t)]
 
-      [`(has-type ((has-type ,op ,t-op) ,es ...) ,t) #:when (function-type t-op) `(has-type (app ,((reveal-functions f-list) `(has-type ,op ,t-op)) ,@(map (reveal-functions f-list) es)) ,t)]
+      [`(has-type ((has-type ,op ,t-op) ,es ...) ,t) #:when (function-type t-op)
+       `(has-type (app ,((reveal-functions f-list) `(has-type ,op ,t-op)) ,@(map (reveal-functions f-list) es)) ,t)]
 
+      [`(has-type (,(app (reveal-functions f-list) op) ,es ...) ,t) #:when (set-member? built-ins op)
+       `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
 
       [`(has-type (,(app (reveal-functions f-list) op) ,es ...) ,t)
        ;(displayln (format "New op: ~a" op))

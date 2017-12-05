@@ -224,7 +224,8 @@
          ; applying user defined function
          [else
           (define-values (op-e op-t) (recur op))
-          (values `(has-type ((has-type (inject ,op-e ,op-t) Any) ,@args) ,op-t) (last op-t))]
+          ; don't inject the function yet. Let convert-closures handle that
+          (values `(has-type (,op-e ,@args) ,op-t) (last op-t))]
          
          )]
       

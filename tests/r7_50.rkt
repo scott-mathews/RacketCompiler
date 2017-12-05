@@ -1,3 +1,1 @@
-(define (fun x) x)
-
-(fun 42)
+42
