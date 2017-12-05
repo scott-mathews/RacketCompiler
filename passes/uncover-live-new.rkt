@@ -45,7 +45,7 @@
     ; Returns live-after for an (op args...) instruction
     [`(,op ,args ...)
      (match op
-       [(? add-like-op?) ; addq, xorq, cmpq, cmp?
+       [(? add-like-op?) ; addq, xorq, cmpq, cmp?, orq, andq, sarq, salq, 
         (define read (set-union (get-arg (first args)) (get-arg (second args))))
         (define written (set))
         (values instr (make-live-before read written last-live-after))]
@@ -55,7 +55,7 @@
         (define written (get-arg (second args)))
         (values instr (make-live-before read written last-live-after))]
        
-       [(? neg-like-op?) ; negq, indirect-callq
+       [(? neg-like-op?) ; negq, notq, indirect-callq
         (define read (get-arg (first args)))
         (define written (set))
         (values instr (make-live-before read written last-live-after))]

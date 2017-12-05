@@ -73,16 +73,21 @@
      (define updated-expression-type (fix-type type))
      
      `(has-type
+       
        ,(match exp
           ; terminals remain unchanged
           [t #:when (terminal? t) t]
+
+          ; Project/Inject
+          [`(project ,(app convert-exp e) ,t) `(project ,e ,t)]
+          [`(inject ,(app convert-exp e) ,t) `(inject ,e ,t)]
 
           ; function-refs are put into vectors
           [`(function-ref ,name)
            ; make sure we take note that we are putting the function-ref in a vector
            ;(set! updated-expression-type `(Vector ,updated-expression-type))
            
-           `(vector (has-type (function-ref ,name) ,(second updated-expression-type)))
+           `(vector (has-type (inject (has-type (function-ref ,name) ,(second updated-expression-type)) ,(second updated-expression-type)) Any))
            ]
           
           ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -98,7 +103,7 @@
            
            ; the actual return is a vector containing a reference to the new lambda function
            ; and the free variables passed into that function
-           `(vector ,name ,@free-vars)
+           `(vector (has-type (inject ,name ,(third name)) Any) ,@free-vars)
            ]
 
           ; In an application, the applied must be a closure, and the first item
@@ -106,6 +111,7 @@
           [`(app ,exp ,exps ...)
 
            (define closure-expression (convert-exp exp))
+           
            (define converted-arguments (map convert-exp exps))
            
            ; make a new variables to store the closure
@@ -116,10 +122,14 @@
            ;(set! updated-expression-type
            ;      (match (second (third closure-expression))
            ;        [`(,input-types ... -> ,output-type) output-type]))
+
+           (define closure-variable-t (if (list? (third closure-expression))
+                                          (second (third closure-expression))
+                                          `(Any -> Any)))
            
            
            `(let ((,(second closure-variable) ,closure-expression))
-              (has-type (app (has-type (vector-ref ,closure-variable (has-type 0 Integer)) ,(second (third closure-expression)))
+              (has-type (app (has-type (project (has-type (vector-ref ,closure-variable (has-type 0 Integer)) Any) ,closure-variable-t) ,closure-variable-t)
                              ,closure-variable
                              ,@converted-arguments)
                         ,updated-expression-type))
@@ -222,6 +232,8 @@
 (define (find-free-vars env)
   (lambda (exp)
     (match exp
+      [`(has-type (project ,e ,t) ,ty) ((find-free-vars env) e)]
+      [`(has-type (inject ,e ,t) ,ty)  ((find-free-vars env) e)]
       [`(has-type ,v ,t) #:when (symbol? v)
                          (if (member v env)
                              '()
@@ -247,6 +259,7 @@
 (define (fix-type type)
   (match type
     ; Trivial types
+    [`Any     type]
     [`Integer type]
     [`Boolean type]
     [`Void    type]
@@ -254,6 +267,7 @@
 
     ; Vectors are traversed through recursively
     [`(Vector ,types ...) `(Vector ,@(map fix-type types))]
+    [`(Vectorof ,type) `(Vector ,(fix-type type))]
 
     ; Every function takes a closure as its first variable
     ; therefore when we see a function type, we add Closure

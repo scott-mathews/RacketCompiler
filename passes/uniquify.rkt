@@ -1,5 +1,7 @@
 #lang racket
 
+(require racket/trace)
+
 ; Import provided
 (require "../utilities.rkt")
 
@@ -30,9 +32,15 @@
   (lambda (exp)
     (match exp
       [v #:when (and (symbol? v) (not (set-member? built-ins v))) (lookup v alist)]
+
+      ; Inject/Project
+      [`(has-type (inject ,(app (uniquify alist) e) ,t) ,ty) `(has-type (inject ,e ,t) ,ty)]
+      [`(has-type (project ,(app (uniquify alist) e) ,t) ,ty) `(has-type (project ,e ,t) ,ty)]
+      
       [`(has-type ,v ,t) #:when (symbol? v) `(has-type ,(lookup v alist) ,t)]
       [`(has-type ,n ,t) #:when (integer? n) `(has-type ,n ,t)]
       [`(has-type ,b ,t) #:when (boolean? b) `(has-type ,b ,t)]
+
       [`(program ,type ,exps ...)
        (define e (last exps))
        (define defs (reverse (cdr (reverse exps))))
@@ -42,6 +50,8 @@
          (define-values (new-define name) ((uniquify new-env) def))
          (set! new-defines (cons new-define new-defines)))
        `(program ,type ,@(reverse new-defines) ,((uniquify new-env) e))]
+
+
       [`(define ((has-type ,(app (uniquify alist) var) ,type) ,args* ...) ,body)
        (define new-env alist)
        (define new-args '())
@@ -50,6 +60,8 @@
                                 (set! new-env (cons (cons v new-name) new-env))
                                 (set! new-args (cons `(has-type ,new-name ,t) new-args))]))
        (values `(define ((has-type ,var ,type) ,@(reverse new-args)) ,((uniquify new-env) body)) var)]
+
+
       [`(has-type (lambda (,args* ...) ,body) ,type)
        (define lam-env alist)
        (define new-args '())
@@ -58,13 +70,22 @@
                                        (set! lam-env (cons (cons v new-name) lam-env))
                                        (set! new-args (cons `(has-type ,new-name ,t) new-args))]))
        `(has-type (lambda (,@(reverse new-args)) ,((uniquify lam-env) body)) ,type)]
+
+
       [`(has-type ((has-type ,fname ,type) ,args* ...) ,t) #:when (member fname (map car alist))
                             `(has-type ((has-type ,(lookup fname alist) ,type) ,@(map (uniquify alist) args*)) ,t)]
+
+
       [`(has-type (let ([,x ,e]) ,body) ,tb)
        (let ([y (gensym x)])
          (let ([l (cons (cons x y) alist)])
            `(has-type (let ([,y ,((uniquify alist) e)]) ,((uniquify l) body)) ,tb)))]
+
+
+
       [`(has-type (if ,cnd ,thn ,els) ,t) `(has-type (if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els)) ,t)]
+
+
       [`(has-type (,(app (uniquify alist) op) ,es ...) ,t) ;(displayln (format "this is new op: ~a" op))
        `(has-type (,op ,@(map (uniquify alist) es)) ,t)]
       [else exp]

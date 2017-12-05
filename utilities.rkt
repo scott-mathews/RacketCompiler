@@ -14,6 +14,7 @@
 	 arg-registers register->color registers align
          byte-reg->full-reg print-by-type)
 
+
 ;; debug state is a nonnegative integer.
 ;; The easiest way to increment it is passing the -d option
 ;; to run-tests.rkt
@@ -545,11 +546,11 @@
 	              (set! suite-type-fails (+ suite-type-fails 1))
 	              (set! type-fails (+ type-fails 1))
 	              (printf (format "test ~a failed, unexpected type error" test-name)) 
-	              (raise "type-error"))
+	              (error "type-error"))
                     '())
                   (if typechecks
                     (if (system (format "gcc -g -std=c99 runtime.o tests/~a.s" test-name))
-                      (void) (exit))
+                      (void) (error "compile-error"))
                     '())
                   (let* ([input (if (file-exists? (format "tests/~a.in" test-name))
                                   (format " < tests/~a.in" test-name)
@@ -571,7 +572,7 @@
 	                  (set! type-fails (+ type-fails 1))
 	                  (set! suite-type-fails (+ suite-type-fails 1))
 		          (printf (format "test ~a passed typechecking but should not have." test-name))
-		          (raise "type-error"))
+		          (error "type-error"))
                         '())
                       (control-fun 'wait)
                       (cond 
@@ -697,6 +698,8 @@
     (lambda (ty index)
       (format "\tmovq\t~a(%r~a), %rax\n~a" (* 8 (+ 1 index)) depth (print-by-type ty (+ 1 depth)))))
   (match ty
+    ['Any 
+     (format "\tmovq\t%rax, %rdi\n\tcallq\t~a\n" (label-name "print_any"))]
     ['Void (format "\tcallq\t~a\n" (label-name "print_void"))]
     ['Integer 
      (format "\tmovq\t%rax, %rdi\n\tcallq\t~a\n" (label-name "print_int"))]

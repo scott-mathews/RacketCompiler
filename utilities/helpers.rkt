@@ -6,7 +6,7 @@
 (provide function-type terminal? map-me remove-duplicate-movq cmp->cc
          look-up-type get-function-type get-lambda-type get-lambda-env
          update-arg-format make-f-list make-typed-f-list cmp?
-         move-like-op? add-like-op? neg-like-op? call-like-op?)
+         move-like-op? add-like-op? neg-like-op? call-like-op? tagof)
 
 ;;;;;;;;;;;;;;;;;;;
 ; ==> Helpers <== ;
@@ -44,11 +44,18 @@
     [`xorq #t]
     [`cmpq #t]
     [(? cmp?) #t]
+    ; Dec 4: Added R7 instrs
+    [`orq #t]
+    [`salq #t]
+    [`sarq #t]
+    [`andq #t]
+    
     [else #f]))
 
 (define (neg-like-op? op)
   (match op
     [`negq #t]
+    [`notq #t]
     [`indirect-callq #t]
     [else #f]))
 
@@ -95,30 +102,35 @@
 ; get-lambda-type
 (define (get-lambda-type lam)
   (match lam
-    [`(lambda: (,args* ...) : ,type ,body)
+    [`(lambda (,args* ...) ,body)
      (define arg-types (foldr cons '()
                               (map (lambda (arg)
-                                     (match arg
-                                       [`[,name : ,t]
-                                        t]))
+                                     arg
+                                     ;(match arg
+                                     ;  [`[,name : ,t]
+                                     ;   t])
+                                     )
                                    args*)))
-     `(,@arg-types -> ,type)]))
+     `(,@arg-types -> Any)]))
 
 ; get-lambda-env
 (define (get-lambda-env lam env)
   (match lam
-    [`(lambda: (,args* ...) : ,type ,body)
+    [`(lambda (,args* ...) ,body)
      (foldr cons env
             (map (lambda (arg)
-                   (match arg
-                     [`[,name : ,t]
-                      (cons name t)]))
+                   (cons arg `Any)
+                   ;(match arg
+                   ;  [`[,name : ,t]
+                   ;   (cons name t)])
+                   )
                  args*))]))
 
 ; update-arg-format
 (define (update-arg-format args)
   (map (lambda (arg)
          (match arg
+           [name `(has-type ,name Any)]
            [`[,name : ,type] `(has-type ,name ,type)]))
        args))
 

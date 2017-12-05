@@ -28,6 +28,11 @@
 
 ; Check if an expression is a terminal one
 
+(define (typeof flat vars)
+  (match flat
+    [v #:when (symbol? v) (lookup v vars)]
+    [n #:when (fixnum? n) `Integer]
+    [b #:when (boolean? b) `Boolean]))
 
 ;;; Flatten Itself ;;;
 
@@ -46,6 +51,17 @@
 (define (flatten-helper exp . var)
   ;(display exp)
   (match exp
+
+    ; Inject/Project
+    [`(has-type (project ,e ,t) ,ty) (define-values (flat-e assignments-e vars-e) (flatten-helper e))
+                                     (define v (gensym 'tmp))
+                                     (values v `(,@assignments-e (assign ,v (project ,flat-e ,t)))
+                                             (cons (cons v (typeof flat-e vars-e)) vars-e))]
+    [`(has-type (inject ,e ,t) ,ty) (define-values (flat-e assignments-e vars-e) (flatten-helper e))
+                                     (define v (gensym 'tmp))
+                                     (values v `(,@assignments-e (assign ,v (inject ,flat-e ,t)))
+                                             (cons (cons v (typeof flat-e vars-e)) vars-e))]
+    
     [`(has-type (if ,cnd ,thn ,els) ,t) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
                           (define v (gensym `tmp))
                           (define-values (flat-thn assignments-thn vars-thn) (flatten-helper thn))
@@ -174,7 +190,7 @@
             (set! new-vars (cons var (remove (cons (car var) found-type) new-vars)))
             (void))
         (set! new-vars (cons var new-vars))))
-  new-vars)
+  (check-duplicate-vars new-vars))
 
 ; Makes it so there is only one copy of each var
 (define (check-duplicate-vars vars)

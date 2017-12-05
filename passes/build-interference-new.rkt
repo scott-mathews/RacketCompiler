@@ -70,7 +70,7 @@
 
          ; If instruction I is a (negq sd), add an edge (sd, v) for every
          ; v in the live-after set of I (UNLESS v == sd)
-         [`negq
+         [(? (lambda (op) (or (equal? op `negq) (equal? op `notq))))
           (for ([var live-after-set])
             (if (and (var-typed-arg? (first args)) (not (equal? var (get-name (first args)))))
                 (add-edge graph var (get-name (first args)))

@@ -50,15 +50,22 @@
   (* 8 (add1 n)))
 
 ; replace marker in instructions with expression
+; iterates through some instructions, then iterates
+; through each arg of the instruction, replacing the
+; instr args indicated for replacement by assoc list
+; marker mappings
+; Dec 4: added if following
 (define (replace-marker stmts marker-mappings)
+  (define replace-arg (lambda (instr-arg)
+                        (if
+                         (member instr-arg (map car marker-mappings))
+                         (lookup instr-arg marker-mappings)
+                         instr-arg)))
   (map (lambda (instr)
-         (if (list? instr)
-             (map (lambda (instr-arg)
-                    (if
-                     (member instr-arg (map car marker-mappings))
-                     (lookup instr-arg marker-mappings)
-                     instr-arg)) instr)
-             instr)) stmts))
+         (match instr 
+           [`(if ,cnd ,thn ,els)
+            `(if ,(map replace-arg cnd) ,(replace-marker thn marker-mappings) ,(replace-marker els marker-mappings))]
+           [else (map replace-arg instr)])) stmts))
 
 ; converts an exp form from its C to its x86 equivalent.
 (define (convert-exp exp)
@@ -75,6 +82,36 @@
     ; Handle Operations ;
     ;;;;;;;;;;;;;;;;;;;;;
 
+    ;; Project and Inject ;;
+    [`(inject ,arg ,type) (cond
+                            ; Vectors and Procedures
+                            [(list? type) `((movq ,(convert-arg arg) lhs)
+                                            (orq (int ,(tagof type)) lhs))]
+
+                            ; All other types
+                            [else `((movq ,(convert-arg arg) lhs)
+                                    (salq (int 3) lhs)
+                                    (orq (int ,(tagof type)) lhs))])]
+
+    
+    [`(project ,arg ,type) (cond
+                             ; Vectors and Procedures
+                             [(list? type) `((movq ,(convert-arg arg) lhs)
+                                             (andq (int 7) lhs)
+                                             (if (eq? lhs (int ,(tagof type)))
+                                                 ((movq (int 7) lhs)
+                                                  (notq lhs)
+                                                  (andq ,(convert-arg arg) lhs))
+                                                 ((callq exit))))]
+
+                             ; All other types
+                             [else `((movq ,(convert-arg arg) lhs)
+                                     (andq (int 7) lhs)
+                                     (if (eq? lhs (int ,(tagof type)))
+                                         ((movq ,(convert-arg arg) lhs)
+                                          (sarq (int 3) lhs))
+                                         ((callq exit))))])]
+    
     ;; Function Operations ;;
     [`(app ,arg ,args ...) `(,@(move-arguments args)
                              ; I believe the below code is unnecessary. On your next trip
