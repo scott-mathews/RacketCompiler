@@ -5,16 +5,13 @@
 ; export constants
 (provide cmp-syms bool-syms-biadic bool-syms-monadic
          arith-syms-biadic arith-syms-monadic vector-syms
-         other-syms built-ins type-predicates)
+         other-syms built-ins)
 
 (provide arg-reg-list)
 
 ;;;;;;;;;;;;;
 ; Constants ;
 ;;;;;;;;;;;;;
-
-(define type-predicates
-  (set `boolean? `integer? `vector? `procedure?))
 
 ; Symbols for our language
 (define cmp-syms '(< > <= >= eq?))

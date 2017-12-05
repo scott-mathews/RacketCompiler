@@ -24,16 +24,16 @@ main:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then70065
+	je then37958
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end70066
-then70065:
+	jmp end37959
+then37958:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end70066:
+end37959:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -53,16 +53,16 @@ end70066:
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then70067
+	je then37960
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rbx
-	jmp end70068
-then70067:
+	jmp end37961
+then37960:
 	movq $0, %rbx
 	movq %rbx, %rbx
-end70068:
+end37961:
 	movq %rbx, %rbx
 	movq free_ptr(%rip), %rbx
 	addq $16, free_ptr(%rip)
@@ -84,16 +84,16 @@ end70068:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then70069
+	je then37962
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end70070
-then70069:
+	jmp end37963
+then37962:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end70070:
+end37963:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)

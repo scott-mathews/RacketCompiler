@@ -61,11 +61,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; === R6 Tests === ;;;
-;(compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (range 1 11))
-;(my-run-tests passes "s6" (range 1 11) "" "type-check")
-
-;;; === R7 Tests === ;;;
-;(compiler-tests "r7 compiler" (type-check '()) r7_passes "r7" (range 1 10))
-(my-run-tests passes "r7" (range 1 12) "" "reveal-functions")
+(compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (range 1 11))
 
 (display "tests passed!") (newline)

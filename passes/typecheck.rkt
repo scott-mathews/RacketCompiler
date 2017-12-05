@@ -14,295 +14,157 @@
 
 ;;; === Type Checker === ;;;
 
-; Traverses through a list of defines, and returns an environment
+; Traverses through a list of defines, and returns and environment
 ; containing the types of all functions from the defines
 ; This allows functions to reference other functions
 (define (functions-env defs)
-  (define env '())
+  (define env '()) 
   (for ([def defs])
     (match def
-      [`(define (,name ,args ...) ,body)
-       
-       (define function-type `(,@(map (lambda (arg) `Any) args) -> Any))
+      [`(define (,name ,args* ...) : ,type ,body)
+       (define input-types '())
+       (for ([arg args*]) ; add each argument's type to a list
+         (match arg
+           [`[,name : ,type] (set! input-types (cons type input-types))]))
+       (set! input-types (reverse input-types)) ; reverse input-types (because it's backwards from our traversal
+       (define function-type `(,@input-types -> ,type))
        (set! env (cons (cons name function-type) env))] ;update env with that function's type
       ))
   env)
-
-;;;;;;;;;;;;;;;;;;
-; Handle Defines ;
-;
-; Sometimes there will be recursion/mutual recursion. 
-; When passing over the functions, we will try to get
-; their types. Some of them will fail, because they rely
-; on a function whose type we don't have yet. For these,
-; we will continue to run our function, until they have
-; all had a chance to get a type.
-
-(define (type-check-defines defs)
-
-  (define function-env '())
-  (define finished-defs '())
-  (define unfinished-defs defs)
-
-  (for ([num (range 0 (length defs))])
-    
-    (set! defs unfinished-defs)
-  
-    (for ([def defs])
-      (with-handlers ([exn:fail? (lambda (exn) (void))])
-
-       
-        ;(displayln (append arg-env function-env))
-        (define-values (new-define t-new-define) ((type-check function-env) def))
-        (set! function-env (cons (cons (first (second def)) t-new-define) function-env))
-        (set! finished-defs (cons new-define finished-defs))
-        (set! unfinished-defs (remove def unfinished-defs)))
-      )
-    )
-
-  (values finished-defs function-env))
-
-
 
 (define (typecheck-R4 env)
   (lambda (e)
     (define recur (typecheck-R4 env))
     (match e
       [`(program ,exps ...)
-
-       ; extract body and definitions
        (define body (last exps))
        (define defs (reverse (cdr (reverse exps))))
-
-       ; recur on definitions
-       (define-values (new-defs function-env) (type-check-defines defs))
-       
-       (define-values (new-body T) ((type-check function-env) body))
+       (define new-defs '())
+       (define new-env (functions-env defs))
+       (for ([def defs])
+         (define-values (fexp output-env) ((typecheck-R4 new-env) def))
+         (set! new-env (cons output-env new-env))
+         (set! new-defs (cons fexp new-defs)))
+       (define-values (new-body T) ((typecheck-R4 new-env) body))
        `(program (type ,T) ,@new-defs ,new-body)]
-
-      ;;;;;;;;;;;;;;;;;
-      ; Trivial Stuff ;
-      ;;;;;;;;;;;;;;;;;
-
-      [(? fixnum?) (values `(inject ,e Integer) `Any)]
-      [(? boolean?) (values `(inject ,e Boolean) `Any)]
-      [(? symbol?) (values e (lookup e env))]
-      [`(void) (values `(inject (void) Void) `Any)]
-      [`(read) (values `(inject (read) Integer) `Any)]
-
-      ;;;;;;;;;;;;
-      ; R6 stuff ;
-      ;;;;;;;;;;;;
-
-      [`(inject ,(app recur new-e e-ty) ,ty)
-       (cond
-         [(equal? e-ty ty)
-          (values `(inject ,new-e ,ty) `Any)]
-         [else
-          (error "inject expected ~a to have type ~a" e ty)])]
-      [`(project ,(app recur new-e e-ty) ,ty)
-       (cond
-         [(equal? e-ty `Any)
-          (values `(project ,new-e ,ty) ty)]
-         [else
-          (error "project expected ~a to have type Any" e)])]
-      [`(,pred ,e) #:when (set-member? type-predicates pred)
-       (define-values (new-e e-ty) (recur e))
-       (cond
-         [(equal? e-ty `Any)
-          (values `(,pred ,new-e) `Boolean)]
-         [else
-          (error "predicate expected arg of type Any, not" e-ty)])]
-
-      ;;;;;;;
-      ; Let ;
-      ;;;;;;;
-      
+      [(? fixnum?) (values `(has-type ,e Integer) `Integer)]
+      [(? boolean?) (values `(has-type ,e Boolean) `Boolean)]
+      [(? symbol?) (values `(has-type ,e ,(lookup e env)) (lookup e env))]
+      [`(void) (values `(has-type (void) Void) `Void)]
       [`(let ([,x ,(app recur e T)]) ,body)
        (define new-env (cons (cons x T) env))
        (define-values (eb tb) ((type-check new-env) body))
-       (values `(let ([,x ,e]) ,eb) tb)]
-
-      ;;;;;;;;;;
-      ; Lambda ;
-      ;;;;;;;;;;
-      
-      [`(lambda (,args* ...) ,body)
-       (define new-env (map (lambda (arg) (cons arg `Any)) args*))
-       (define-values (e-body t-body) ((type-check (append new-env env)) body))
-       (define lambda-type `(,@(map cdr new-env) -> ,t-body))
-       (values `(inject (lambda (,@args*) ,e-body) ,lambda-type) lambda-type)]
-
-      ;;;;;;;;;;
-      ; Define ;
-      ;;;;;;;;;;
-      
-      [`(define (,var ,args ...) ,body)
-
-       (define function-type `(,@(map (lambda (arg) `Any) args) -> Any))
-       (define arg-env (map (lambda (arg) (cons arg `Any)) args))
-       (define body-env (append env arg-env)) ;(cons var function-type)))
-       (define-values (new-body t-body) ((type-check body-env) body))
-       (set! function-type `(,@(map (lambda (arg) `Any) args) -> ,t-body))
-
-       (values `(define (,var ,@args) ,new-body)
-               t-body)]
-
-      ;;;;;;;;;;;;;;;;
-      ; Vector Stuff ;
-      ;;;;;;;;;;;;;;;;
-      
+       (values `(has-type (let ([,x ,e]) ,eb) ,tb) tb)]     
+      [`(lambda: (,args* ...) : ,type ,body)
+       (define arg-env (get-lambda-env e env))
+       (define lam-type (get-lambda-type e))
+       (define new-args (update-arg-format args*))
+       (define-values (eb tb) ((type-check arg-env) body))
+       (values `(has-type (lambda (,@new-args) ,eb) ,lam-type)
+               lam-type)]
+      [`(define (,var ,args* ...) : ,type ,body)
+       (define input-types '())
+       (define new-env env)
+       (define new-args '())
+       (for ([arg args*]) ; add each argument's type to a list
+         (match arg
+           [`[,name : ,type] (set! input-types (cons type input-types)) ; add input-type
+                             (set! new-env (cons (cons name type) new-env))
+                             (set! new-args (cons `(has-type ,name ,type) new-args))]))
+       (set! input-types (reverse input-types)) ; reverse input-types (because it's backwards from our traversal
+       (define function-type `(,@input-types -> ,type)) ; eg. ((Vector Integer) Integer) -> Integer
+       (define output-env (cons (cons var function-type) env))
+       (set! new-env (cons (cons var function-type) new-env))
+       ;(set! output-env (cons (cons var function-type env)))
+       (define-values (eb tb) ((typecheck-R4 new-env) body))
+       (if (equal? tb type)
+           (values `(define ((has-type ,var ,function-type) ,@(reverse new-args)) ,eb) (cons var function-type)) ; return has-typed expression, type, and function name
+           (error `type-check "expected body to have type ~a but found type ~a" type tb))
+       ] 
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
-         (values `(inject (vector ,@e*) ,t) t))]
-      
+         (values `(has-type (vector ,@e*) ,t) t))]
+
       [`(vector-ref ,(app recur e t) ,i)
        (match t
          [`(Vector ,ts ...)
-          (define-values (i^ t-i) (recur i))
-          (let ([tmp1 (gensym 'vectorreftmp)]
-                [tmp2 (gensym 'indextmp)])
-            (values `(let ((,tmp1 (project ,e (Vectorof Any))))
-                       (let ((,tmp2 (project ,i^ Integer)))
-                         (vector-ref ,tmp1 ,tmp2))) `Any))
-          ]
-         [`(Vectorof ,t)
-          (unless (exact-nonnegative-integer? i)
+          (unless (and (exact-nonnegative-integer? i)
+                       (i . < . (length ts)))
             (error `type-check "invalid index ~a" i))
-          (values `(vector-ref ,e ,i) t)]
-         [`Any
-          (values `(vector-ref ,e ,i) t)])]
-      
+          (let ([t (list-ref ts i)])
+            (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t)
+                    t))]
+         [else (error `type-check "expected a vector in vector-ref, not ~a" t)])]
+
       [`(vector-set! ,(app recur e-vec^ t-vec) ,i
                      ,(app recur e-arg^ t-arg))
        (match t-vec
-         [`(Vector ,ts ...)
-          (let ([tmp1 (gensym 'vectorsetteetmp)]
-                [tmp2 (gensym 'indextmp)]
-                [tmp3 (gensym 'vectorsettertmp)])
-            (values `(let ((,tmp1 (project ,e-vec^ (Vectorof Any))))
-                       (let ((,tmp2 (project (inject ,i Integer) Integer)))
-                         (let ((,tmp3 ,e-arg^))
-                           (vector-set! ,tmp1 ,tmp2 ,tmp3)))) `Any))]
-         [`(Vectorof ,t)
-          (unless (exact-nonnegative-integer? i)
-            (error `type-check "invalid index ~a" i))
-          (unless (equal? t t-arg)
-            (error `type-check "type mismatch in vector-set! ~a ~a" t t-arg))
-          (values `(vector-set! ,e-vec^ ,i ,e-arg^) `Void)]
-         [`Any
-          (values `(vector-set! ,e-vec^ ,i ,e-arg^) `Void)]
-         [else (error `type-check
-                      "expected a vector in vector-set!, not ~a" t-vec)])]
+         [`(Vector ,ts ...) (unless (and (exact-nonnegative-integer? i) (i . < . (length ts)))
+                              (error `type-check "invalid index ~a" i))
+                            (unless (equal? (list-ref ts i) t-arg)
+                              (error `type-check "type mistmatch in vector-set! ~a ~a" (list-ref ts i) t-arg))
+                            (values `(has-type (vector-set! ,e-vec^
+                                                            (has-type ,i Integer)
+                                                            ,e-arg^) Void) `Void)]
+         [else (error `type-check "expected a vector in vector-set!, not ~a" t-vec)])]
 
+      [`(read) (values `(has-type (read) Integer) `Integer)]
+
+      
+
+      [`(,op ,(app recur n1 t1) ,(app recur n2 t2)) #:when (member op arith-syms-biadic)
+                     (if (and (equal? t1 `Integer) (equal? t2 `Integer))
+                         (values `(has-type (,op ,n1 ,n2) Integer) `Integer)
+                         (error `typecheck-R4 "~a expects integer arguments" op))]
+
+      [`(,op ,(app recur n t)) #:when (member op arith-syms-monadic)
+                                          (if (equal? t `Integer)
+                                              (values `(has-type (,op ,n) ,t) `Integer)
+                                              (error `typecheck-R4 "~a expects integer arguments" op))]
+
+      
+
+      [`(not ,(app recur e T))
+       (match T
+         [`Boolean (values `(has-type (not ,e) ,T) 'Boolean)]
+         [else (error `type-check "`not` expects a boolean" e)])]
+
+      [`(,op ,(app recur e1 b1) ,(app recur e2 b2)) #:when (member op bool-syms-biadic)
+           (if (and (equal? b1 `Boolean) (equal? b2 `Boolean))
+               (values `(has-type (,op ,e1 ,e2) Boolean) 'Boolean)
+               (error `type-check "~a expects boolean arguments" op))]
+
+      [`(,op ,(app recur e1 t1) ,(app recur e2 t2)) #:when (member op cmp-syms)
+           (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
+           (define vector-type (if (list? t1) (member 'Vector t1) #f))
+           (if (and (or vector-type (member t1 accepted-types)) (or vector-type (member t2 accepted-types)) (equal? t1 t2))
+               (values `(has-type (,op ,e1 ,e2) Boolean) `Boolean)
+               (error `type-check "~a expects integer arguments (or of the same type if eq?)" op))]
+      
+      [`(,fname ,(app recur e* t*) ...) #:when (member fname (map car env)) 
+                                        (define signature (lookup fname env))
+                                        (define-values (arg-types output-type) (match signature [`(,args ... -> ,output) (values args output)]))
+                                        (for ([t t*] [arg-t arg-types])
+                                          (if (equal? t arg-t)
+                                              "pass"
+                                              (error `type-check "Argument types ~a did not match function signature ~a" t* arg-types)))
+                                        (values `(has-type ((has-type ,fname ,(lookup fname env)) ,@e*) ,output-type) output-type)]
+
+      
+      
       [`(if ,(app recur cnd-e cnd-T) ,(app recur thn-e thn-T) ,(app recur els-e els-T))
-           (values `(if (eq? ,cnd-e (inject #f Boolean)) ,els-e ,thn-e) `Any)]
-
-      ;;;;;;;;;;;;;;
-      ; Handle Ops ;
-      ;;;;;;;;;;;;;;
-
-      [`(,op ,args ...)
-       (match op
-
-         ; Comparison operations with two arguments
-         [(? (lambda (op) (member op cmp-syms)))
-          (define-values (e-arg1 t-arg1) (recur (first args)))
-          (define-values (e-arg2 t-arg2) (recur (second args)))
-          (cond
-            [(equal? `eq? op)
-             (values `(inject (eq? ,e-arg1 ,e-arg2) Boolean) `Any)]
-            [else
-             (values `(inject (,op (project ,e-arg1  Integer) (project ,e-arg2 Integer)) Boolean) `Any)])]
-
-         ; Boolean operations with one argument
-         [(? (lambda (op) (member op bool-syms-monadic)))
-          (define-values (e-arg t-arg) (recur (first args)))
-          (define tmp (gensym 'nottmp))
-          (values `(let ((,tmp ,e-arg))
-                     (if (eq? ,tmp (inject #f Boolean))
-                         (inject #t Boolean)
-                         (inject #f Boolean))) `Any)]
-         
-         ; Boolean operations with two arguments
-         [(? (lambda (op) (member op bool-syms-biadic)))
-          (define-values (e-arg1 t-arg1) (recur (first args)))
-          (define-values (e-arg2 t-arg2) (recur (second args)))
-          (define tmp (gensym 'andortmp))
-          (cond
-            [(equal? `or  op) (values `(let ((,tmp ,e-arg1))
-                                         (if (eq? ,tmp (inject #f Boolean))
-                                             ,e-arg2
-                                             ,tmp)) `Any)]
-            [(equal? `and op) (values `(let ((,tmp ,e-arg1))
-                                         (if (eq? ,tmp (inject #f Boolean))
-                                             ,tmp
-                                             ,e-arg2)) `Any)])]
-
-         ; Arithmetic operations with one argument
-         [(? (lambda (op) (member op arith-syms-monadic))) ; -
-          (define-values (e-arg t-arg) (recur (first args)))
-          (values `(inject (,op (project ,e-arg Integer)) Integer) `Any)]
-         
-         ; Arithmetic operations with two arguments
-         [(? (lambda (op) (member op arith-syms-biadic))) ; +
-          (define-values (e-arg1 t-arg1) (recur (first args)))
-          (define-values (e-arg2 t-arg2) (recur (second args)))
-          (values `(inject (,op (project ,e-arg1 Integer) (project ,e-arg2 Integer)) Integer) `Any)]
-
-         ; User defined function as operator
-         [else
-          (define-values (e-op t-op) (recur op))
-          (define-values (e-ops t-ops) (map2 recur args))
-          (values `((project ,e-op ,t-op) ,@e-ops) (match t-op
-                                                     [`(,args ... -> ,output) output]
-                                                     [else t-op]))])]
-
-      ;[`(,op ,(app recur n1 t1) ,(app recur n2 t2)) #:when (member op arith-syms-biadic)
-      ;               (if (and (equal? t1 `Integer) (equal? t2 `Integer))
-      ;                   (values `(has-type (,op ,n1 ,n2) Integer) `Integer)
-      ;                   (error `typecheck-R4 "~a expects integer arguments" op))]
-
-      ;[`(,op ,(app recur n t)) #:when (member op arith-syms-monadic)
-      ;                                    (if (equal? t `Integer)
-      ;                                        (values `(has-type (,op ,n) ,t) `Integer)
-      ;                                        (error `typecheck-R4 "~a expects integer arguments" op))]
-
+       (if (equal? cnd-T `Boolean)
+           (if (equal? thn-T els-T)
+               (values `(has-type (if ,cnd-e ,thn-e ,els-e) ,thn-T) thn-T)
+               (error `type-check "both branches of if must be same type"))
+           (error `type-check "if expects a boolean in the conditional"))]
       
-
-      ;[`(not ,(app recur e T))
-      ; (match T
-      ;   [`Boolean (values `(has-type (not ,e) ,T) 'Boolean)]
-      ;   [else (error `type-check "`not` expects a boolean" e)])]
-
-      ;[`(,op ,(app recur e1 b1) ,(app recur e2 b2)) #:when (member op bool-syms-biadic)
-      ;     (if (and (equal? b1 `Boolean) (equal? b2 `Boolean))
-      ;         (values `(has-type (,op ,e1 ,e2) Boolean) 'Boolean)
-      ;         (error `type-check "~a expects boolean arguments" op))]
-
-      ;[`(,op ,(app recur e1 t1) ,(app recur e2 t2)) #:when (member op cmp-syms)
-      ;     (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
-      ;     (define vector-type (if (list? t1) (member 'Vector t1) #f))
-      ;     (if (and (or vector-type (member t1 accepted-types)) (or vector-type (member t2 accepted-types)) (equal? t1 t2))
-      ;         (values `(has-type (,op ,e1 ,e2) Boolean) `Boolean)
-      ;         (error `type-check "~a expects integer arguments (or of the same type if eq?)" op))]
-      
-      ;[`(,fname ,(app recur e* t*) ...) #:when (member fname (map car env)) 
-      ;                                  (define signature (lookup fname env))
-      ;                                  (define-values (arg-types output-type) (match signature [`(,args ... -> ,output) (values args output)]))
-      ;                                  (for ([t t*] [arg-t arg-types])
-      ;                                    (if (equal? t arg-t)
-      ;                                        "pass"
-      ;                                        (error `type-check "Argument types ~a did not match function signature ~a" t* arg-types)))
-      ;                                  (values `(has-type ((has-type ,fname ,(lookup fname env)) ,@e*) ,output-type) output-type)]
-
-      
-      ;[`(,(app recur op op-t) ,(app recur args ts) ...)
-      ; (define output-type (function-type op-t))
-      ; (if (equal? (length args) (length (match op-t [`(,inputs ... -> ,output) inputs])))
-      ;     "pass"
-      ;     (error `type-check "argument arity exception"))
-      ; (values `(has-type (,op ,@args) ,output-type) output-type)]
+      [`(,(app recur op op-t) ,(app recur args ts) ...)
+       (define output-type (function-type op-t))
+       (if (equal? (length args) (length (match op-t [`(,inputs ... -> ,output) inputs])))
+           "pass"
+           (error `type-check "argument arity exception"))
+       (values `(has-type (,op ,@args) ,output-type) output-type)]
       )))
 
 (define type-check typecheck-R4)

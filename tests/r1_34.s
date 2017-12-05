@@ -17,7 +17,45 @@ main:
 	addq $1, %rcx
 	movq $1, %rbx
 	addq $1, %rbx
+	movq %rcx, %rcx
+	addq %rbx, %rcx
+	movq $1, %rbx
+	addq $1, %rbx
+	movq $1, %rdx
+	addq $1, %rdx
+	movq %rbx, %rbx
+	addq %rdx, %rbx
+	movq %rcx, %rcx
+	addq %rbx, %rcx
+	movq $1, %rbx
+	addq $1, %rbx
+	movq $1, %rdx
+	addq $1, %rdx
+	movq %rbx, %rbx
+	addq %rdx, %rbx
+	movq $1, %rdx
+	addq $1, %rdx
+	movq $1, %rsi
+	addq $1, %rsi
+	movq %rdx, %rdx
+	addq %rsi, %rdx
+	movq %rbx, %rbx
+	addq %rdx, %rbx
+	movq %rcx, %rsi
+	addq %rbx, %rsi
+	movq $1, %rcx
+	addq $1, %rcx
+	movq $1, %rbx
+	addq $1, %rbx
 	movq %rcx, %rdx
+	addq %rbx, %rdx
+	movq $1, %rbx
+	addq $1, %rbx
+	movq $1, %rcx
+	addq $1, %rcx
+	movq %rbx, %rbx
+	addq %rcx, %rbx
+	movq %rdx, %rdx
 	addq %rbx, %rdx
 	movq $1, %rcx
 	addq $1, %rcx
@@ -25,59 +63,21 @@ main:
 	addq $1, %rbx
 	movq %rcx, %rcx
 	addq %rbx, %rcx
-	movq %rdx, %rbx
-	addq %rcx, %rbx
-	movq $1, %rcx
-	addq $1, %rcx
-	movq $1, %rdx
-	addq $1, %rdx
-	movq %rcx, %rcx
-	addq %rdx, %rcx
-	movq $1, %rdx
-	addq $1, %rdx
-	movq $1, %rsi
-	addq $1, %rsi
-	movq %rdx, %rdx
-	addq %rsi, %rdx
-	movq %rcx, %rcx
-	addq %rdx, %rcx
-	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq $1, %rdx
-	addq $1, %rdx
-	movq $1, %rcx
-	addq $1, %rcx
-	movq %rdx, %rsi
-	addq %rcx, %rsi
-	movq $1, %rcx
-	addq $1, %rcx
-	movq $1, %rdx
-	addq $1, %rdx
-	movq %rcx, %rcx
-	addq %rdx, %rcx
-	movq %rsi, %rsi
-	addq %rcx, %rsi
-	movq $1, %rdx
-	addq $1, %rdx
-	movq $1, %rcx
-	addq $1, %rcx
-	movq %rdx, %rdx
-	addq %rcx, %rdx
-	movq $1, %rcx
-	addq $1, %rcx
+	movq $1, %rbx
+	addq $1, %rbx
 	movq $1, %rdi
 	addq $1, %rdi
-	movq %rcx, %rcx
-	addq %rdi, %rcx
-	movq %rdx, %rdx
-	addq %rcx, %rdx
-	movq %rsi, %rcx
-	addq %rdx, %rcx
 	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq $10, %rcx
+	addq %rdi, %rbx
+	movq %rcx, %rcx
 	addq %rbx, %rcx
-	movq %rcx, %rax
+	movq %rdx, %rbx
+	addq %rcx, %rbx
+	movq %rsi, %rcx
+	addq %rbx, %rcx
+	movq $10, %rbx
+	addq %rcx, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
