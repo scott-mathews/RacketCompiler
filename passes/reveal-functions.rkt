@@ -56,6 +56,6 @@
 
       [`(has-type (,(app (reveal-functions f-list) op) ,es ...) ,t)
        ;(displayln (format "New op: ~a" op))
-       `(has-type (,op ,@(map (reveal-functions f-list) es)) ,t)]
+       `(has-type (app ,op ,@(map (reveal-functions f-list) es)) ,t)]
       ))) ; might need to update x to function-ref here
 ;;; End Reveal Functions ;;;

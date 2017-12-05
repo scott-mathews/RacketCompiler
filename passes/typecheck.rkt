@@ -223,9 +223,8 @@
 
          ; applying user defined function
          [else
-          (displayln op)
           (define-values (op-e op-t) (recur op))
-          (values `(has-type (,op-e ,@args) ,op-t) (last op-t))]
+          (values `(has-type ((has-type (inject ,op-e ,op-t) Any) ,@args) ,op-t) (last op-t))]
          
          )]
       
