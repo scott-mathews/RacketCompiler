@@ -29,15 +29,14 @@
   env)
 
 ;;;;;;;;;;;;;;;;;;
-; Handle Defines ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;                                                        ;
-; Sometimes there will be recursion/mutual recursion.    ;
-; When passing over the functions, we will try to get    ;
-; their types. Some of them will fail, because they rely ;
-; on a function whose type we don't have yet. For these, ;
-; we will continue to run our function, until they have  ;
-; all had a chance to get a type.                        ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Handle Defines ;
+;
+; Sometimes there will be recursion/mutual recursion. 
+; When passing over the functions, we will try to get
+; their types. Some of them will fail, because they rely
+; on a function whose type we don't have yet. For these,
+; we will continue to run our function, until they have
+; all had a chance to get a type.
 
 (define (type-check-defines defs)
 
@@ -147,7 +146,7 @@
        (set! function-type `(,@(map (lambda (arg) `Any) args) -> ,t-body))
 
        (values `(define (,var ,@args) ,new-body)
-               function-type)]
+               t-body)]
 
       ;;;;;;;;;;;;;;;;
       ; Vector Stuff ;
@@ -164,7 +163,8 @@
           (let ([tmp1 (gensym 'vectorreftmp)]
                 [tmp2 (gensym 'indextmp)])
             (values `(let ((,tmp1 (project ,e (Vectorof Any))))
-                       (vector-ref ,tmp1 ,i)) `Any))
+                       (let ((,tmp2 (project ,i^ Integer)))
+                         (vector-ref ,tmp1 ,tmp2))) `Any))
           ]
          [`(Vectorof ,t)
           (unless (exact-nonnegative-integer? i)
@@ -181,8 +181,9 @@
                 [tmp2 (gensym 'indextmp)]
                 [tmp3 (gensym 'vectorsettertmp)])
             (values `(let ((,tmp1 (project ,e-vec^ (Vectorof Any))))
-                       (let ((,tmp3 ,e-arg^))
-                         (vector-set! ,tmp1 ,i ,tmp3))) `Any))]
+                       (let ((,tmp2 (project (inject ,i Integer) Integer)))
+                         (let ((,tmp3 ,e-arg^))
+                           (vector-set! ,tmp1 ,tmp2 ,tmp3)))) `Any))]
          [`(Vectorof ,t)
           (unless (exact-nonnegative-integer? i)
             (error `type-check "invalid index ~a" i))
