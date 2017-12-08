@@ -13,18 +13,86 @@ main:
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $10, %rbx
+	movq $10, %rcx
+	salq $3, %rcx
+	orq $1, %rcx
+	movq %rcx, %rbx
+	andq $7, %rbx
+	cmpq $1, %rbx
+	je then101431
+	callq exit
+	jmp end101432
+then101431:
+	movq %rcx, %rbx
+	sarq $3, %rbx
+end101432:
+	movq %rbx, %rbx
 	negq %rbx
 	movq %rbx, %rbx
-	addq $11, %rbx
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %r12
+	andq $7, %r12
+	cmpq $1, %r12
+	je then101433
+	callq exit
+	jmp end101434
+then101433:
+	movq %rbx, %r12
+	sarq $3, %r12
+end101434:
+	movq $11, %rcx
+	salq $3, %rcx
+	orq $1, %rcx
+	movq %rcx, %rbx
+	andq $7, %rbx
+	cmpq $1, %rbx
+	je then101435
+	callq exit
+	jmp end101436
+then101435:
+	movq %rcx, %rbx
+	sarq $3, %rbx
+end101436:
+	movq %r12, %rcx
+	addq %rbx, %rcx
+	movq %rcx, %rbx
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %rcx
+	movq %rcx, %rbx
+	andq $7, %rbx
+	cmpq $1, %rbx
+	je then101437
+	callq exit
+	jmp end101438
+then101437:
+	movq %rcx, %rbx
+	sarq $3, %rbx
+end101438:
+	movq $41, %rcx
+	salq $3, %rcx
+	orq $1, %rcx
+	movq %rcx, %r12
+	andq $7, %r12
+	cmpq $1, %r12
+	je then101439
+	callq exit
+	jmp end101440
+then101439:
+	movq %rcx, %r12
+	sarq $3, %r12
+end101440:
 	movq %rbx, %rbx
+	addq %r12, %rbx
 	movq %rbx, %rbx
-	addq $41, %rbx
+	salq $3, %rbx
+	orq $1, %rbx
 	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
-	callq	print_int
+	callq	print_any
 	subq $0, %r15
 	addq $88, %rsp
 	movq $0, %rax

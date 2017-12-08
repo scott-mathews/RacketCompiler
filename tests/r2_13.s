@@ -14,33 +14,69 @@ main:
 	addq $0, %r15
 
 	movq $1, %rbx
-	cmpq $1, %rbx
-	je then37411
+	salq $3, %rbx
+	orq $4, %rbx
+	movq %rbx, %rcx
 	movq $0, %rbx
-	jmp end37412
-then37411:
+	salq $3, %rbx
+	orq $4, %rbx
+	cmpq %rcx, %rbx
+	sete %al
+	movzbq %al, %rbx
+	cmpq $1, %rbx
+	je then102724
+	movq %rcx, %rbx
+	jmp end102725
+then102724:
+	movq $0, %rbx
+	salq $3, %rbx
+	orq $4, %rbx
 	movq %rbx, %rbx
-end37412:
+end102725:
+	movq $0, %rcx
+	salq $3, %rcx
+	orq $4, %rcx
+	cmpq %rbx, %rcx
+	sete %al
+	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then37413
-	movq $0, %rbx
-	jmp end37414
-then37413:
+	je then102726
 	movq $1, %rbx
-end37414:
+	salq $3, %rbx
+	orq $4, %rbx
 	movq %rbx, %rbx
+	jmp end102727
+then102726:
+	movq $0, %rbx
+	salq $3, %rbx
+	orq $4, %rbx
+	movq %rbx, %rbx
+end102727:
+	movq %rbx, %rcx
+	movq $0, %rbx
+	salq $3, %rbx
+	orq $4, %rbx
+	cmpq %rcx, %rbx
+	sete %al
+	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then37415
-	movq $777, %rbx
-	jmp end37416
-then37415:
+	je then102728
 	movq $42, %rbx
-end37416:
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %rbx
+	jmp end102729
+then102728:
+	movq $777, %rbx
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %rbx
+end102729:
 	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
-	callq	print_int
+	callq	print_any
 	subq $0, %r15
 	addq $88, %rsp
 	movq $0, %rax

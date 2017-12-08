@@ -13,22 +13,42 @@ main:
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $1, %rax
-	cmpq $1, %rax
+	movq $1, %rcx
+	salq $3, %rcx
+	orq $1, %rcx
+	movq $1, %rbx
+	salq $3, %rbx
+	orq $1, %rbx
+	cmpq %rcx, %rbx
+	sete %al
+	movzbq %al, %rbx
+	movq %rbx, %rcx
+	salq $3, %rcx
+	orq $4, %rcx
+	movq $0, %rbx
+	salq $3, %rbx
+	orq $4, %rbx
+	cmpq %rcx, %rbx
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then37366
-	movq $777, %rbx
-	jmp end37367
-then37366:
+	je then102479
 	movq $42, %rbx
-end37367:
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %rbx
+	jmp end102480
+then102479:
+	movq $777, %rbx
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %rbx
+end102480:
 	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
-	callq	print_int
+	callq	print_any
 	subq $0, %r15
 	addq $88, %rsp
 	movq $0, %rax

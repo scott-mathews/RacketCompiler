@@ -14,11 +14,17 @@ main:
 	addq $0, %r15
 
 	movq $0, %rbx
-	movq $42, %rax
+	salq $3, %rbx
+	orq $4, %rbx
+	movq %rbx, %rbx
+	movq $42, %rbx
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
-	callq	print_int
+	callq	print_any
 	subq $0, %r15
 	addq $88, %rsp
 	movq $0, %rax

@@ -15,24 +15,27 @@ main:
 	movq $0, -8(%r15)
 
 	movq $42, %rbx
-	movq fromspace_end(%rip), %rdx
-	movq free_ptr(%rip), %rcx
-	movq %rcx, %rcx
-	addq $16, %rcx
-	cmpq %rdx, %rcx
+	salq $3, %rbx
+	orq $1, %rbx
+	movq %rbx, %rbx
+	movq fromspace_end(%rip), %rcx
+	movq free_ptr(%rip), %rdx
+	movq %rdx, %rdx
+	addq $16, %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then39463
+	je then106390
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end39464
-then39463:
+	jmp end106391
+then106390:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end39464:
+end106391:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -44,25 +47,27 @@ end39464:
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %rbx
-	movq %rbx, -8(%r15)
-	movq fromspace_end(%rip), %rcx
-	movq free_ptr(%rip), %rbx
+	orq $2, %rbx
 	movq %rbx, %rbx
-	addq $16, %rbx
-	cmpq %rcx, %rbx
+	movq %rbx, -8(%r15)
+	movq fromspace_end(%rip), %rbx
+	movq free_ptr(%rip), %rcx
+	movq %rcx, %rcx
+	addq $16, %rcx
+	cmpq %rbx, %rcx
 	sete %al
 	movzbq %al, %rbx
 	cmpq $1, %rbx
-	je then39465
+	je then106392
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rbx
-	jmp end39466
-then39465:
+	jmp end106393
+then106392:
 	movq $0, %rbx
 	movq %rbx, %rbx
-end39466:
+end106393:
 	movq %rbx, %rbx
 	movq free_ptr(%rip), %rbx
 	addq $16, free_ptr(%rip)
@@ -75,15 +80,39 @@ end39466:
 	movq $0, %rcx
 	movq %rcx, %rcx
 	movq %rbx, %rbx
+	orq $2, %rbx
+	movq %rbx, %rcx
+	movq %rcx, %rbx
+	andq $7, %rbx
+	cmpq $2, %rbx
+	je then106394
+	callq exit
+	jmp end106395
+then106394:
+	movq $7, %rbx
+	notq %rbx
+	andq %rcx, %rbx
+end106395:
 	movq %rbx, %r11
-	movq 8(%r11), %rbx
+	movq 8(%r11), %rcx
+	movq %rcx, %rbx
+	andq $7, %rbx
+	cmpq $2, %rbx
+	je then106396
+	callq exit
+	jmp end106397
+then106396:
+	movq $7, %rbx
+	notq %rbx
+	andq %rcx, %rbx
+end106397:
 	movq %rbx, %r11
 	movq 8(%r11), %rbx
 	movq %rbx, %rax
 
 	movq %rax, %rdi
 	movq	%rax, %rdi
-	callq	print_int
+	callq	print_any
 	subq $8, %r15
 	addq $88, %rsp
 	movq $0, %rax

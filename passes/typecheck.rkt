@@ -151,11 +151,12 @@
             (values `(has-type (vector-ref (has-type (project ,e (Vector ,@ts)) (Vector ,@ts)) (has-type ,i Integer)) ,t)
                     t))]
          [`(Vectorof ,t)
+          (displayln "COWABUNGA")
           (unless (exact-nonnegative-integer? i)
             (error `type-check "invalid index to vector-ref"))
           (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t) t)]
          [`Any
-          (values `(has-type (vector-ref ,e (has-type ,i Integer)) Any) t)]
+          (values `(has-type (vector-ref (has-type (project ,e (Vector Any)) (Vector Any)) (has-type ,i Integer)) Any) t)]
          [else (error `type-check "expected a vector in vector-ref, not ~a" t)])]
 
       [`(vector-set! ,(app recur e-vec^ t-vec) ,i
