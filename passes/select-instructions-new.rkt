@@ -84,8 +84,8 @@
 
     ;; Project and Inject ;;
     [`(inject ,arg ,type) (cond
-                            ; Vectors and Procedures
-                            [(list? type) `((movq ,(convert-arg arg) lhs)
+                            ; Vectors
+                            [(and (list? type) (equal? 'Vector (car type))) `((movq ,(convert-arg arg) lhs)
                                             (orq (int ,(tagof type)) lhs))]
 
                             ; All other types
@@ -95,8 +95,8 @@
 
     
     [`(project ,arg ,type) (cond
-                             ; Vectors and Procedures
-                             [(list? type) `((movq ,(convert-arg arg) lhs)
+                             ; Vectors
+                             [(and (list? type) (equal? 'Vector (car type))) `((movq ,(convert-arg arg) lhs)
                                              (andq (int 7) lhs)
                                              (if (eq? lhs (int ,(tagof type)))
                                                  ((movq (int 7) lhs)

@@ -24,7 +24,7 @@
       
       [(? terminal?) exp]
       
-      [`(has-type ,v ,t) #:when (member v f-list) `(has-type (function-ref ,v) ,t)]
+      [`(has-type ,v ,t) #:when (member v f-list) `(has-type (inject (has-type (function-ref ,v) ,t) ,t) Any)]
 
       
       [`(has-type ,v ,t) #:when (or (symbol? v) (boolean? v) (integer? v)) `(has-type ,v ,t)]

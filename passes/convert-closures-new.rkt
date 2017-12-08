@@ -85,6 +85,7 @@
           ; function-refs are put into vectors
           [`(function-ref ,name)
            ; make sure we take note that we are putting the function-ref in a vector
+
            ;(set! updated-expression-type `(Vector ,updated-expression-type))
            
            `(vector (has-type (inject (has-type (function-ref ,name) ,(second updated-expression-type)) ,(second updated-expression-type)) Any))
@@ -129,7 +130,7 @@
            
            
            `(let ((,(second closure-variable) ,closure-expression))
-              (has-type (app (has-type (project (has-type (vector-ref ,closure-variable (has-type 0 Integer)) Any) ,closure-variable-t) ,closure-variable-t)
+              (has-type (app (has-type (project (has-type (vector-ref (has-type (project ,closure-variable (Any -> Any)) (Any -> Any)) (has-type 0 Integer)) Any) ,closure-variable-t) ,closure-variable-t)
                              ,closure-variable
                              ,@converted-arguments)
                         ,updated-expression-type))

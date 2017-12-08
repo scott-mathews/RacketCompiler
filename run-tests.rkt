@@ -64,8 +64,8 @@
 ;(compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (range 1 11))
 
 ;;; === R7 Tests === ;;;
-(compiler-tests "r7 compiler" (type-check '()) r7_passes "r7" (range 50 56))
-(compiler-tests "r7 compiler" (type-check '()) r7_passes "r7" (range 1 18))
-;(my-run-tests passes "r7" (range 1 11) "" "print-x86"); "convert-closures")
+;(compiler-tests "r7 compiler" (type-check '()) r7_passes "r7" (range 50 56))
+;(compiler-tests "r7 compiler" (type-check '()) r7_passes "r7" (range 10 22))
+(my-run-tests passes "r7" (range 11 12) "" "print-x86"); "convert-closures")
 
 (display "tests passed!") (newline)
