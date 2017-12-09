@@ -33,7 +33,7 @@
 (define (update-and-split vars colors)
   ; Split variables into a list of regular variables and a list of vector variables
   (define-values (regular-vars rootstack-vars)
-    (map2 (lambda (var) (if (and (list? (cdr var)) (equal? (cadr var) 'Vector))
+    (map2 (lambda (var) (if (or (equal? `Any (cdr var)) (and (list? (cdr var)) (or (equal? (cadr var) 'Vector) (equal? (cadr var) 'Vectorof))))
                             (values '() `(,@(car var)))
                             (values `(,@(car var)) '())))
         

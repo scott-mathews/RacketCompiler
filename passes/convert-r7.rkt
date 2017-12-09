@@ -10,6 +10,10 @@
 ; Convert R7 to R6 ;
 ;;;;;;;;;;;;;;;;;;;;
 (define (convert-r7 program)
+  ; Reset globals
+  (set! function-names '())
+  (set! function-env '())
+  
   (match program
     [`(program ,exps ...)
      (define body (last exps))
@@ -24,6 +28,8 @@
 (define (convert-defines defines)
   (map (lambda (define) (match define
                           [`(define (,name ,args ...) ,body)
+                           (set! function-names (cons name function-names))
+                           (set! function-env (cons (cons name `(,@(map (lambda (arg) `Any) args) -> Any)) function-env))
                            `(define (,name ,@(convert-args args)) : Any ,(convert-exp body))]))
        defines))
 
@@ -31,7 +37,7 @@
 ; Convert Function Arguments ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define (convert-args args)
-  (map (lambda (arg) `[arg : Any]) args))
+  (map (lambda (arg) `[,arg : Any]) args))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -44,7 +50,11 @@
     ; Trivial Expressions ;
     ;;;;;;;;;;;;;;;;;;;;;;;
     [n #:when (fixnum? n) `(inject ,n Integer)]
-    [b #:when (fixnum? b) `(inject ,b Boolean)]
+    [b #:when (boolean? b) `(inject ,b Boolean)]
+    
+    ; Function references must be injected
+    [f #:when (and (symbol? f) (member f function-names)) `(inject ,f ,(lookup f function-env))]
+    
     [v #:when (symbol? v) v]
     [`(void) `(inject ,exp Void)]
     [`(read) `(inject ,exp Integer)]
@@ -70,7 +80,7 @@
     ;;;;;;;;;;;;;;
     ; Operations ;
     ;;;;;;;;;;;;;;
-    [`([,op] ,args ...)
+    [`(,op ,args ...)
      (match op
 
        ;;;;;;;
@@ -107,6 +117,11 @@
                (inject #t Boolean)
                (inject #f Boolean)))]
 
+       ;;;;;;;;;;
+       ; vector ;
+       ;;;;;;;;;;
+       [`vector
+        `(inject (vector ,@(map convert-exp args)) (Vector ,@(map (lambda (arg) `Any) args)))]
        
        ;;;;;;;;;;;;;;
        ; vector-ref ;
@@ -154,3 +169,9 @@
        )]
 
     ))
+
+;;;;;;;;;;;;;;;;;;;;
+; Global Variables ;
+;;;;;;;;;;;;;;;;;;;;
+(define function-names '())
+(define function-env '())

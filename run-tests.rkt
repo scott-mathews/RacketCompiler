@@ -24,6 +24,7 @@
       )
     (void))
 
-(compiler-tests "r7 compiler" #f r7_passes "r7" (range 0 23))
+;(compiler-tests "r7 compiler" #f r7_passes "r7" (range 70 71))
+(my-run-tests r7_passes "r7" (range 70 71) "")
 
 (display "tests passed!") (newline)

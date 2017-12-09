@@ -107,6 +107,7 @@
 
       [`(vector-ref ,(app recur e t) ,i)
        (match t
+         ; Vector
          [`(Vector ,ts ...)
           (unless (and (exact-nonnegative-integer? i)
                        (i . < . (length ts)))
@@ -114,11 +115,18 @@
           (let ([t (list-ref ts i)])
             (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t)
                     t))]
+         ; Vectorof
+         [`(Vectorof ,t)
+          (unless (exact-nonnegative-integer? i)
+            (error `type-check "invalid index ~a" i))
+          (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t) t)]
+         ; Else
          [else (error `type-check "expected a vector in vector-ref, not ~a" t)])]
       
       [`(vector-set! ,(app recur e-vec^ t-vec) ,i
                      ,(app recur e-arg^ t-arg))
        (match t-vec
+         ; Vector
          [`(Vector ,ts ...) (unless (and (exact-nonnegative-integer? i) (i . < . (length ts)))
                               (error `type-check "invalid index ~a" i))
                             (unless (equal? (list-ref ts i) t-arg)
@@ -126,6 +134,12 @@
                             (values `(has-type (vector-set! ,e-vec^
                                                             (has-type ,i Integer)
                                                             ,e-arg^) Void) `Void)]
+         ; Vectorof
+         [`(Vectorof ,t) (unless (exact-nonnegative-integer? i)
+                           (error `type-check "invalid index ~a" i))
+                         (unless (equal? t t-arg)
+                           (error `type-check "type mismatch in vector-set! ~a ~a" t t-arg))
+                         (values `(has-type (vector-set! ,e-vec^ (has-type ,i Integer) ,e-arg^) Void) `Void)]
          [else (error `type-check "expected a vector in vector-set!, not ~a" t-vec)])]
 
       [`(read) (values `(has-type (read) Integer) `Integer)]
@@ -157,7 +171,7 @@
                (error `type-check "~a expects boolean arguments" op))]
 
       [`(,op ,(app recur e1 t1) ,(app recur e2 t2)) #:when (member op cmp-syms)
-           (define accepted-types (if (equal? 'eq? op) '(Boolean Integer) '(Integer)))
+           (define accepted-types (if (equal? 'eq? op) '(Boolean Integer Any) '(Integer Any)))
            (define vector-type (if (list? t1) (member 'Vector t1) #f))
            (if (and (or vector-type (member t1 accepted-types)) (or vector-type (member t2 accepted-types)) (equal? t1 t2))
                (values `(has-type (,op ,e1 ,e2) Boolean) `Boolean)

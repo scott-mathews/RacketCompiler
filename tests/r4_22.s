@@ -69,15 +69,15 @@ main:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then485527
+	je then36977
 	movq $0, %rcx
-	jmp end485528
-then485527:
+	jmp end36978
+then36977:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end485528:
+end36978:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)

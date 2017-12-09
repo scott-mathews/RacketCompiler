@@ -265,6 +265,9 @@
     [`Closure type]
     [`Any     type]
 
+    
+    [`(Vectorof ,type) `(Vectorof ,(fix-type type))]
+
     ; Vectors are traversed through recursively
     [`(Vector ,types ...) `(Vector ,@(map fix-type types))]
 
