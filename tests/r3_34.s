@@ -13,8 +13,7 @@ main:
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $0, %rbx
-	movq %rbx, %rax
+	movq $0, %rax
 
 	movq %rax, %rdi
 	callq	print_void

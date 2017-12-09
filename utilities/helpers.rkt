@@ -7,7 +7,7 @@
          look-up-type get-function-type get-lambda-type get-lambda-env
          update-arg-format make-f-list make-typed-f-list cmp?
          move-like-op? add-like-op? neg-like-op? call-like-op? tagof
-         type-annotation?)
+         type-annotation? pred->type)
 
 ;;;;;;;;;;;;;;;;;;;
 ; ==> Helpers <== ;
@@ -184,6 +184,16 @@
     [`<= `le]
     [`eq? `e]
     [else (error "WARNING: in cmp->cc didn't match ~a" op)]))
+
+(define (pred->type pred)
+  (match pred
+    [`boolean?  `Boolean]
+    [`vector? `(Vector Any)]
+
+    ; All procedures will be closures now.
+    [`procedure? `(Vector Any)]
+    [`void? `Void]
+    [`integer? `Integer]))
 
 ; Checks if symbol is a comparison operator
 (define (cmp? op)

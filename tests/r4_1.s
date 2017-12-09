@@ -39,30 +39,29 @@ main:
 
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
-	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
 	movq %rcx, %rcx
 	addq $16, %rcx
-	cmpq %rdx, %rcx
+	movq fromspace_end(%rip), %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
-	cmpq $1, %rcx
-	je then75405
+	movq $0, %rax
+	cmpq %rcx, %rax
+	je then484687
+	movq $0, %rcx
+	jmp end484688
+then484687:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end75406
-then75405:
-	movq $0, %rcx
-	movq %rcx, %rcx
-end75406:
+end484688:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $3, 0(%r11)
-	movq %rcx, %rcx
 	movq %rcx, %r11
 	movq %rbx, 8(%r11)
 	movq $0, %rbx

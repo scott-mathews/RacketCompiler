@@ -18,24 +18,26 @@ main:
 	cmpq %rbx, %rax
 	sete %al
 	movzbq %al, %rcx
-	cmpq $1, %rcx
-	je then71017
-	movq $20, %rbx
-	jmp end71018
-then71017:
+	movq $0, %rax
+	cmpq %rcx, %rax
+	je then480678
 	movq %rbx, %rbx
-end71018:
+	jmp end480679
+then480678:
+	movq $20, %rbx
+end480679:
 	movq $42, %rax
 	cmpq %rbx, %rax
 	sete %al
 	movzbq %al, %rbx
-	cmpq $1, %rbx
-	je then71019
-	movq $777, %rbx
-	jmp end71020
-then71019:
+	movq $0, %rax
+	cmpq %rbx, %rax
+	je then480680
 	movq $42, %rbx
-end71020:
+	jmp end480681
+then480680:
+	movq $777, %rbx
+end480681:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

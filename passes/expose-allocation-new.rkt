@@ -119,14 +119,14 @@
 (define (make-center return-variable vector-type bytes vec-length)
   `(has-type
     (let ([,(gensym '_) (has-type
-              (if (has-type (< (global-value fromspace_end)
-                               (has-type (+ (global-value free_ptr) (has-type ,bytes Integer)) Integer)) Boolean)
+              (if (has-type (< (has-type (+ (has-type (global-value free_ptr) Integer) (has-type ,bytes Integer)) Integer)
+                               (has-type (global-value fromspace_end) Integer)) Boolean)
                   (has-type (void) Void)
-                  (has-type (collect ,bytes) Void))
+                  (has-type (collect (has-type ,bytes Integer)) Void))
               Void)])
       (has-type
        ; vvv vector-type will be turned into tag later.
-       (let ([,(second return-variable) (has-type (allocate ,vec-length ,vector-type) ,vector-type)])
+       (let ([,(second return-variable) (has-type (allocate (has-type ,vec-length Integer) ,vector-type) ,vector-type)])
          placeholder
          )
        ,vector-type))

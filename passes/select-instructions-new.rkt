@@ -3,6 +3,7 @@
 (require "../utilities.rkt")
 
 (require "../utilities/helpers.rkt")
+(require "../utilities/constants.rkt")
 
 (provide select-instructions)
 
@@ -79,6 +80,23 @@
     ; Handle Operations ;
     ;;;;;;;;;;;;;;;;;;;;;
 
+    ;; Type Predicates ;;
+    [`(,pred ,arg) #:when (member pred type-predicates)
+                   (match pred
+                     ; Vectors
+                     ;[`vector? `((movq ,(convert-arg arg) lhs)
+                     ;            (andq (int 7) lhs)
+                     ;            (cmpq lhs (int ,(tagof (pred->type pred))))
+                     ;            (set ,(cmp->cc `eq?) (byte-reg al))
+                     ;            (movzbq (byte-reg al) lhs))]
+
+                     ; All other types
+                     [else `((movq ,(convert-arg arg) lhs)
+                             (andq (int 7) lhs)
+                             (cmpq lhs (int ,(tagof (pred->type pred))))
+                             (set ,(cmp->cc `eq?) (byte-reg al))
+                             (movzbq (byte-reg al) lhs))])]
+
     ;; Inject and Project ;;
     [`(inject ,arg ,type) (cond
                             ; Vectors
@@ -154,6 +172,7 @@
     [(? symbol?) `(var ,arg)]
     [(? fixnum?) `(int ,arg)]
     [(? boolean?) `(int ,(if arg 1 0))]
+    [`(void) `(int 0)]
     [`(function-ref ,name) `(leaq (function-ref ,name) lhs)]))
 
 (define (arg? exp)

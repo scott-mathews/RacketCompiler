@@ -14,17 +14,17 @@ main:
 	addq $0, %r15
 
 	movq $1, %rbx
-	movq $46, %rdx
+	movq $46, %rcx
 	movq %rbx, %rbx
 	addq $7, %rbx
 	movq %rbx, %rbx
-	movq $4, %rcx
-	addq %rbx, %rcx
-	movq %rcx, %rcx
+	movq $4, %rdx
+	addq %rbx, %rdx
+	movq %rdx, %rdx
 	movq %rbx, %rbx
-	addq %rdx, %rbx
+	addq %rcx, %rbx
 	movq %rbx, %rbx
-	movq %rcx, %rcx
+	movq %rdx, %rcx
 	negq %rcx
 	movq %rbx, %rbx
 	addq %rcx, %rbx

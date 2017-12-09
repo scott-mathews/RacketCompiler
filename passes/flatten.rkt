@@ -44,7 +44,6 @@
     ))
 
 (define (flatten-helper exp . var)
-  ;(display exp)
   (match exp
     [`(has-type (if ,cnd ,thn ,els) ,t) (define-values (flat-cnd assignments-cnd vars-cnd) (flatten-helper cnd))
                           (define v (gensym `tmp))

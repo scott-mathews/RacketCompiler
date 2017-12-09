@@ -10,12 +10,13 @@
 (require "utilities/testing.rkt")
 
 ; Import Passes
+(require "passes/convert-r7.rkt")
 (require "passes/typecheck.rkt")
 (require "passes/uniquify.rkt")
 (require "passes/reveal-functions.rkt")
 (require "passes/convert-closures-new.rkt")
 (require "passes/expose-allocation-new.rkt")
-(require "passes/flatten.rkt")
+(require "passes/flatten-new.rkt")
 (require "passes/select-instructions-new.rkt")
 (require "passes/uncover-live-new.rkt")
 (require "passes/build-interference-new.rkt")
@@ -29,7 +30,8 @@
 (provide uniquify-pass flatten-pass select-instructions-pass
          allocate-registers-pass patch-instructions-pass type-check
          lower-conditionals-pass r5_passes expose-allocation-pass
-         reveal-functions-pass passes r3_passes r4_passes r6_passes)
+         reveal-functions-pass passes r3_passes r4_passes r6_passes
+         r7_passes)
 
 ;; Define the passes to be used by interp-tests and the grader
 ;; Note that your compiler file (or whatever file provides your passes)
@@ -133,3 +135,5 @@
 
 (define passes
   (cons `("type-check" ,(type-check '()) ,interp-scheme) r5_passes))
+
+(define r7_passes (cons `("convert-r7" ,convert-r7 ,interp-scheme) passes))

@@ -11,43 +11,42 @@ function0:
 
 	movq %rdi, %rbx
 	movq %rsi, %rbx
-	movq %rbx, %r12
 	movq %rbx, %rbx
+	movq %rbx, %r12
 	movq %rbx, %r13
-	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
 	movq %rcx, %rcx
 	addq $32, %rcx
-	cmpq %rdx, %rcx
+	movq fromspace_end(%rip), %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
-	cmpq $1, %rcx
-	je then75972
+	movq $0, %rax
+	cmpq %rcx, %rax
+	je then485188
+	movq $0, %rcx
+	jmp end485189
+then485188:
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end75973
-then75972:
-	movq $0, %rcx
-	movq %rcx, %rcx
-end75973:
+end485189:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $32, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $7, 0(%r11)
-	movq %rcx, %rcx
 	movq %rcx, %r11
 	movq %r13, 24(%r11)
 	movq $0, %rdx
 	movq %rdx, %rdx
 	movq %rcx, %r11
-	movq %rbx, 16(%r11)
-	movq $0, %rbx
-	movq %rbx, %rbx
+	movq %r12, 16(%r11)
+	movq $0, %rdx
+	movq %rdx, %rdx
 	movq %rcx, %r11
-	movq %r12, 8(%r11)
+	movq %rbx, 8(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %rax
@@ -78,30 +77,29 @@ main:
 
 	leaq function0(%rip), %rbx
 	movq %rbx, %rbx
-	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
 	movq %rcx, %rcx
 	addq $16, %rcx
-	cmpq %rdx, %rcx
+	movq fromspace_end(%rip), %rdx
+	cmpq %rcx, %rdx
 	sete %al
 	movzbq %al, %rcx
-	cmpq $1, %rcx
-	je then75974
+	movq $0, %rax
+	cmpq %rcx, %rax
+	je then485190
+	movq $0, %rcx
+	jmp end485191
+then485190:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end75975
-then75974:
-	movq $0, %rcx
-	movq %rcx, %rcx
-end75975:
+end485191:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
 	movq $3, 0(%r11)
-	movq %rcx, %rcx
 	movq %rcx, %r11
 	movq %rbx, 8(%r11)
 	movq $0, %rbx
@@ -115,17 +113,17 @@ end75975:
 	movq %rax, %rbx
 	movq %rbx, %rbx
 	movq %rbx, %r11
-	movq 8(%r11), %rdx
+	movq 8(%r11), %rcx
 	movq %rbx, %r11
-	movq 16(%r11), %rcx
+	movq 16(%r11), %rdx
 	movq %rbx, %r11
 	movq 24(%r11), %rbx
 	movq %rbx, %rbx
 	addq $3, %rbx
-	movq %rcx, %rcx
-	addq %rbx, %rcx
-	movq %rdx, %rbx
-	addq %rcx, %rbx
+	movq %rdx, %rdx
+	addq %rbx, %rdx
+	movq %rcx, %rbx
+	addq %rdx, %rbx
 	movq %rbx, %rax
 
 	movq %rax, %rdi
