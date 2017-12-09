@@ -27,6 +27,11 @@
          (define-values (new-define name) ((reveal-functions new-env) def))
          (set! new-defines (cons new-define new-defines)))       
        `(program ,type ,@(reverse new-defines) ,((reveal-functions new-env) e))]
+
+      ; Inject/Project
+      [`(inject ,(app (reveal-functions f-list) e) ,t) `(inject ,e ,t)]
+      [`(project ,(app (reveal-functions f-list) e) ,t) `(project ,e ,t)]
+      
       [`(define ((has-type ,var ,type) ,args* ...) ,body)
        (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions f-list) body)) var)]
       [`(has-type (lambda (,args* ...) ,body) ,type)

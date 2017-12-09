@@ -36,6 +36,7 @@
   (lambda (e)
     (define recur (typecheck-R4 env))
     (match e
+      ; Program
       [`(program ,exps ...)
        (define body (last exps))
        (define defs (reverse (cdr (reverse exps))))
@@ -47,14 +48,26 @@
          (set! new-defs (cons fexp new-defs)))
        (define-values (new-body T) ((typecheck-R4 new-env) body))
        `(program (type ,T) ,@new-defs ,new-body)]
-      [(? fixnum?) (values `(has-type ,e Integer) `Integer)]
-      [(? boolean?) (values `(has-type ,e Boolean) `Boolean)]
-      [(? symbol?) (values `(has-type ,e ,(lookup e env)) (lookup e env))]
-      [`(void) (values `(has-type (void) Void) `Void)]
+
+      ; Inject/Project
+      [`(inject ,(app recur new-e e-ty) ,ty)
+       (cond
+         [(equal? e-ty ty) (values `(inject ,new-e ,ty) `Any)]
+         [else (error "inject expected ~a to have type ~a" e ty)])]
+      [`(project ,(app recur new-e e-ty) ,ty)
+       (cond
+         [(equal? e-ty `Any) (values `(project ,new-e ,ty) ty)]
+         [else (error "project expected ~a to have type Any" e ty)])]
+
+      ; Let
       [`(let ([,x ,(app recur e T)]) ,body)
        (define new-env (cons (cons x T) env))
        (define-values (eb tb) ((type-check new-env) body))
-       (values `(has-type (let ([,x ,e]) ,eb) ,tb) tb)]     
+       (values `(has-type (let ([,x ,e]) ,eb) ,tb) tb)]
+
+
+
+      ; Lambda
       [`(lambda: (,args* ...) : ,type ,body)
        (define arg-env (get-lambda-env e env))
        (define lam-type (get-lambda-type e))
@@ -62,6 +75,12 @@
        (define-values (eb tb) ((type-check arg-env) body))
        (values `(has-type (lambda (,@new-args) ,eb) ,lam-type)
                lam-type)]
+ 
+      [(? fixnum?) (values `(has-type ,e Integer) `Integer)]
+      [(? boolean?) (values `(has-type ,e Boolean) `Boolean)]
+      [(? symbol?) (values `(has-type ,e ,(lookup e env)) (lookup e env))]
+      [`(void) (values `(has-type (void) Void) `Void)]
+      
       [`(define (,var ,args* ...) : ,type ,body)
        (define input-types '())
        (define new-env env)
@@ -80,7 +99,8 @@
        (if (equal? tb type)
            (values `(define ((has-type ,var ,function-type) ,@(reverse new-args)) ,eb) (cons var function-type)) ; return has-typed expression, type, and function name
            (error `type-check "expected body to have type ~a but found type ~a" type tb))
-       ] 
+       ]
+      
       [`(vector ,(app recur e* t*) ...)
        (let ([t `(Vector ,@t*)])
          (values `(has-type (vector ,@e*) ,t) t))]
@@ -95,7 +115,7 @@
             (values `(has-type (vector-ref ,e (has-type ,i Integer)) ,t)
                     t))]
          [else (error `type-check "expected a vector in vector-ref, not ~a" t)])]
-
+      
       [`(vector-set! ,(app recur e-vec^ t-vec) ,i
                      ,(app recur e-arg^ t-arg))
        (match t-vec
@@ -110,7 +130,9 @@
 
       [`(read) (values `(has-type (read) Integer) `Integer)]
 
-      
+      ; Type Predicates
+      [`(,pred ,(app recur new-e e-ty)) #:when (member pred type-predicates)
+                                        (values `(has-type (,pred ,new-e) Boolean) `Boolean)]
 
       [`(,op ,(app recur n1 t1) ,(app recur n2 t2)) #:when (member op arith-syms-biadic)
                      (if (and (equal? t1 `Integer) (equal? t2 `Integer))

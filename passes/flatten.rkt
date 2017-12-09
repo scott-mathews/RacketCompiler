@@ -57,6 +57,8 @@
     [`(has-type ,v ,t) #:when (symbol? v) (values v '() (list (cons v t)))]
     [`(has-type ,n ,t) #:when (fixnum? n) (values n '() '())]
     [`(has-type ,b ,t) #:when (boolean? b) (values b '() '())]
+
+    
     [`(has-type (void) ,t) (define v (genvar var))
                            (values v `((assign ,v (void))) (list (cons v t)))]
     [`(global-value ,name) (define v (genvar var))
@@ -91,8 +93,8 @@
      (define new-args* (map cadr args*))
      ; make sure vars contains all arguments as well.
      `(define (,new-fn ,@new-args*) ,(check-duplicate-vars (cleanup (append vars (args->vars args*)))) ,@assignments (return ,flat-exp))]
-    [`(has-type (let ([,v (has-type ,e ,te)]) ,body) ,t)
-     (define-values (flat-exp1 assignments1 vars1) (flatten-helper `(has-type ,e ,te)))
+    [`(,ac (let ([,v (,ac2 ,e ,te)]) ,body) ,t)
+     (define-values (flat-exp1 assignments1 vars1) (flatten-helper `(,ac2 ,e ,te)))
      (define-values (flat-exp2 assignments2 vars2) (flatten-helper body))
      (define v-type (cons v te))
      ;(cond
@@ -134,9 +136,17 @@
     [`(has-type (- ,e) ,t) (define v (genvar var))
              (define-values (flat-exp assignments vars) (flatten-helper e))
              (values v `( ,@assignments (assign ,v (- ,flat-exp))) (cons (cons v t) vars))]
+    
+    ; Inject/Project
+    [`(inject ,e ,t) (define v (genvar var))
+                     (define-values (flat-e ass-e vars-e) (flatten-helper e))
+                     (values v `(,@ass-e (assign ,v (inject ,flat-e ,t))) (cons (cons v t) vars-e))]
+    [`(project ,e ,t) (define v (genvar var))
+                      (define-values (flat-e ass-e vars-e) (flatten-helper e))
+                      (values v `(,@ass-e (assign ,v (project ,flat-e ,t))) (cons (cons v t) vars-e))]
+    
     [`(has-type (,op ,args* ...) ,t) (define v (genvar var))
                                      (define-values (flat-exps assignments vars) (map3 flatten-helper args*))
-                                     (displayln exp)
                                      (values v `(,@(values assignments) (assign ,v (,op ,@flat-exps))) (cons (cons v t) (foldr append '() vars)))]
     ))
 

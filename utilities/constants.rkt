@@ -5,7 +5,7 @@
 ; export constants
 (provide cmp-syms bool-syms-biadic bool-syms-monadic
          arith-syms-biadic arith-syms-monadic vector-syms
-         other-syms built-ins)
+         other-syms built-ins type-predicates)
 
 (provide arg-reg-list)
 
@@ -21,7 +21,8 @@
 (define arith-syms-monadic '(-))
 (define vector-syms '(vector-set! vector-ref vector))
 (define other-syms '(read void))
-(define built-ins (list->set (append cmp-syms bool-syms-biadic arith-syms-biadic arith-syms-monadic bool-syms-monadic vector-syms other-syms)))
+(define type-predicates '(boolean? integer? procedure? vector?))
+(define built-ins (list->set (append type-predicates cmp-syms bool-syms-biadic arith-syms-biadic arith-syms-monadic bool-syms-monadic vector-syms other-syms)))
 
 ; Registers
 

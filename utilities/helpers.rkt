@@ -6,11 +6,18 @@
 (provide function-type terminal? map-me remove-duplicate-movq cmp->cc
          look-up-type get-function-type get-lambda-type get-lambda-env
          update-arg-format make-f-list make-typed-f-list cmp?
-         move-like-op? add-like-op? neg-like-op? call-like-op?)
+         move-like-op? add-like-op? neg-like-op? call-like-op? tagof
+         type-annotation?)
 
 ;;;;;;;;;;;;;;;;;;;
 ; ==> Helpers <== ;
 ;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; General Matching Helpers ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (type-annotation? op)
+  (or (equal? 'inject op) (equal? 'project op) (equal? 'has-type op)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Dynamic Typing Helpers ;
@@ -43,12 +50,17 @@
     [`addq #t]
     [`xorq #t]
     [`cmpq #t]
+    [`andq #t]
+    [`orq  #t]
+    [`sarq #t]
+    [`salq #t]
     [(? cmp?) #t]
     [else #f]))
 
 (define (neg-like-op? op)
   (match op
     [`negq #t]
+    [`notq #t]
     [`indirect-callq #t]
     [else #f]))
 

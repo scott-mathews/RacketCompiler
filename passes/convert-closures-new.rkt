@@ -67,6 +67,10 @@
 (define (convert-exp e)
   ; extract type from expression
   (match e
+
+    ; Inject/Project
+    [`(inject ,(app convert-exp new-e) ,t) `(inject ,new-e ,t)]
+    [`(project ,(app convert-exp new-e) ,t) `(project ,new-e ,t)]
     
     [`(has-type ,exp ,type)
      ; all expressions have their types fixed.
@@ -227,6 +231,11 @@
                              '()
                              `((has-type ,v ,t)))]
       [`(has-type ,v ,t) #:when (terminal? v) '()]
+
+      ; Inject / Project
+      [`(inject ,e ,t) ((find-free-vars env) e)]
+      [`(project ,e ,t) ((find-free-vars env) e)]
+      
       [`(has-type (function-ref ,v) ,t) '()]
       [`(has-type (let ((,var ,e)) ,body) ,type)
        (append ((find-free-vars (cons var env)) e) ((find-free-vars (cons var env)) body))]
@@ -251,6 +260,7 @@
     [`Boolean type]
     [`Void    type]
     [`Closure type]
+    [`Any     type]
 
     ; Vectors are traversed through recursively
     [`(Vector ,types ...) `(Vector ,@(map fix-type types))]

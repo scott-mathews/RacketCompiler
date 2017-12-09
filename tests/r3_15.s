@@ -15,24 +15,24 @@ main:
 	movq $0, -8(%r15)
 
 	movq $0, %rbx
-	movq fromspace_end(%rip), %rcx
-	movq free_ptr(%rip), %rdx
-	movq %rdx, %rdx
-	addq $16, %rdx
-	cmpq %rcx, %rdx
+	movq fromspace_end(%rip), %rdx
+	movq free_ptr(%rip), %rcx
+	movq %rcx, %rcx
+	addq $16, %rcx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then39364
+	je then324024
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end39365
-then39364:
+	jmp end324025
+then324024:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end39365:
+end324025:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -44,11 +44,11 @@ end39365:
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, -8(%r15)
-	movq $1, -48(%rbp)
+	movq $1, %r14
 	movq $2, %rbx
 	movq $3, %r13
 	movq $4, %r12
-	movq $5, %r14
+	movq $5, -48(%rbp)
 	movq fromspace_end(%rip), %rdx
 	movq free_ptr(%rip), %rcx
 	movq %rcx, %rcx
@@ -57,16 +57,16 @@ end39365:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then39366
+	je then324026
 	movq %r15, %rdi
 	movq $48, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end39367
-then39366:
+	jmp end324027
+then324026:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end39367:
+end324027:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $48, free_ptr(%rip)
@@ -74,7 +74,8 @@ end39367:
 	movq $11, 0(%r11)
 	movq %rcx, %rcx
 	movq %rcx, %r11
-	movq %r14, 40(%r11)
+	movq -48(%rbp), %rax
+	movq %rax, 40(%r11)
 	movq $0, %rdx
 	movq %rdx, %rdx
 	movq %rcx, %r11
@@ -90,8 +91,7 @@ end39367:
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %r11
-	movq -48(%rbp), %rax
-	movq %rax, 8(%r11)
+	movq %r14, 8(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %rbx
@@ -102,18 +102,18 @@ end39367:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then39368
+	je then324028
 	movq %rbx, %r11
 	movq $42, 8(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
-	jmp end39369
-then39368:
+	jmp end324029
+then324028:
 	movq -8(%r15), %r11
 	movq $42, 8(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
-end39369:
+end324029:
 	movq %rbx, %rbx
 	movq -8(%r15), %r11
 	movq 8(%r11), %rbx
