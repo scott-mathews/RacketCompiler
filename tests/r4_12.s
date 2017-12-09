@@ -11,27 +11,27 @@ function0:
 
 	movq %rdi, %rbx
 	movq %rsi, %rbx
-	movq %rbx, %r13
 	movq %rbx, %r12
 	movq %rbx, %rbx
-	movq fromspace_end(%rip), %rcx
-	movq free_ptr(%rip), %rdx
-	movq %rdx, %rdx
-	addq $32, %rdx
-	cmpq %rcx, %rdx
+	movq %rbx, %r13
+	movq fromspace_end(%rip), %rdx
+	movq free_ptr(%rip), %rcx
+	movq %rcx, %rcx
+	addq $32, %rcx
+	cmpq %rdx, %rcx
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then326995
+	je then75972
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end326996
-then326995:
+	jmp end75973
+then75972:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end326996:
+end75973:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $32, free_ptr(%rip)
@@ -39,15 +39,15 @@ end326996:
 	movq $7, 0(%r11)
 	movq %rcx, %rcx
 	movq %rcx, %r11
-	movq %rbx, 24(%r11)
+	movq %r13, 24(%r11)
+	movq $0, %rdx
+	movq %rdx, %rdx
+	movq %rcx, %r11
+	movq %rbx, 16(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %r11
-	movq %r12, 16(%r11)
-	movq $0, %rbx
-	movq %rbx, %rbx
-	movq %rcx, %r11
-	movq %r13, 8(%r11)
+	movq %r12, 8(%r11)
 	movq $0, %rbx
 	movq %rbx, %rbx
 	movq %rcx, %rax
@@ -86,16 +86,16 @@ main:
 	sete %al
 	movzbq %al, %rcx
 	cmpq $1, %rcx
-	je then326997
+	je then75974
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-	jmp end326998
-then326997:
+	jmp end75975
+then75974:
 	movq $0, %rcx
 	movq %rcx, %rcx
-end326998:
+end75975:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -113,19 +113,19 @@ end326998:
 	movq $13, %rsi
 	callq *%rbx
 	movq %rax, %rbx
-	movq %rbx, %rcx
-	movq %rcx, %r11
-	movq 8(%r11), %rbx
-	movq %rcx, %r11
-	movq 16(%r11), %rdx
-	movq %rcx, %r11
-	movq 24(%r11), %rcx
-	movq %rcx, %rcx
-	addq $3, %rcx
-	movq %rdx, %rdx
-	addq %rcx, %rdx
 	movq %rbx, %rbx
-	addq %rdx, %rbx
+	movq %rbx, %r11
+	movq 8(%r11), %rdx
+	movq %rbx, %r11
+	movq 16(%r11), %rcx
+	movq %rbx, %r11
+	movq 24(%r11), %rbx
+	movq %rbx, %rbx
+	addq $3, %rbx
+	movq %rcx, %rcx
+	addq %rbx, %rcx
+	movq %rdx, %rbx
+	addq %rcx, %rbx
 	movq %rbx, %rax
 
 	movq %rax, %rdi

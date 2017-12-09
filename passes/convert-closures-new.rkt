@@ -69,17 +69,20 @@
   (match e
 
     ; Inject/Project
-    [`(inject ,(app convert-exp new-e) ,t) `(inject ,new-e ,t)]
-    [`(project ,(app convert-exp new-e) ,t) `(project ,new-e ,t)]
+    ;[`(inject ,(app convert-exp new-e) ,t) `(inject ,new-e ,t)]
+    ;[`(project ,(app convert-exp new-e) ,t) `(project ,new-e ,t)]
     
-    [`(has-type ,exp ,type)
+    [`(,type-annot ,exp ,type)
      ; all expressions have their types fixed.
      (define updated-expression-type (fix-type type))
      
-     `(has-type
+     `(,type-annot
        ,(match exp
           ; terminals remain unchanged
           [t #:when (terminal? t) t]
+
+          ; type annotations get fixed
+          [`(,type-annot2 ,inner-e ,inner-t) #:when (type-annotation? type-annot2) (convert-exp exp)]
 
           ; function-refs are put into vectors
           [`(function-ref ,name)

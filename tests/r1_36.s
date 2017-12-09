@@ -15,99 +15,99 @@ main:
 
 	callq read_int
 	movq %rax, %rbx
-	movq %rbx, %r12
-	callq read_int
-	movq %rax, %rbx
-	movq %rbx, -128(%rbp)
-	callq read_int
-	movq %rax, %rbx
 	movq %rbx, -48(%rbp)
+	callq read_int
+	movq %rax, %rbx
+	movq %rbx, -120(%rbp)
+	callq read_int
+	movq %rax, %rbx
+	movq %rbx, -80(%rbp)
 	callq read_int
 	movq %rax, %rbx
 	movq %rbx, -96(%rbp)
 	callq read_int
 	movq %rax, %rbx
-	movq %rbx, -88(%rbp)
-	callq read_int
-	movq %rax, %rbx
-	movq %rbx, -72(%rbp)
-	callq read_int
-	movq %rax, %rbx
-	movq %rbx, -112(%rbp)
-	callq read_int
-	movq %rax, %rbx
 	movq %rbx, %r14
+	callq read_int
+	movq %rax, %rbx
+	movq %rbx, -128(%rbp)
 	callq read_int
 	movq %rax, %rbx
 	movq %rbx, %rbx
 	callq read_int
 	movq %rax, %rcx
-	movq %rcx, -64(%rbp)
+	movq %rcx, %r12
 	callq read_int
 	movq %rax, %rcx
 	movq %rcx, -104(%rbp)
 	callq read_int
 	movq %rax, %rcx
+	movq %rcx, -64(%rbp)
+	callq read_int
+	movq %rax, %rcx
+	movq %rcx, -88(%rbp)
+	callq read_int
+	movq %rax, %rcx
 	movq %rcx, %r13
 	callq read_int
 	movq %rax, %rcx
-	movq %rcx, -80(%rbp)
+	movq %rcx, -112(%rbp)
 	callq read_int
 	movq %rax, %rcx
 	movq %rcx, -56(%rbp)
 	callq read_int
 	movq %rax, %rcx
-	movq %rcx, -120(%rbp)
+	movq %rcx, -72(%rbp)
 	callq read_int
 	movq %rax, %rcx
 	movq %rcx, %rcx
-	movq -128(%rbp), %rdx
+	movq -120(%rbp), %rdx
 	negq %rdx
-	movq %r12, %rsi
+	movq -48(%rbp), %rsi
 	addq %rdx, %rsi
 	movq -96(%rbp), %rdx
 	negq %rdx
-	movq -48(%rbp), %rdi
+	movq -80(%rbp), %rdi
 	addq %rdx, %rdi
 	movq %rsi, %rdx
 	addq %rdi, %rdx
-	movq -72(%rbp), %rsi
+	movq -128(%rbp), %rsi
 	negq %rsi
-	movq -88(%rbp), %rdi
+	movq %r14, %rdi
 	addq %rsi, %rdi
-	movq %r14, %rsi
-	negq %rsi
-	movq -112(%rbp), %r8
-	addq %rsi, %r8
-	movq %rdi, %rsi
-	addq %r8, %rsi
-	movq %rdx, %rdx
-	addq %rsi, %rdx
-	movq -64(%rbp), %rsi
+	movq %r12, %rsi
 	negq %rsi
 	movq %rbx, %rbx
 	addq %rsi, %rbx
-	movq %r13, %rsi
-	negq %rsi
-	movq -104(%rbp), %rdi
-	addq %rsi, %rdi
-	movq %rbx, %rbx
-	addq %rdi, %rbx
+	movq %rdi, %rsi
+	addq %rbx, %rsi
+	movq %rdx, %rbx
+	addq %rsi, %rbx
+	movq -64(%rbp), %rdx
+	negq %rdx
+	movq -104(%rbp), %rsi
+	addq %rdx, %rsi
+	movq %r13, %rdx
+	negq %rdx
+	movq -88(%rbp), %rdi
+	addq %rdx, %rdi
+	movq %rsi, %rdx
+	addq %rdi, %rdx
 	movq -56(%rbp), %rsi
 	negq %rsi
-	movq -80(%rbp), %rdi
+	movq -112(%rbp), %rdi
 	addq %rsi, %rdi
 	movq %rcx, %rcx
 	negq %rcx
-	movq -120(%rbp), %rsi
+	movq -72(%rbp), %rsi
 	addq %rcx, %rsi
 	movq %rdi, %rcx
 	addq %rsi, %rcx
+	movq %rdx, %rdx
+	addq %rcx, %rdx
 	movq %rbx, %rbx
-	addq %rcx, %rbx
-	movq %rdx, %rcx
-	addq %rbx, %rcx
-	movq %rcx, %rbx
+	addq %rdx, %rbx
+	movq %rbx, %rbx
 	addq $42, %rbx
 	movq %rbx, %rax
 

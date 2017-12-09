@@ -7,31 +7,31 @@
 (provide expose-allocation)
 
 (define (expose-allocation exp)
-  (match exp
+  (match exp    
     ; vector expressions are reformatted into
     ; a series of let bindings surrounding a
     ; conditional call to the garbage collector
     ; which evaluate to the value storing the
     ; start address of the vector in memory
-    [`(has-type (vector ,exps* ...) ,type)
+    [`(,type-annot (vector ,exps* ...) ,type) #:when (type-annotation? type-annot)
      (make-lets exp)]
 
-    ; Inject/Project
-    [`(inject ,(app expose-allocation e) ,t) `(inject ,e ,t)]
-    [`(project ,(app expose-allocation e) ,t) `(project ,e ,t)]
+    ; decompose has-types
+    [`(,type-annot ,e ,type) #:when (type-annotation? type-annot)
+                             `(,type-annot ,(expose-allocation e) ,type)]
 
     ; Lets are handled trivially
-    [`(has-type (let ((,v ,e)) ,body) ,type)
-     `(has-type (let ((,v ,(expose-allocation e))) ,(expose-allocation body)) ,type)]
+    [`(let ((,v ,e)) ,body)
+     `(let ((,v ,(expose-allocation e))) ,(expose-allocation body))]
     
     ; Terminal values are handled trivially
     [(? terminal?) exp]
-    [`(has-type ,v ,t) #:when (or (terminal? v) (equal? `function-ref (car v)))
-                       `(has-type ,v ,t)]
+    [v #:when (or (terminal? v) (equal? `function-ref (car v)))
+                       v]
     
     ; The operation form is handled trivially
-    [`(has-type (,op ,exps* ...) ,type)
-     `(has-type (,op ,@(map expose-allocation exps*)) ,type)]
+    [`(,op ,exps* ...)
+     `(,op ,@(map expose-allocation exps*))]
 
     ; The define form is handled trivially
     [`(define (,name ,args* ...) ,body)
@@ -51,7 +51,7 @@
 
 (define (make-lets exp)
   (match exp
-    [`(has-type (vector ,exps* ...) ,type)
+    [`(,type-annot (vector ,exps* ...) ,type)
      ; apply expose allocation on all exps* to ensure any contained vectors are dealt with
      (set! exps* (map expose-allocation exps*))
      
@@ -65,7 +65,7 @@
      (define init-vars (foldr cons '() (map (lambda (exp) `(has-type ,(gensym 'initvar) ,(third exp))) exps*)))
 
      ; variable which will contain the final vector pointer
-     (define return-variable `(has-type ,(gensym 'vector) ,type))
+     (define return-variable `(,type-annot ,(gensym 'vector) ,type))
 
      ; initial lets contain the assignment of a variable to an expression
      ; and a placeholder in the body of the let

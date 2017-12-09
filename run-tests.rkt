@@ -8,7 +8,7 @@
 (require "utilities/testing.rkt")
 
 ;(debug-level 2)
-(define regression_tests_active #f)
+(define regression_tests_active #t)
 
 ; Compiler Tests
 (if regression_tests_active
@@ -21,8 +21,8 @@
       )
     (void))
 
-;(compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (append (list 1) (range 3 11)))
-(my-run-tests passes "s6" (range 3 4) "" "select-instructions")
-;(my-run-tests passes "r4" (range 1 11) "" "type-check")
+(compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (append (list 1) (range 3 11)))
+;(my-run-tests passes "s6" (range 1 2) "" "select-instructions")
+;(my-run-tests passes "r1" (range 5 6) "" "uniquify")
 
 (display "tests passed!") (newline)
