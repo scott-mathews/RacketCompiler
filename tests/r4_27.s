@@ -17,10 +17,10 @@ function0:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then37202
+	je then40268
 	movq $0, %rbx
-	jmp end37203
-then37202:
+	jmp end40269
+then40268:
 	leaq function1(%rip), %rcx
 	movq %rcx, %r12
 	movq free_ptr(%rip), %rcx
@@ -32,15 +32,15 @@ then37202:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then37204
+	je then40270
 	movq $0, %rcx
-	jmp end37205
-then37204:
+	jmp end40271
+then40270:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end37205:
+end40271:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -62,7 +62,7 @@ end37205:
 	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end37203:
+end40269:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -93,10 +93,10 @@ function1:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then37206
+	je then40272
 	movq $1, %rbx
-	jmp end37207
-then37206:
+	jmp end40273
+then40272:
 	leaq function0(%rip), %rcx
 	movq %rcx, %r12
 	movq free_ptr(%rip), %rcx
@@ -108,15 +108,15 @@ then37206:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then37208
+	je then40274
 	movq $0, %rcx
-	jmp end37209
-then37208:
+	jmp end40275
+then40274:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end37209:
+end40275:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -138,7 +138,7 @@ end37209:
 	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end37207:
+end40273:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -176,15 +176,15 @@ main:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then37210
+	je then40276
 	movq $0, %rcx
-	jmp end37211
-then37210:
+	jmp end40277
+then40276:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end37211:
+end40277:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -203,12 +203,12 @@ end37211:
 	movq %rax, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then37212
+	je then40278
 	movq $42, %rbx
-	jmp end37213
-then37212:
+	jmp end40279
+then40278:
 	movq $0, %rbx
-end37213:
+end40279:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

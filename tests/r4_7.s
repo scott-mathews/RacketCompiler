@@ -17,10 +17,10 @@ function0:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then36322
+	je then39388
 	movq $0, %rbx
-	jmp end36323
-then36322:
+	jmp end39389
+then39388:
 	leaq function1(%rip), %rcx
 	movq %rcx, %r12
 	movq free_ptr(%rip), %rcx
@@ -32,15 +32,15 @@ then36322:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then36324
+	je then39390
 	movq $0, %rcx
-	jmp end36325
-then36324:
+	jmp end39391
+then39390:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end36325:
+end39391:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -62,7 +62,7 @@ end36325:
 	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end36323:
+end39389:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -93,10 +93,10 @@ function1:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then36326
+	je then39392
 	movq $1, %rbx
-	jmp end36327
-then36326:
+	jmp end39393
+then39392:
 	leaq function0(%rip), %rcx
 	movq %rcx, %r12
 	movq free_ptr(%rip), %rcx
@@ -108,15 +108,15 @@ then36326:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then36328
+	je then39394
 	movq $0, %rcx
-	jmp end36329
-then36328:
+	jmp end39395
+then39394:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end36329:
+end39395:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -138,7 +138,7 @@ end36329:
 	callq *%r12
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end36327:
+end39393:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -176,15 +176,15 @@ main:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then36330
+	je then39396
 	movq $0, %rcx
-	jmp end36331
-then36330:
+	jmp end39397
+then39396:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end36331:
+end39397:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -205,12 +205,12 @@ end36331:
 	movq %rax, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then36332
+	je then39398
 	movq $999, %rbx
-	jmp end36333
-then36332:
+	jmp end39399
+then39398:
 	movq $42, %rbx
-end36333:
+end39399:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

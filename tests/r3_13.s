@@ -32,15 +32,15 @@ main:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then33463
+	je then36519
 	movq $0, %rcx
-	jmp end33464
-then33463:
+	jmp end36520
+then36519:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end33464:
+end36520:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
@@ -66,15 +66,15 @@ end33464:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then33465
+	je then36521
 	movq $0, %rcx
-	jmp end33466
-then33465:
+	jmp end36522
+then36521:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end33466:
+end36522:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
@@ -94,15 +94,15 @@ end33466:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then33467
+	je then36523
 	movq $0, %rcx
-	jmp end33468
-then33467:
+	jmp end36524
+then36523:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end33468:
+end36524:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
@@ -128,15 +128,15 @@ end33468:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then33469
+	je then36525
 	movq $0, %rcx
-	jmp end33470
-then33469:
+	jmp end36526
+then36525:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end33470:
+end36526:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
@@ -161,15 +161,15 @@ end33470:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then33471
+	je then36527
 	movq $0, %rcx
-	jmp end33472
-then33471:
+	jmp end36528
+then36527:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end33472:
+end36528:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
@@ -194,15 +194,15 @@ end33472:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then33473
+	je then36529
 	movq $0, %rcx
-	jmp end33474
-then33473:
+	jmp end36530
+then36529:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end33474:
+end36530:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)

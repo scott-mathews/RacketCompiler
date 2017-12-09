@@ -92,7 +92,7 @@
           ; Handle callq collect
           (if (equal? (first args) `collect)
               (for ([var live-after-set])
-                (if (and (list? (lookup var vars)) (equal? (car (lookup var vars)) 'Vector))
+                (if (or (equal? (lookup var vars) 'Any) (and (list? (lookup var vars)) (or (equal? (car (lookup var vars)) 'Vectorof) (equal? (car (lookup var vars)) 'Vector))))
                     (for ([callee callee-save])
                       (add-edge graph (register->color callee) var))
                     (void)))

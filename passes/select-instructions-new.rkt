@@ -100,21 +100,23 @@
     ;; Inject and Project ;;
     [`(inject ,arg ,type) (cond
                             ; Vectors
-                            [(and (list? type) (equal? 'Vector (car type))) `((movq ,(convert-arg arg) lhs)
-                                                                              (orq (int ,(tagof type)) lhs))]
+                            [(and (list? type) (or (equal? 'Vectorof (car type)) (equal? 'Vector (car type))))
+                             `((movq ,(convert-arg arg) lhs)
+                               (orq (int ,(tagof type)) lhs))]
                             ; All other types
                             [else `((movq ,(convert-arg arg) lhs)
                                     (salq (int 3) lhs)
                                     (orq (int ,(tagof type)) lhs))])]
     [`(project ,arg ,type) (cond
                              ; Vectors
-                             [(and (list? type) (equal? 'Vector (car type))) `((movq ,(convert-arg arg) lhs)
-                                                                               (andq (int 7) lhs)
-                                                                               (if (eq? lhs (int ,(tagof type)))
-                                                                                   ((movq (int 7) lhs)
-                                                                                    (notq lhs)
-                                                                                    (andq ,(convert-arg arg) lhs))
-                                                                                   ((callq exit))))]
+                             [(and (list? type) (or (equal? 'Vectorof (car type)) (equal? 'Vector (car type))))
+                              `((movq ,(convert-arg arg) lhs)
+                                (andq (int 7) lhs)
+                                (if (eq? lhs (int ,(tagof type)))
+                                    ((movq (int 7) lhs)
+                                     (notq lhs)
+                                     (andq ,(convert-arg arg) lhs))
+                                    ((callq exit))))]
                              ; All other types
                              [else `((movq ,(convert-arg arg) lhs)
                                      (andq (int 7) lhs)
