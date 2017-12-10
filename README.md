@@ -9,7 +9,7 @@ Members:
 
 Instructions for Instructors
 ============================
-# Running Our Compiler
+## Running Our Compiler
 
 To run our compiler please take the following steps:
 
@@ -30,7 +30,7 @@ racket run-tests.rkt
 
 Original Support Code Instructions
 ==================================
-# p423-public-code
+## p423-public-code
 Utility code, test suites, etc. for the compiler course.
 
 This code will be described in the Appendix of the book.
