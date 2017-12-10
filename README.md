@@ -9,28 +9,28 @@ Members:
 
 Instructions for Instructors
 ============================
-# Running Our Compiler
+## Running Our Compiler
 
 To run our compiler please take the following steps:
 
 1. Compile and link runtime.c by running the following command
 
----
+```
 gcc -c -g -std=c99 runtime.c
----
+```
 
 2. Run run-tests.rkt by running the following command
 
----
+```
 racket run-tests.rkt
----
+```
 
 3. Sit back and enjoy the tests
 
 
 Original Support Code Instructions
 ==================================
-# p423-public-code
+## p423-public-code
 Utility code, test suites, etc. for the compiler course.
 
 This code will be described in the Appendix of the book.
