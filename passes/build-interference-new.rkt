@@ -56,6 +56,17 @@
            (add-edge graph vertex neighbor)))
        ]
 
+      [`(while (,instrs-cnd ...) (,live-after-cnd ...) (,instrs-body ...) (,live-after-body ...))
+
+       ; build graph for body of while
+       (define cnd-graph (build-graph vars live-after-cnd instrs-cnd graph ))
+       (define body-graph (build-graph vars live-after-body instrs-body cnd-graph))
+
+       (for ([vertex (vertices body-graph)])
+         (for ([neighbor (adjacent body-graph vertex)])
+           (add-edge graph vertex neighbor)))
+       ]
+
       [`(,op ,args ...)
        (match op
          ; If instruction I is a (movq s d), add an edge (d,v) for every

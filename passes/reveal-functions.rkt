@@ -39,6 +39,11 @@
       ;[`(inject ,(app (reveal-functions f-list) e) ,t) `(inject ,e ,t)]
       ;[`(project ,(app (reveal-functions f-list) e) ,t) `(project ,e ,t)]
 
+      ; While
+      [`(while ,exps ...)
+       `(while ,@(map (reveal-functions f-list) exps))]
+      
+      ; Begin
       [`(begin ,exps ...)
        `(begin ,@(map (reveal-functions f-list) exps))]
       

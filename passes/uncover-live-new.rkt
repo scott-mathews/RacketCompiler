@@ -42,6 +42,19 @@
      (values `(if ,instr-cnd ,instrs-thns ,live-after-thns ,instrs-elss ,live-after-elss)
              (set-union (car live-after-thns) (car live-after-elss) live-after-cnd))]
 
+    ; While
+    [`(while (,cnd-instrs ...) (,body-instrs ...))
+
+     (define-values (instrs-body-0 live-after-body-0) (uncover-instrs body-instrs last-live-after))
+     (define-values (instrs-cnd-0 live-after-cnd-0) (uncover-instrs cnd-instrs (car live-after-body-0)))
+
+     (define-values (instrs-body live-after-body) (uncover-instrs body-instrs (car live-after-cnd-0)))
+     (define-values (instrs-cnd live-after-cnd) (uncover-instrs cnd-instrs (car live-after-body)))
+
+     (values `(while ,instrs-cnd ,live-after-cnd ,instrs-body ,live-after-body)
+             (car live-after-cnd))
+     ]
+
     ; Returns live-after for an (op args...) instruction
     [`(,op ,args ...)
      (match op

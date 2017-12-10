@@ -50,6 +50,10 @@
     [`(if ,cnd ,thns ,thns-sets ,elss ,elss-sets)
      `(if ,(update-instr cnd colors) ,(map (update-instr-factory colors) thns) ,(map (update-instr-factory colors) elss))]
 
+    ; Handle while
+    [`(while ,cnds ,cns-sets ,body ,body-sets)
+     `(while ,(map (update-instr-factory colors) cnds) ,(map (update-instr-factory colors) body))]
+
     [`(,op ,args ...)
      `(,op ,@(map (lambda (arg) (arg->reg arg colors)) args))]))
 

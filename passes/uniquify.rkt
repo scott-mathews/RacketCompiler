@@ -76,6 +76,11 @@
       
       [`(if ,cnd ,thn ,els) `(if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els))]
 
+      ; While
+      [`(while ,exps ...)
+       `(while ,@(map (uniquify alist) exps))]
+      
+      ; Begin
       [`(begin ,exps ...)
        `(begin ,@(map (uniquify alist) exps))]
       

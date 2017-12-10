@@ -22,11 +22,12 @@
       ; Test 2 omitted (it correctly throws an error)
       (compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (append (list 0 1) (range 3 11) (list 50)))
       (compiler-tests "r7 compiler" #f r7_passes "r7" (range 1 22))
+      (compiler-tests "begin compiler" #f r7_passes "begin" (range 0 6))
       )
     (void))
 
 
-(compiler-tests "begin compiler" #f r7_passes "begin" (range 0 6))
-;(my-run-tests r7_passes "begin" (range 0 6) "" "flatten")
+(compiler-tests "while compiler" #f r7_passes "while" (range 0 2))
+;(my-run-tests r7_passes "while" (range 0 1) "" "print-x86")
 
 (display "tests passed!") (newline)

@@ -124,6 +124,21 @@
          ; Compile Vars
          (set! vars-exp (list (cons tmp-var type)))]
 
+        ;;;;;;;;;
+        ; While ;
+        ;;;;;;;;;
+        [`(while ,exps ...)
+
+         ; Recur On Sub-Expressions
+         (define-values (flat-exps stmts-exps vars-exps) (map3 flatten-exp exps))
+
+         ; Generate a Temporary Variable
+         (define tmp-var (gensym 'whileret))
+            
+         (set! flat-exp tmp-var)
+         (set! stmts-exp `((while (,@(first stmts-exps)) (,@(foldr append '() (cdr stmts-exps))))))
+         (set! vars-exp (cons (cons tmp-var type) (foldr append '() vars-exps)))]
+
         ;;;;;;
         ; If ;
         ;;;;;;

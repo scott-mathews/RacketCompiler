@@ -11,6 +11,24 @@
 
 (define (lower-conditionals exp)
   (match exp
+
+    ;;;;;;;;;;;;;;;;
+    ; Lower Whiles ;
+    ;;;;;;;;;;;;;;;;
+    [`(while ,cnds ,instrs)
+     (define startlabel (gensym 'startwhile))
+     (define endlabel (gensym 'endwhile))
+
+     `((label ,startlabel)
+       ,@(map-me lower-conditionals cnds)
+       (jmp-if ,(cmp->cc `eq?) ,endlabel)
+       ,@(map-me lower-conditionals instrs)
+       (jmp ,startlabel)
+       (label ,endlabel))]
+
+    ;;;;;;;;;;;;;
+    ; Lower Ifs ;
+    ;;;;;;;;;;;;;
     [`(if (,cmp ,arg1 ,arg2) ,thns ,elss) (define thnlabel (gensym `then))
                                           (define endlabel (gensym `end))
                                           `((cmpq ,arg2 ,arg1)

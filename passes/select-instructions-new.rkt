@@ -40,6 +40,7 @@
     [`(collect ,bytes) `((movq (reg r15) (reg rdi))
                          (movq (int ,bytes) (reg rsi))
                          (callq collect))]
+    [`(while ,cnd ,exps) `((while ,(convert-statements cnd) ,(convert-statements exps)))]
     [`(if (,cmp ,arg1 ,arg2) ,stmts-thn ,stmts-els) `((if (,cmp ,(convert-arg arg2) ,(convert-arg arg1))
                                                                       ,(convert-statements stmts-thn)
                                                                       ,(convert-statements stmts-els)))]
@@ -61,6 +62,9 @@
            [`(if ,cnd ,thn ,els)
             `(if ,(map replace-arg cnd) ,(replace-marker thn marker-mappings)
                  ,(replace-marker els marker-mappings))]
+           [`(while ,cnds ,exps)
+            `(while ,(replace-marker cnds marker-mappings)
+                    ,(replace-marker exps marker-mappings))]
            [else (map replace-arg instr)])) stmts))
 
 

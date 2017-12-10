@@ -65,6 +65,10 @@
        (define-values (eb tb) ((type-check new-env) body))
        (values `(has-type (let ([,x ,e]) ,eb) ,tb) tb)]
 
+      ; While
+      [`(while ,(app recur exps ts) ...)
+       (values `(has-type (while ,@exps) Void) `Void)]
+
       ; Begin
       [`(begin ,(app recur exps ts) ...)
        (if (empty? ts)
