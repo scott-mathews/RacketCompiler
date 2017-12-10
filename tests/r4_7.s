@@ -17,10 +17,10 @@ function0:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then3537
+	je then19541
 	movq $0, %rbx
-	jmp end3538
-then3537:
+	jmp end19542
+then19541:
 	leaq function1(%rip), %r12
 	movq %r12, %r12
 	movq free_ptr(%rip), %r13
@@ -32,15 +32,15 @@ then3537:
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then3539
+	je then19543
 	movq $0, %r13
-	jmp end3540
-then3539:
+	jmp end19544
+then19543:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end3540:
+end19544:
 	movq %r13, %r13
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
@@ -62,7 +62,7 @@ end3540:
 	callq *%r13
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end3538:
+end19542:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -93,10 +93,10 @@ function1:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then3541
+	je then19545
 	movq $1, %rbx
-	jmp end3542
-then3541:
+	jmp end19546
+then19545:
 	leaq function0(%rip), %r12
 	movq %r12, %r12
 	movq free_ptr(%rip), %r13
@@ -108,15 +108,15 @@ then3541:
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then3543
+	je then19547
 	movq $0, %r13
-	jmp end3544
-then3543:
+	jmp end19548
+then19547:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end3544:
+end19548:
 	movq %r13, %r13
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
@@ -138,7 +138,7 @@ end3544:
 	callq *%r13
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end3542:
+end19546:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -176,15 +176,15 @@ main:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then3545
+	je then19549
 	movq $0, %r12
-	jmp end3546
-then3545:
+	jmp end19550
+then19549:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end3546:
+end19550:
 	movq %r12, %r12
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)
@@ -205,12 +205,12 @@ end3546:
 	movq %rax, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then3547
+	je then19551
 	movq $999, %rbx
-	jmp end3548
-then3547:
+	jmp end19552
+then19551:
 	movq $42, %rbx
-end3548:
+end19552:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

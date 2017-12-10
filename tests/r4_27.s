@@ -17,10 +17,10 @@ function0:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then4297
+	je then20301
 	movq $0, %rbx
-	jmp end4298
-then4297:
+	jmp end20302
+then20301:
 	leaq function1(%rip), %r12
 	movq %r12, %r12
 	movq free_ptr(%rip), %r13
@@ -32,15 +32,15 @@ then4297:
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then4299
+	je then20303
 	movq $0, %r13
-	jmp end4300
-then4299:
+	jmp end20304
+then20303:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end4300:
+end20304:
 	movq %r13, %r13
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
@@ -62,7 +62,7 @@ end4300:
 	callq *%r13
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end4298:
+end20302:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -93,10 +93,10 @@ function1:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then4301
+	je then20305
 	movq $1, %rbx
-	jmp end4302
-then4301:
+	jmp end20306
+then20305:
 	leaq function0(%rip), %r12
 	movq %r12, %r12
 	movq free_ptr(%rip), %r13
@@ -108,15 +108,15 @@ then4301:
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then4303
+	je then20307
 	movq $0, %r13
-	jmp end4304
-then4303:
+	jmp end20308
+then20307:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end4304:
+end20308:
 	movq %r13, %r13
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
@@ -138,7 +138,7 @@ end4304:
 	callq *%r13
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end4302:
+end20306:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -176,15 +176,15 @@ main:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then4305
+	je then20309
 	movq $0, %r12
-	jmp end4306
-then4305:
+	jmp end20310
+then20309:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end4306:
+end20310:
 	movq %r12, %r12
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)
@@ -203,12 +203,12 @@ end4306:
 	movq %rax, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then4307
+	je then20311
 	movq $42, %rbx
-	jmp end4308
-then4307:
+	jmp end20312
+then20311:
 	movq $0, %rbx
-end4308:
+end20312:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

@@ -51,15 +51,15 @@ main:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then4326
+	je then20330
 	movq $0, %r12
-	jmp end4327
-then4326:
+	jmp end20331
+then20330:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end4327:
+end20331:
 	movq %r12, %r12
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)
