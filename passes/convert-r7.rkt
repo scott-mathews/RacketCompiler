@@ -19,6 +19,12 @@
      (define body (last exps))
      (define defines (reverse (cdr (reverse exps))))
 
+     ; Set up Global variables
+     (map (lambda (define) (match define [`(define (,name ,args ...) ,body)
+                                          (set! function-names (cons name function-names))
+                                          (set! function-env (cons (cons name `(,@(map (lambda (arg) `Any) args) -> Any)) function-env))
+                                          ])) defines)
+
      `(program ,@(convert-defines defines) ,(convert-exp body))
      ]))
 
@@ -28,8 +34,6 @@
 (define (convert-defines defines)
   (map (lambda (define) (match define
                           [`(define (,name ,args ...) ,body)
-                           (set! function-names (cons name function-names))
-                           (set! function-env (cons (cons name `(,@(map (lambda (arg) `Any) args) -> Any)) function-env))
                            `(define (,name ,@(convert-args args)) : Any ,(convert-exp body))]))
        defines))
 

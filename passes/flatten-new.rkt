@@ -72,7 +72,11 @@
        (set! flat-exp tmp-var)
 
        ; Update vars
-       (set! vars-exp (cons (cons tmp-var type) vars-e))
+       (if (equal? type-annot 'inject)
+           ; inject creates an Any type var
+           (set! vars-exp (cons (cons tmp-var `Any) vars-e))
+           ; project creates a var of the type projected to
+           (set! vars-exp (cons (cons tmp-var type) vars-e)))
 
        (values flat-exp stmts-exp vars-exp)]
     

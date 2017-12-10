@@ -61,7 +61,6 @@
   (match op
     [`negq #t]
     [`notq #t]
-    [`indirect-callq #t]
     [else #f]))
 
 (define (call-like-op? op)

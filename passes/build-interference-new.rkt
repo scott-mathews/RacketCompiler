@@ -24,6 +24,12 @@
   ; graph is the interference graph we will add to
   (define graph initial-graph)
 
+  (for ([var (map car vars)])
+    (if (equal? (lookup-interference var vars) 'Any)
+        (for ([reg (vector->list general-registers)])
+          (add-edge graph var (register->color reg)))
+        (void)))
+
   ; iterate through the instructions and live-after-sets for each instruction
   ; simultaneously
   (for ([live-after-set live-afters] [instr instrs])
@@ -92,7 +98,7 @@
           ; Handle callq collect
           (if (equal? (first args) `collect)
               (for ([var live-after-set])
-                (if (or (equal? (lookup var vars) 'Any) (and (list? (lookup var vars)) (or (equal? (car (lookup var vars)) 'Vectorof) (equal? (car (lookup var vars)) 'Vector))))
+                (if (or (equal? (lookup-interference var vars) 'Any) (and (list? (lookup-interference var vars)) (or (equal? (car (lookup-interference var vars)) 'Vectorof) (equal? (car (lookup-interference var vars)) 'Vector))))
                     (for ([callee callee-save])
                       (add-edge graph (register->color callee) var))
                     (void)))
@@ -118,6 +124,11 @@
 
 (define (var-typed-arg? arg)
   (equal? (first arg) 'var))
+
+(define (lookup-interference var vars)
+  (if (member var (map car vars))
+      (lookup var vars)
+      `Register))
 
 ; Grabs the name of an arg
 ; (only works if the arg is typed var)

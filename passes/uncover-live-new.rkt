@@ -45,7 +45,7 @@
     ; Returns live-after for an (op args...) instruction
     [`(,op ,args ...)
      (match op
-       [(? add-like-op?) ; addq, xorq, cmpq, cmp?
+       [(? add-like-op?) ; addq, xorq, cmpq, cmp?, andq, orq, sarq, salq
         (define read (set-union (get-arg (first args)) (get-arg (second args))))
         (define written (set))
         (values instr (make-live-before read written last-live-after))]
@@ -55,12 +55,18 @@
         (define written (get-arg (second args)))
         (values instr (make-live-before read written last-live-after))]
        
-       [(? neg-like-op?) ; negq, indirect-callq
+       [(? neg-like-op?) ; negq, notq
         (define read (get-arg (first args)))
         (define written (set))
         (values instr (make-live-before read written last-live-after))]
 
        ; Odd ones out
+       [`indirect-callq
+        (define read (get-arg (first args)))
+        ; add caller save registers to written
+        (define written (list->set (map register->color (set->list caller-save))))
+        (values instr (set-union written (make-live-before read written last-live-after)))]
+
        [`callq
         (values instr last-live-after)]
        
@@ -78,7 +84,9 @@
     [`deref (set)]
     [`byte-reg (set)]
     [`global-value (set)]
-    [`reg (set)]
+    [`reg (set)];(if (member (second arg) (vector->list general-registers))
+                ;   (set (register->color (second arg)))
+                ;   (set))]
     [`function-ref (set)]
     [else (error "Not matched in get-arg (uncover-live): ~a" (first arg))]))
 
