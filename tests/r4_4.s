@@ -71,15 +71,15 @@ main:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then111980
+	je then19480
 	movq $0, %r12
-	jmp end111981
-then111980:
+	jmp end19481
+then19480:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end111981:
+end19481:
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)
 	movq %r12, %r11
@@ -99,15 +99,15 @@ end111981:
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then111982
+	je then19482
 	movq $0, %r13
-	jmp end111983
-then111982:
+	jmp end19483
+then19482:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end111983:
+end19483:
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
 	movq %r13, %r11

@@ -198,6 +198,13 @@
 
          (match op
 
+           ; Convert begins
+           [`begin
+            
+            (set! flat-exp (last flat-args))
+            (set! stmts-exp `(,@(foldr append '() stmts-args)))
+            (set! vars-exp (foldr append '() vars-args))]
+
            ; Convert AND
            [`and
 

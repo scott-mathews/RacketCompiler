@@ -8,7 +8,7 @@
 (require "utilities/testing.rkt")
 
 ;(debug-level 2)
-(define regression_tests_active #t)
+(define regression_tests_active #f)
 
 ; Compiler Tests
 (if regression_tests_active
@@ -21,11 +21,12 @@
       
       ; Test 2 omitted (it correctly throws an error)
       (compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (append (list 0 1) (range 3 11) (list 50)))
+      (compiler-tests "r7 compiler" #f r7_passes "r7" (range 1 22))
       )
     (void))
 
 
-(compiler-tests "r7 compiler" #f r7_passes "r7" (range 1 22))
-;(my-run-tests r7_passes "r7" (range 15 16) "")
+(compiler-tests "begin compiler" #f r7_passes "begin" (range 0 6))
+;(my-run-tests r7_passes "begin" (range 0 6) "" "flatten")
 
 (display "tests passed!") (newline)

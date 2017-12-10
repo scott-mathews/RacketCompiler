@@ -65,7 +65,12 @@
        (define-values (eb tb) ((type-check new-env) body))
        (values `(has-type (let ([,x ,e]) ,eb) ,tb) tb)]
 
-
+      ; Begin
+      [`(begin ,(app recur exps ts) ...)
+       (if (empty? ts)
+           (error "expected expression after begin")
+           (void))
+       (values `(has-type (begin ,@exps) ,(last ts)) (last ts))]
 
       ; Lambda
       [`(lambda: (,args* ...) : ,type ,body)

@@ -87,6 +87,12 @@
     [`(,op ,args ...)
      (match op
 
+       ;;;;;;;;;
+       ; Begin ;
+       ;;;;;;;;;
+       [`begin
+        `(begin ,@(map convert-exp args))]
+
        ;;;;;;;
        ; AND ;
        ;;;;;;;

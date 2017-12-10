@@ -38,6 +38,9 @@
       ; Inject/Project
       ;[`(inject ,(app (reveal-functions f-list) e) ,t) `(inject ,e ,t)]
       ;[`(project ,(app (reveal-functions f-list) e) ,t) `(project ,e ,t)]
+
+      [`(begin ,exps ...)
+       `(begin ,@(map (reveal-functions f-list) exps))]
       
       [`(define ((has-type ,var ,type) ,args* ...) ,body)
        (values `(define ((has-type ,var ,type) ,@args*) ,((reveal-functions f-list) body)) var)]

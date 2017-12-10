@@ -75,6 +75,10 @@
                             `((,type-annot ,(lookup fname alist) ,type) ,@(map (uniquify alist) args*))]
       
       [`(if ,cnd ,thn ,els) `(if ,((uniquify alist) cnd) ,((uniquify alist) thn) ,((uniquify alist) els))]
+
+      [`(begin ,exps ...)
+       `(begin ,@(map (uniquify alist) exps))]
+      
       [`(,(app (uniquify alist) op) ,es ...) ;(displayln (format "this is new op: ~a" op))
        `(,op ,@(map (uniquify alist) es))]
       [else exp]
