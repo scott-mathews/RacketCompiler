@@ -173,27 +173,16 @@ main:
 	movq %rax, -48(%rbp)
 	movq -64(%rbp), %rax
 	addq %rax, -48(%rbp)
-	movq %r14, %r14
 	addq -48(%rbp), %r14
-	movq %r13, %r13
 	addq %r14, %r13
-	movq %r12, %r12
 	addq %r13, %r12
-	movq %r10, %r10
 	addq %r12, %r10
-	movq %r9, %r9
 	addq %r10, %r9
-	movq %r8, %r8
 	addq %r9, %r8
-	movq %rdi, %rdi
 	addq %r8, %rdi
-	movq %rsi, %rsi
 	addq %rdi, %rsi
-	movq %rdx, %rdx
 	addq %rsi, %rdx
-	movq %rcx, %rcx
 	addq %rdx, %rcx
-	movq %rbx, %rbx
 	addq %rcx, %rbx
 	movq %rbx, %rax
 

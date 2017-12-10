@@ -158,7 +158,23 @@
          (set! flat-exp flat-body)
 
          ; Create Let Statements
-         (set! stmts-exp `(,@stmts-e (assign ,var ,flat-e) ,@stmts-body))
+         (cond
+         
+           ; Unoptimized lets (simple e's lend to no need for optimization.)
+           [(empty? stmts-e) (set! stmts-exp `(,@stmts-e (assign ,var ,flat-e) ,@stmts-body))]
+
+           ; Ifs
+           [(equal? `if (first (second e)))
+            (set! stmts-exp `(,@stmts-e (assign ,var ,flat-e) ,@stmts-body))]
+
+           ; Vectors
+           [(or (equal? 'Any (last e)) (and (list? (last e)) (equal? 'Vector (first (last e)))))
+            (set! stmts-exp `(,@stmts-e (assign ,var ,flat-e) ,@stmts-body))]
+
+           [else
+            (set! stmts-exp `(,@(reverse (cdr (reverse stmts-e))) (assign ,var ,(third (last stmts-e))) ,@stmts-body))]
+           )
+         
          
          ; Compile Let Vars
          (set! vars-exp (cons (cons var (third e)) (append vars-e vars-body)))

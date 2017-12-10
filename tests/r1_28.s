@@ -14,9 +14,7 @@ main:
 	addq $0, %r15
 
 	movq $22, %rbx
-	movq %rbx, %rbx
 	movq $20, %rcx
-	movq %rbx, %rbx
 	addq %rcx, %rbx
 	movq %rbx, %rax
 

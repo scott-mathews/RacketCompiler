@@ -19,7 +19,6 @@ main:
 	negq %rdx
 	movq $25, %rcx
 	addq %rdx, %rcx
-	movq %rbx, %rbx
 	addq %rcx, %rbx
 	movq %rbx, %rax
 
