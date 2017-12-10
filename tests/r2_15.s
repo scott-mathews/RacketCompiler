@@ -20,23 +20,23 @@ main:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then15910
-	jmp end15911
-then15910:
+	je then237595
+	jmp end237596
+then237595:
 	movq $20, %rbx
-end15911:
+end237596:
 	movq $42, %rax
 	cmpq %rbx, %rax
 	sete %al
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then15912
+	je then237597
 	movq $42, %rbx
-	jmp end15913
-then15912:
+	jmp end237598
+then237597:
 	movq $777, %rbx
-end15913:
+end237598:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

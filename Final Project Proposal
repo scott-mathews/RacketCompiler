@@ -1,0 +1,51 @@
+Final Project Proposal
+Group: xXx rAcketyMcRacketFace xXx
+Members: Scott Mathews, Clint Spesard
+
+Project Title: Imperative Toolkit
+
+Summary:
+Add the following racket language features to our language: begin, set!; add the following non-racket language feature to our language: while; The last two paragraphs in the proposal section describe the benefits of these changes.
+
+Proposal:
+
+For our final project we will extend the R7 dynamically typed language from the final assignment with certain familiar functionalities which will allow for imperative-style programming in our language. Two of these features already exist in racket, and one of them is implemented as a macro in the utilities.rkt file provided with course material.
+
+First of all, we shall implement begin and set!. These extend R7 as follows
+
+exp ::= (begin exp+)   :: type
+     |  (set! var exp) :: Void
+
+Semantically, begin takes a series of expressions, and executes them in the order they appear, returning the final exp as the value of the begin expression. Begin should be fairly straightforward to implement, simply structurally recurring over the expressions within begin through each pass previous to flatten. When we arrive at flatten, the begin statement will disappear as the rest of the program is flattened (just like the expressions already are in begin.) We can recur flatten on each of these expressions, and return the list of statements for each of them in the order they appear, returning the return variable of the last expression as the return variable for the entire series of statements. No passes need to be added to the language to handle begin.
+
+Set! is more involved: we need to make sure that any variable which has set! called on it is global (in our language this means stored on the heap). Thus, we propose adding a new pass to the compiler, which occurs immediately after uniquify. This pass shall be called box-mutations. In this pass, all variables which are ever the receiver of a set! are put into an environment, an unilaterally converted to vectors of length 1. Every occurence of (set! var exp) is thus converted to (vector-set! var 0 exp), and every occurrence of var outside of a set! is thus converted to (vector-ref var 0). Finally, the beginning of the program is wrapped in a series of lets, which initialize the vectors which contain these boxed variables.
+
+e.g. 
+body => 
+(let ((var1 (vector void))) ... body ... )
+
+The second feature we will implement is while. This extends R7 as follows
+
+exp ::= (while exp exp+) :: Void
+
+Semantically, while takes a conditional expression exp, and a series of expressions, and performs the following operations: if exp evaluates to true, performs all of the following expressions, and return to the conditional. If the conditional evaluates to false, return void from the while loop. This entire expression can be handled very similarly to begin, but during flatten we do not merge it into the rest of the expressions. We leave it as (while exp stmts+). In this sense, the expression is handled similarly to if statements. We keep this structures all the way through register allocation, and finally in lower-conditionals we take the while statement and convert it into a conditional jmp to a label at the start of the while, otherwise a series of instructions followed by a jump to the start of the while (just before the conditional jump to the end of the while).
+
+e.g.
+-----------------------------------
+... 
+
+label start_while
+comparison-statements*
+conditional jump to end_while
+statements+
+jump to start_while
+label end_while
+
+...
+-----------------------------------
+
+Thus, we shall provide an imperative style programming toolkit to the many users of our language (who use it for such mission-critical purposes as ICBM launch controllers, airplane navigation systems, and algorithmic trading systems). The benefit of these changes is that it will allow these users to introduce even more side-effects and uncertainty into their software, leading to world chaos, which will allow the secret xXx rAcketyMcRacketFace xXx society to seize control of--
+
+Ha-hemm. I meant to say: Will provide some nice convenient features for faster prototyping in our language (at the cost of correctness) to our lovely users.
+
+Fin.

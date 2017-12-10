@@ -31,15 +31,15 @@ main:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then16945
+	je then238930
 	movq $0, %rcx
-	jmp end16946
-then16945:
+	jmp end238931
+then238930:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end16946:
+end238931:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
@@ -61,15 +61,15 @@ end16946:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then16947
+	je then238932
 	movq $0, %rcx
-	jmp end16948
-then16947:
+	jmp end238933
+then238932:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end16948:
+end238933:
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
@@ -86,15 +86,15 @@ end16948:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then16949
+	je then238934
 	movq $0, %rcx
-	jmp end16950
-then16949:
+	jmp end238935
+then238934:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end16950:
+end238935:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
@@ -116,15 +116,15 @@ end16950:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then16951
+	je then238936
 	movq $0, %rcx
-	jmp end16952
-then16951:
+	jmp end238937
+then238936:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end16952:
+end238937:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
@@ -145,15 +145,15 @@ end16952:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then16953
+	je then238938
 	movq $0, %rcx
-	jmp end16954
-then16953:
+	jmp end238939
+then238938:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end16954:
+end238939:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11
@@ -174,15 +174,15 @@ end16954:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then16955
+	je then238940
 	movq $0, %rcx
-	jmp end16956
-then16955:
+	jmp end238941
+then238940:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rcx
-end16956:
+end238941:
 	movq free_ptr(%rip), %rcx
 	addq $24, free_ptr(%rip)
 	movq %rcx, %r11

@@ -8,7 +8,7 @@
 (require "utilities/testing.rkt")
 
 ;(debug-level 2)
-(define regression_tests_active #f)
+(define regression_tests_active #t)
 
 ; Compiler Tests
 (if regression_tests_active
