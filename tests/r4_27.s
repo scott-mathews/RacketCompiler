@@ -16,10 +16,10 @@ function0:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then348166
+	je then21346
 	movq $0, %rbx
-	jmp end348167
-then348166:
+	jmp end21347
+then21346:
 	leaq function1(%rip), %r12
 	movq free_ptr(%rip), %r13
 	movq %r13, %r13
@@ -30,15 +30,15 @@ then348166:
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then348168
+	je then21348
 	movq $0, %r13
-	jmp end348169
-then348168:
+	jmp end21349
+then21348:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end348169:
+end21349:
 	movq %r13, %r13
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
@@ -59,7 +59,7 @@ end348169:
 	callq *%r13
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end348167:
+end21347:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -89,10 +89,10 @@ function1:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then348170
+	je then21350
 	movq $1, %rbx
-	jmp end348171
-then348170:
+	jmp end21351
+then21350:
 	leaq function0(%rip), %r12
 	movq free_ptr(%rip), %r13
 	movq %r13, %r13
@@ -103,15 +103,15 @@ then348170:
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then348172
+	je then21352
 	movq $0, %r13
-	jmp end348173
-then348172:
+	jmp end21353
+then21352:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end348173:
+end21353:
 	movq %r13, %r13
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
@@ -132,7 +132,7 @@ end348173:
 	callq *%r13
 	movq %rax, %rbx
 	movq %rbx, %rbx
-end348171:
+end21351:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -168,15 +168,15 @@ main:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then348174
+	je then21354
 	movq $0, %r12
-	jmp end348175
-then348174:
+	jmp end21355
+then21354:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end348175:
+end21355:
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)
 	movq %r12, %r11
@@ -193,12 +193,12 @@ end348175:
 	movq %rax, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then348176
+	je then21356
 	movq $42, %rbx
-	jmp end348177
-then348176:
+	jmp end21357
+then21356:
 	movq $0, %rbx
-end348177:
+end21357:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

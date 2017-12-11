@@ -72,15 +72,15 @@ main:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then346753
+	je then20125
 	movq $0, %rcx
-	jmp end346754
-then346753:
+	jmp end20126
+then20125:
 	movq %r15, %rdi
 	movq $408, %rsi
 	callq collect
 	movq $0, %rcx
-end346754:
+end20126:
 	movq free_ptr(%rip), %rcx
 	addq $408, free_ptr(%rip)
 	movq %rcx, %r11
@@ -340,15 +340,15 @@ end346754:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then346755
+	je then20127
 	movq $0, %rcx
-	jmp end346756
-then346755:
+	jmp end20128
+then20127:
 	movq %r15, %rdi
 	movq $408, %rsi
 	callq collect
 	movq $0, %rcx
-end346756:
+end20128:
 	movq free_ptr(%rip), %rcx
 	addq $408, free_ptr(%rip)
 	movq %rcx, %r11
@@ -608,15 +608,15 @@ end346756:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then346757
+	je then20129
 	movq $0, %rcx
-	jmp end346758
-then346757:
+	jmp end20130
+then20129:
 	movq %r15, %rdi
 	movq $408, %rsi
 	callq collect
 	movq $0, %rcx
-end346758:
+end20130:
 	movq free_ptr(%rip), %rcx
 	addq $408, free_ptr(%rip)
 	movq %rcx, %r11

@@ -20,15 +20,15 @@ function0:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then347556
+	je then20832
 	movq $0, %r12
-	jmp end347557
-then347556:
+	jmp end20833
+then20832:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end347557:
+end20833:
 	movq %r12, %r12
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)

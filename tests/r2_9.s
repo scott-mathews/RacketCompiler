@@ -19,12 +19,12 @@ main:
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then343053
+	je then16863
 	movq $42, %rbx
-	jmp end343054
-then343053:
+	jmp end16864
+then16863:
 	movq $777, %rbx
-end343054:
+end16864:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

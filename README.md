@@ -31,8 +31,8 @@ titled "Instructions for Instructors".
 
 Relevant files:
 ```
-passes/uniquify-r8.rkt
-passes/box-mutations.rkt
+passes/uniquify-r8.rkt   (entire file)
+passes/box-mutations.rkt (entire file)
 ```
 
 Compiler Pipeline:
@@ -72,16 +72,31 @@ two traversals of the AST. The purpose of each traversal is as follows:
 
 #### Relevant tests to set!
 
+All tests have prefix "tests/final\_[number]" from the root of the repository.
+
+| **test no.** | **test purpose** |
+| --- |          ---------------- |
+| 13  | set! used within closure on closure variable|
+| 14  | set! within while loop within function |
+| 15  | basic set! of a let bound variable |
+| 16  | set! used within while loop |
+| 17  | set! used with function (inside while loop) |
+| 18  | set! used on function argument |
+| 19  | set! which changes variable's type |
+| 20  | set! used on a closure variable (within lambda) |
+| 21  | set! used on function argument |
+| 22  | set! used on vector within function |
+
 ---
 
 ### while
 
 Relevant files:
 ```
-passes/convert-r7.rkt
-passes/select-instructions-new.rkt
-passes/uncover-live-new.rkt
-passes/lower-conditionals.rkt
+passes/convert-r7.rkt              (lines 100-108)
+passes/select-instructions-new.rkt (lines 65-67)
+passes/uncover-live-new.rkt        (lines 45-56)
+passes/lower-conditionals.rkt      (lines 18-27)
 ```
 
 Compiler pipeline remains unchanged.
@@ -106,18 +121,30 @@ Finally, we used the lower-conditionals pass (which was previously used to chang
 to a series of statements, labels, and jumps) to lower while loops as well. This translation of a while loop is as
 follows:
 ```racket
-(while (conditional statements ...) (body statements ...)) 
+(while (conditional instructions ...) (body instructions ...)) 
 |
 v
 label start_while
-conditional statements ...
+conditional instructions ...
 conditional jump to end_while
-body statements ...
+body instructions ...
 jump to start_while
 label end_while
 ```
 
 #### Relevant tests to while
+
+All tests have prefix "tests/final\_[number]" from the root of the repository.
+
+| **test no.** | **test purpose** |
+| --- |          ---------------- |
+| 6  | while loop with begin as conditional |
+| 10 | while with comparison against vector-ref as condition |
+| 11 | a loop that does not run |
+| 13 | while loop containing closure |
+| 14  | set! within while loop within function |
+| 16  | set! used within while loop |
+| 17  | set! used with function (inside while loop) |
 
 ---
 
@@ -125,7 +152,7 @@ label end_while
 
 Relevant files:
 ```
-passes/flatten-new.rkt
+passes/flatten-new.rkt (lines 216-221)
 ```
 
 Compiler pipeline remains unchanged.
@@ -138,6 +165,18 @@ In the flatten pass, begin is changed into a series of statements, and the retur
 of the final expression. After this, begin is fully incorporated into the language.
 
 #### Relevant tests to begin
+
+All tests have prefix "tests/final\_[number]" from the root of the repository.
+
+| **test no.** | **test purpose** |
+| --- |          ---------------- |
+| 4  | nested begins |
+| 5  | if statement with begin as conditional |
+| 6  | while loop with begin as conditional |
+| 7  | begin with vectors inside |
+| 9  | begin as element of a vector |
+
+*Note: begin is used for most of the tests. Some of the begin specific tests are here.*
 
 
 Instructions for Instructors
