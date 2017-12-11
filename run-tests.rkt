@@ -32,7 +32,7 @@
     (begin
       (compiler-tests "begin compiler" #f r7_passes "begin" (range 0 6))
       (compiler-tests "while compiler" #f r7_passes "while" (range 0 3))
-      (compiler-tests "set! compiler" #f r7_passes "set" (range 1 8))
+      (compiler-tests "set! compiler" #f r7_passes "set" (range 0 8))
       )
     (void))
 

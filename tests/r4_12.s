@@ -23,15 +23,15 @@ function0:
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then20872
+	je then306279
 	movq $0, %rcx
-	jmp end20873
-then20872:
+	jmp end306280
+then306279:
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-end20873:
+end306280:
 	movq %rcx, %rcx
 	movq free_ptr(%rip), %rcx
 	addq $32, free_ptr(%rip)
@@ -81,15 +81,15 @@ main:
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then20874
+	je then306281
 	movq $0, %r12
-	jmp end20875
-then20874:
+	jmp end306282
+then306281:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end20875:
+end306282:
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)
 	movq %r12, %r11
