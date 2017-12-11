@@ -8,12 +8,12 @@
 (require "utilities/testing.rkt")
 
 ;(debug-level 2)
-(define regression_tests_active #f)
+(define regression_tests_active #t)
 
 ; Compiler Tests
 (if regression_tests_active
     (begin
-      (compiler-tests "r1-compiler" (type-check '()) r6_passes "r1" (range 1 49))
+      (compiler-tests "r1 compiler" (type-check '()) r6_passes "r1" (range 1 49))
       (compiler-tests "r2 compiler" (type-check '()) r6_passes "r2" (range 1 53))
       (compiler-tests "r3 compiler" (type-check '()) r6_passes "r3" (range 1 36))
       (compiler-tests "r4 compiler" (type-check '()) r6_passes "r4" (range 1 39))
