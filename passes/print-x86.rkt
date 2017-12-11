@@ -71,7 +71,7 @@
 (define (print-x86 exp)
   (match exp
     [`(jmp-if ,cc ,label) (format "\tj~a ~a\n" cc label)]
-    [`(set ,e ,arg) (string-append "\tsete " (arg->string arg) "\n")]
+    [`(set ,e ,arg) (string-append "\tset" (symbol->string e) " " (arg->string arg) "\n")]
     [`(,op ,arg1 ,arg2) (string-append "\t" (format "~a" op) " " (arg->string arg1) ", " (arg->string arg2) "\n")]
     [`(label ,name) (format "~a:\n" name)]
     [`(indirect-callq ,arg) (if (equal? (system-type) `macosx) (format "\tcallq *~a\n" (arg->string arg)) (format "\tcallq *~a\n" (arg->string arg)))]

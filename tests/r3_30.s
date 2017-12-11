@@ -67,20 +67,20 @@ main:
 	movq free_ptr(%rip), %rcx
 	addq $408, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then241223
+	je then20125
 	movq $0, %rcx
-	jmp end241224
-then241223:
+	jmp end20126
+then20125:
 	movq %r15, %rdi
 	movq $408, %rsi
 	callq collect
 	movq $0, %rcx
-end241224:
+end20126:
 	movq free_ptr(%rip), %rcx
 	addq $408, free_ptr(%rip)
 	movq %rcx, %r11
@@ -335,20 +335,20 @@ end241224:
 	movq free_ptr(%rip), %rcx
 	addq $408, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then241225
+	je then20127
 	movq $0, %rcx
-	jmp end241226
-then241225:
+	jmp end20128
+then20127:
 	movq %r15, %rdi
 	movq $408, %rsi
 	callq collect
 	movq $0, %rcx
-end241226:
+end20128:
 	movq free_ptr(%rip), %rcx
 	addq $408, free_ptr(%rip)
 	movq %rcx, %r11
@@ -603,20 +603,20 @@ end241226:
 	movq free_ptr(%rip), %rcx
 	addq $408, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then241227
+	je then20129
 	movq $0, %rcx
-	jmp end241228
-then241227:
+	jmp end20130
+then20129:
 	movq %r15, %rdi
 	movq $408, %rsi
 	callq collect
 	movq $0, %rcx
-end241228:
+end20130:
 	movq free_ptr(%rip), %rcx
 	addq $408, free_ptr(%rip)
 	movq %rcx, %r11

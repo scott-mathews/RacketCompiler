@@ -119,7 +119,7 @@
 (define (make-center return-variable vector-type bytes vec-length)
   `(has-type
     (let ([,(gensym '_) (has-type
-              (if (has-type (< (has-type (+ (has-type (global-value free_ptr) Integer) (has-type ,bytes Integer)) Integer)
+              (if (has-type (<= (has-type (+ (has-type (global-value free_ptr) Integer) (has-type ,bytes Integer)) Integer)
                                (has-type (global-value fromspace_end) Integer)) Boolean)
                   (has-type (void) Void)
                   (has-type (collect (has-type ,bytes Integer)) Void))

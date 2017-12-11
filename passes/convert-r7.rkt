@@ -10,6 +10,7 @@
 ; Convert R7 to R6 ;
 ;;;;;;;;;;;;;;;;;;;;
 (define (convert-r7 program)
+  
   ; Reset globals
   (set! function-names '())
   (set! function-env '())
@@ -24,7 +25,7 @@
                                           (set! function-names (cons name function-names))
                                           (set! function-env (cons (cons name `(,@(map (lambda (arg) `Any) args) -> Any)) function-env))
                                           ])) defines)
-
+     
      `(program ,@(convert-defines defines) ,(convert-exp body))
      ]))
 
@@ -165,7 +166,7 @@
 
         ; TODO : IMPLEMENT EXP AS INDEX
         `(let ((,tmp-var (project ,(convert-exp (first args)) (Vectorof Any))))
-           (vector-set! ,tmp-var ,(second args) ,(convert-exp (third args))))]
+           (inject (vector-set! ,tmp-var ,(second args) ,(convert-exp (third args))) Void))]
 
        ;;;;;;;;;;;;;;;;;;
        ; Arithmetic Ops ;

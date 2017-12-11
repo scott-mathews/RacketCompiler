@@ -9,6 +9,7 @@
 
 ;(debug-level 2)
 (define regression_tests_active #t)
+(define future_tests_active #f)
 
 ; Compiler Tests
 (if regression_tests_active
@@ -22,12 +23,19 @@
       ; Test 2 omitted (it correctly throws an error)
       (compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (append (list 0 1) (range 3 11) (list 50)))
       (compiler-tests "r7 compiler" #f r7_passes "r7" (range 1 22))
-      (compiler-tests "begin compiler" #f r7_passes "begin" (range 0 6))
+      
+      
       )
     (void))
 
+(if future_tests_active
+    (begin
+      (compiler-tests "begin compiler" #f r7_passes "begin" (range 0 6))
+      (compiler-tests "while compiler" #f r7_passes "while" (range 0 3))
+      (compiler-tests "set! compiler" #f r7_passes "set" (range 1 8))
+      )
+    (void))
 
-(compiler-tests "while compiler" #f r7_passes "while" (range 0 2))
-;(my-run-tests r7_passes "while" (range 0 1) "" "print-x86")
+;(my-run-tests r7_passes "while" (range 2 3) "" "print-x86")
 
 (display "tests passed!") (newline)

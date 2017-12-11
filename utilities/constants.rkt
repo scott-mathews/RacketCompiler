@@ -20,7 +20,7 @@
 (define arith-syms-biadic '(+))
 (define arith-syms-monadic '(-))
 (define vector-syms '(vector-set! vector-ref vector))
-(define other-syms '(read void))
+(define other-syms '(read void set! begin while))
 (define type-predicates '(boolean? integer? procedure? vector? void?))
 (define built-ins (list->set (append type-predicates cmp-syms bool-syms-biadic arith-syms-biadic arith-syms-monadic bool-syms-monadic vector-syms other-syms)))
 

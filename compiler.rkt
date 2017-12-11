@@ -10,6 +10,8 @@
 (require "utilities/testing.rkt")
 
 ; Import Passes
+(require "passes/uniquify-r8.rkt")
+(require "passes/box-mutations.rkt")
 (require "passes/convert-r7.rkt")
 (require "passes/typecheck.rkt")
 (require "passes/uniquify.rkt")
@@ -30,7 +32,7 @@
 (provide uniquify-pass flatten-pass select-instructions-pass
          allocate-registers-pass patch-instructions-pass type-check
          lower-conditionals-pass r5_passes expose-allocation-pass
-         reveal-functions-pass passes r3_passes r4_passes r6_passes
+         reveal-functions-pass r3_passes r4_passes r6_passes
          r7_passes)
 
 ;; Define the passes to be used by interp-tests and the grader
@@ -133,7 +135,21 @@
 (define r4_passes r5_passes)
 (define r6_passes r5_passes)
 
-(define passes
-  (cons `("type-check" ,(type-check '()) ,interp-scheme) r5_passes))
-
-(define r7_passes (cons `("convert-r7" ,convert-r7 ,interp-scheme) passes))
+(define r7_passes
+  `(("uniquify-r8"         ,uniquify-r8            ,interp-scheme)
+    ("box-mutations"       ,box-mutations          ,interp-scheme)
+    ("convert-r7"          ,convert-r7             ,interp-scheme)
+    ("type-check"          ,(type-check '())       ,interp-scheme)
+    ("reveal functions"    ,(reveal-functions '()) ,interp-scheme)
+    ("convert-closures"    ,convert-closures       ,interp-scheme)
+    ("expose-allocation"   ,expose-allocation      ,interp-scheme)
+    ("flatten"             ,flatten                ,interp-C)
+    ("select-instructions" ,select-instructions    ,interp-x86)
+    ("uncover-live"        ,uncover-live           ,interp-x86)
+    ("build-interference"  ,build-interference     ,interp-x86)
+    ("allocate-registers"  ,allocate-registers     ,interp-x86)
+    ("assign-homes"        ,assign-homes           ,interp-x86)
+    ("lower-conditionals"  ,lower-conditionals     ,interp-x86)
+    ("patch-instructions"  ,patch-instructions     ,interp-x86)
+    ("print-x86"           ,print-x86              ,interp-x86))
+  )

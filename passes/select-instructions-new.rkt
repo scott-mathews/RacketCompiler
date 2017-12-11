@@ -163,7 +163,7 @@
 
     ;; Comparison Operations ;;
     [`(,cmp ,arg1 ,arg2) #:when (cmp? cmp)
-                         `((cmpq ,(convert-arg arg1) ,(convert-arg arg2))
+                         `((cmpq ,(convert-arg arg2) ,(convert-arg arg1))
                            (set ,(cmp->cc cmp) (byte-reg al))
                            (movzbq (byte-reg al) lhs))]
 

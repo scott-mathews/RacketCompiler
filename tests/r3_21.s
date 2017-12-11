@@ -20,20 +20,20 @@ main:
 	movq free_ptr(%rip), %rcx
 	addq $16, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then239552
+	je then18508
 	movq $0, %rcx
-	jmp end239553
-then239552:
+	jmp end18509
+then18508:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end239553:
+end18509:
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
@@ -45,20 +45,20 @@ end239553:
 	movq free_ptr(%rip), %rcx
 	addq $32, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then239554
+	je then18510
 	movq $0, %rcx
-	jmp end239555
-then239554:
+	jmp end18511
+then18510:
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-end239555:
+end18511:
 	movq free_ptr(%rip), %rcx
 	addq $32, free_ptr(%rip)
 	movq %rcx, %r11
@@ -78,7 +78,7 @@ end239555:
 	movq 16(%r11), %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then239556
+	je then18512
 	movq %rbx, %r11
 	movq 8(%r11), %rcx
 	movq %rbx, %r11
@@ -87,10 +87,10 @@ end239555:
 	movq 8(%r11), %rbx
 	addq %rbx, %rcx
 	movq %rcx, %rbx
-	jmp end239557
-then239556:
+	jmp end18513
+then18512:
 	movq $44, %rbx
-end239557:
+end18513:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

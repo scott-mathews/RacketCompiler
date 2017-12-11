@@ -22,20 +22,20 @@ main:
 	movq free_ptr(%rip), %rcx
 	addq $16, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then241296
+	je then20192
 	movq $0, %rcx
-	jmp end241297
-then241296:
+	jmp end20193
+then20192:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end241297:
+end20193:
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
@@ -50,20 +50,20 @@ end241297:
 	movq free_ptr(%rip), %rcx
 	addq $16, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then241298
+	je then20194
 	movq $0, %rcx
-	jmp end241299
-then241298:
+	jmp end20195
+then20194:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rcx
-end241299:
+end20195:
 	movq free_ptr(%rip), %rcx
 	addq $16, free_ptr(%rip)
 	movq %rcx, %r11
@@ -75,20 +75,20 @@ end241299:
 	movq free_ptr(%rip), %rcx
 	addq $32, %rcx
 	movq fromspace_end(%rip), %rdx
-	cmpq %rcx, %rdx
-	sete %al
+	cmpq %rdx, %rcx
+	setle %al
 	movzbq %al, %rcx
 	movq $0, %rax
 	cmpq %rcx, %rax
-	je then241300
+	je then20196
 	movq $0, %rcx
-	jmp end241301
-then241300:
+	jmp end20197
+then20196:
 	movq %r15, %rdi
 	movq $32, %rsi
 	callq collect
 	movq $0, %rcx
-end241301:
+end20197:
 	movq free_ptr(%rip), %rcx
 	addq $32, free_ptr(%rip)
 	movq %rcx, %r11
@@ -109,20 +109,20 @@ end241301:
 	movq free_ptr(%rip), %rbx
 	addq $16, %rbx
 	movq fromspace_end(%rip), %rcx
-	cmpq %rbx, %rcx
-	sete %al
+	cmpq %rcx, %rbx
+	setle %al
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then241302
+	je then20198
 	movq $0, %rbx
-	jmp end241303
-then241302:
+	jmp end20199
+then20198:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %rbx
-end241303:
+end20199:
 	movq free_ptr(%rip), %rbx
 	addq $16, free_ptr(%rip)
 	movq %rbx, %r11
@@ -135,20 +135,20 @@ end241303:
 	movq free_ptr(%rip), %rbx
 	addq $24, %rbx
 	movq fromspace_end(%rip), %rcx
-	cmpq %rbx, %rcx
-	sete %al
+	cmpq %rcx, %rbx
+	setle %al
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then241304
+	je then20200
 	movq $0, %rbx
-	jmp end241305
-then241304:
+	jmp end20201
+then20200:
 	movq %r15, %rdi
 	movq $24, %rsi
 	callq collect
 	movq $0, %rbx
-end241305:
+end20201:
 	movq free_ptr(%rip), %rbx
 	addq $24, free_ptr(%rip)
 	movq %rbx, %r11

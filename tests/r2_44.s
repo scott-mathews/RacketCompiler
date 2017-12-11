@@ -15,31 +15,29 @@ main:
 
 	callq read_int
 	movq %rax, %rbx
-	movq $0, %rax
-	cmpq %rbx, %rax
+	cmpq $0, %rbx
 	sete %al
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then237911
+	je then17041
 	callq read_int
 	movq %rax, %rbx
-	movq $1, %rax
-	cmpq %rbx, %rax
+	cmpq $1, %rbx
 	sete %al
 	movzbq %al, %rbx
-	jmp end237912
-then237911:
+	jmp end17042
+then17041:
 	movq $0, %rbx
-end237912:
+end17042:
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then237913
+	je then17043
 	movq $0, %rbx
-	jmp end237914
-then237913:
+	jmp end17044
+then17043:
 	movq $42, %rbx
-end237914:
+end17044:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

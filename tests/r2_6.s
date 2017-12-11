@@ -13,18 +13,18 @@ main:
 	movq rootstack_begin(%rip), %r15
 	addq $0, %r15
 
-	movq $2, %rax
-	cmpq $1, %rax
+	movq $1, %rax
+	cmpq $2, %rax
 	sete %al
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then237501
+	je then16859
 	movq $777, %rbx
-	jmp end237502
-then237501:
+	jmp end16860
+then16859:
 	movq $42, %rbx
-end237502:
+end16860:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

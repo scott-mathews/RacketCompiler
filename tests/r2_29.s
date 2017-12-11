@@ -17,17 +17,17 @@ main:
 	movq %rax, %rbx
 	callq read_int
 	movq %rax, %rcx
-	cmpq %rbx, %rcx
+	cmpq %rcx, %rbx
 	sete %al
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then237721
+	je then16941
 	movq $42, %rbx
-	jmp end237722
-then237721:
+	jmp end16942
+then16941:
 	movq $777, %rbx
-end237722:
+end16942:
 	movq %rbx, %rax
 
 	movq %rax, %rdi

@@ -11,32 +11,31 @@ function0:
 
 	movq %rdi, %rbx
 	movq %rsi, %rbx
-	movq $0, %rax
-	cmpq %rbx, %rax
+	cmpq $0, %rbx
 	sete %al
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then242000
+	je then20812
 	leaq function0(%rip), %r12
 	movq free_ptr(%rip), %r13
 	movq %r13, %r13
 	addq $16, %r13
 	movq fromspace_end(%rip), %r14
-	cmpq %r13, %r14
-	sete %al
+	cmpq %r14, %r13
+	setle %al
 	movzbq %al, %r13
 	movq $0, %rax
 	cmpq %r13, %rax
-	je then242002
+	je then20814
 	movq $0, %r13
-	jmp end242003
-then242002:
+	jmp end20815
+then20814:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r13
-end242003:
+end20815:
 	movq %r13, %r13
 	movq free_ptr(%rip), %r13
 	addq $16, free_ptr(%rip)
@@ -53,10 +52,10 @@ end242003:
 	callq *%r13
 	movq %rax, %rbx
 	movq %rbx, %rbx
-	jmp end242001
-then242000:
+	jmp end20813
+then20812:
 	movq %rbx, %rbx
-end242001:
+end20813:
 	movq %rbx, %rax
 
 	addq $40, %rsp
@@ -87,20 +86,20 @@ main:
 	movq free_ptr(%rip), %r12
 	addq $16, %r12
 	movq fromspace_end(%rip), %r13
-	cmpq %r12, %r13
-	sete %al
+	cmpq %r13, %r12
+	setle %al
 	movzbq %al, %r12
 	movq $0, %rax
 	cmpq %r12, %rax
-	je then242004
+	je then20816
 	movq $0, %r12
-	jmp end242005
-then242004:
+	jmp end20817
+then20816:
 	movq %r15, %rdi
 	movq $16, %rsi
 	callq collect
 	movq $0, %r12
-end242005:
+end20817:
 	movq free_ptr(%rip), %r12
 	addq $16, free_ptr(%rip)
 	movq %r12, %r11
