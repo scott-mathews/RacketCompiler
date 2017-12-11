@@ -22,10 +22,7 @@
       
       ; Test 2 omitted (it correctly throws an error)
       (compiler-tests "r6 compiler" (type-check '()) r6_passes "s6" (append (list 0 1) (range 3 11) (list 50)))
-      (compiler-tests "r7 compiler" #f r7_passes "r7" (range 1 22))
-      
-      
-      )
+      (compiler-tests "r7 compiler" #f r7_passes "r7" (range 1 22)))
     (void))
 
 (if future_tests_active

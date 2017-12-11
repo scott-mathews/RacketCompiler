@@ -1,11 +1,7 @@
 Team: xXx rAckety McrAcketfAce xXx
-==================================
+----------------------------------
 
-Members:
-
- * scomathe (Scott Mathews)
- * cspesa (Clint Spesard)
-
+Team Members: scomathe (Scott Mathews), cspesa (Clint Spesard)
 
 Final Project Summary
 =====================
@@ -79,14 +75,68 @@ two traversals of the AST. The purpose of each traversal is as follows:
 
 ### while
 
+Relevant files:
+```
+passes/convert-r7.rkt
+passes/select-instructions-new.rkt
+passes/uncover-live-new.rkt
+passes/lower-conditionals.rkt
+```
+
+Compiler pipeline remains unchanged.
+
+The process of adding while loops did not require additional passes. It did require modification of the
+existing passes, so as to handle the new construct. First of all, we decided that while loops ought to
+return (void). This decision was made based on the implementation of loops in the Racket language (where
+they also return (void).
+
+We handled while loops quite similarly to if statements. In early passes, the while loop was trivially recursed
+upon. When we reached flatten, we wrapped up the condition and statements of the while loop just like we would
+the condition and then/else cases of an if statement. The first challenge came in the uncover-live pass, and
+related to register allocation in while loops.
+
+When uncovering instructions for a while loop, it is important to consider that everything live at the end of
+the while loop may be live once again at the beginning of the while loop. To handle this case, we modified
+uncover-live to make two passes over the while loop. The first pass uncovered live variables without consideration
+of looping. The second pass used the live-after variables from the end of the first pass in the second pass. This
+ensures that no variables which are live at the end of the while loop are overwritten if the loop proceeds.
+
+Finally, we used the lower-conditionals pass (which was previously used to change if statements from a nested form
+to a series of statements, labels, and jumps) to lower while loops as well. This translation of a while loop is as
+follows:
+```racket
+(while (conditional statements ...) (body statements ...)) 
+|
+v
+label start_while
+conditional statements ...
+conditional jump to end_while
+body statements ...
+jump to start_while
+label end_while
+```
+
 #### Relevant tests to while
 
 ---
 
 ### begin
 
-#### Relevant tests to begin
+Relevant files:
+```
+passes/flatten-new.rkt
+```
 
+Compiler pipeline remains unchanged.
+
+Begin is an expression which takes a series of expressions, executes them in order, and returns the value 
+of the last expression. The motivation for adding begin to our language is it makes the usage of while loops
+and set!s significantly smoother.
+
+In the flatten pass, begin is changed into a series of statements, and the returned value is the flat-variable
+of the final expression. After this, begin is fully incorporated into the language.
+
+#### Relevant tests to begin
 
 
 Instructions for Instructors
