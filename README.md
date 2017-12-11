@@ -17,6 +17,7 @@ for our final project in our compiler. These features are:
 * set!
 * while loops
 * begin statements
+
 All three of these features have been implemented.
 
 ## Discussion and Test Cases

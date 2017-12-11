@@ -100,7 +100,6 @@
        [`while
         (define tmp-var (gensym 'whiletmp))
 
-        ; HARDCODED NOT-LIKE THING INTO CONDITIONAL
         `(while (let ((,tmp-var (eq? ,(convert-exp (first args)) (inject #f Boolean))))
                   (if (eq? (inject ,tmp-var Boolean) (inject #f Boolean))
                       (eq? 0 1) ; fail

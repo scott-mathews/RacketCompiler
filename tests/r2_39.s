@@ -21,13 +21,13 @@ main:
 	movzbq %al, %rbx
 	movq $0, %rax
 	cmpq %rbx, %rax
-	je then302106
+	je then319139
 	callq read_int
 	movq %rax, %rbx
-	jmp end302107
-then302106:
+	jmp end319140
+then319139:
 	movq $777, %rbx
-end302107:
+end319140:
 	movq %rbx, %rax
 
 	movq %rax, %rdi
