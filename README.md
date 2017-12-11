@@ -63,23 +63,25 @@ After uniquifying variables, we begin the process of moving set!-ed variables
 into boxes. This process occurs in the pass "box-mutations". This pass performs
 two traversals of the AST. The purpose of each traversal is as follows:
 * Traversal 1
-** Find variables which are set!-ed
-** Create new variable names for each found variable. These names may be used next traversal.
+  * Find variables which are set!-ed
+  * Create new variable names for each found variable. These names may be used next traversal.
 
 * Traversal 2
-** Replace the initialization of variables which will later be set!-ed to use boxes.
-*** If a variable is instantiated in a let, wrap the right hand side of that let in vector
-*** If a variable is instantiated as an argument, wrap the body of the function/lambda which instantiates said argument in a let, which moves the argument to a new variable, which is then wrapped in a vector.
-** Wrap places where set!-ed variables are used with vector-ref
-** Change all set!s to vector-set!s.
+  * Replace the initialization of variables which will later be set!-ed to use boxes.
+    * If a variable is instantiated in a let, wrap the right hand side of that let in vector
+    * If a variable is instantiated as an argument, wrap the body of the function/lambda which instantiates said argument in a let, which moves the argument to a new variable, which is then wrapped in a vector.
+  * Wrap places where set!-ed variables are used with vector-ref
+  * Change all set!s to vector-set!s.
 
 #### Relevant tests to set!
 
+---
 
 ### while
 
 #### Relevant tests to while
 
+---
 
 ### begin
 
