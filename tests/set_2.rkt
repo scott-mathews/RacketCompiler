@@ -4,4 +4,4 @@
 	(begin
 		(while (< x 42)
 			(set! x (add1 x)))
-		(+ x 42)))
+		x))
