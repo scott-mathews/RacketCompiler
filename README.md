@@ -1,8 +1,3 @@
-Team: xXx rAckety McrAcketfAce xXx
-----------------------------------
-
-Team Members: scomathe (Scott Mathews), cspesa (Clint Spesard)
-
 Final Project Summary
 =====================
 ## Final Project Proposal
